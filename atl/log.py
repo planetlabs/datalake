@@ -1,3 +1,5 @@
+from copy import deepcopy
+from dateutil.parser import parse as dateparse
 
 class InvalidATLMetadata(Exception):
     pass
@@ -11,7 +13,9 @@ class Log(object):
 
     @classmethod
     def from_atl_metadata(cls, metadata):
+        metadata = deepcopy(metadata)
         cls._validate_metadata(metadata)
+        cls._normalize_dates(metadata)
         log = cls()
         log.metadata = metadata
         return log
@@ -35,3 +39,17 @@ class Log(object):
         if version != '0':
             msg = 'Found version %s. Only "0" is supported'.format(version)
             raise UnsupportedATLMetadataVersion(msg)
+
+    @classmethod
+    def _normalize_dates(cls, metadata):
+        for d in ['start', 'end']:
+            date = cls._normalize_date(metadata[d])
+            metadata[d] = date.isoformat() + 'Z'
+
+    @classmethod
+    def _normalize_date(cls, date):
+        try:
+            return dateparse(date)
+        except ValueError:
+            msg = 'could not parse a date from %s'.format(date)
+            raise InvalidATLMetadata(msg)
