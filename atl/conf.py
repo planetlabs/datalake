@@ -16,15 +16,15 @@ config_parser.add('-u', '--storage-url',
                   env_var='STORAGE_URL',
                   default=DEFAULT_STORAGE_URL)
 
-config_parser.add('-a', '--aws-key',
+config_parser.add('-k', '--aws-key',
                   help=('The AWS access key used to read and write s3.'),
                   env_var='AWS_ACCESS_KEY_ID')
 
-config_parser.add('-a', '--aws-secret',
+config_parser.add('-s', '--aws-secret',
                   help=('The AWS secret key used to read and write s3.'),
                   env_var='AWS_SECRET_ACCESS_KEY')
 
-config_parser.add('-a', '--aws-region',
+config_parser.add('-r', '--aws-region',
                   help=('The AWS region where logs should be stored.'),
                   env_var='AWS_REGION')
 
