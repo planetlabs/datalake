@@ -17,19 +17,19 @@ class TestFromATLMetadata(TestCase):
     def test_missing_version(self):
         del(self.metadata['version'])
         with self.assertRaises(InvalidATLMetadata):
-            Log.from_atl_metadata(self.metadata)
+            Log.from_atl_metadata(self.metadata, '/dev/null')
 
     def test_unsupported_version(self):
         self.metadata['version'] = '100'
         with self.assertRaises(UnsupportedATLMetadataVersion):
-            Log.from_atl_metadata(self.metadata)
+            Log.from_atl_metadata(self.metadata,'/dev/null')
 
     def test_normalize_date(self):
         self.metadata['start'] = '2015-03-20'
-        l = Log.from_atl_metadata(self.metadata)
+        l = Log.from_atl_metadata(self.metadata, '/dev/null')
         self.assertEqual(l.metadata['start'], '2015-03-20T00:00:00Z')
 
     def test_invalid_date(self):
         self.metadata['end'] = 'bxfl230'
         with self.assertRaises(InvalidATLMetadata):
-            Log.from_atl_metadata(self.metadata)
+            Log.from_atl_metadata(self.metadata, '/dev/null')
