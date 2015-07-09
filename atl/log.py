@@ -9,14 +9,14 @@ class UnsupportedATLMetadataVersion(Exception):
     pass
 
 
-class Log(object):
+class Log(file):
 
     @classmethod
     def from_atl_metadata(cls, metadata, path):
         metadata = deepcopy(metadata)
         cls._validate_metadata(metadata)
         cls._normalize_dates(metadata)
-        log = cls()
+        log = cls(path)
         log.metadata = metadata
         log.path = path
         return log
@@ -54,7 +54,3 @@ class Log(object):
         except ValueError:
             msg = 'could not parse a date from %s'.format(date)
             raise InvalidATLMetadata(msg)
-
-    @property
-    def content(self):
-        return open(self.path).read()
