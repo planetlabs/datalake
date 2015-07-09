@@ -37,7 +37,7 @@ class Archive(object):
         log.metadata['url'] = self._get_s3_url(log)
         key = self._s3_key_from_metadata(log)
         key.set_metadata('atl', json.dumps(log.metadata))
-        key.set_contents_from_string(log.content)
+        key.set_contents_from_filename(log.path)
         return log.metadata['url']
 
     _URL_FORMAT = 's3://{bucket}/{key}'
