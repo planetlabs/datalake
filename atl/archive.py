@@ -1,7 +1,6 @@
 from conf import get_config
 import urlparse
 from memoized_property import memoized_property
-import os
 import simplejson as json
 
 from boto.s3.connection import S3Connection
@@ -34,11 +33,10 @@ class Archive(object):
         returns the url to which the log was pushed. The log's metadata is also
         updated with the url.
         '''
-        log.metadata['url'] = self._get_s3_url(log)
         key = self._s3_key_from_metadata(log)
         key.set_metadata('atl', json.dumps(log.metadata))
-        key.set_contents_from_filename(log.path)
-        return log.metadata['url']
+        key.set_contents_from_string(log.read())
+        return self._get_s3_url(log)
 
     _URL_FORMAT = 's3://{bucket}/{key}'
 
@@ -58,8 +56,7 @@ class Archive(object):
     _KEY_FORMAT = '{where}/{what}/{name}'
 
     def _s3_key_from_metadata(self, log):
-        name = os.path.basename(log.path)
-        key_name = self._KEY_FORMAT.format(name=name, **log.metadata)
+        key_name = self._KEY_FORMAT.format(name=log.name, **log.metadata)
         return Key(self._s3_bucket, name=key_name)
 
     @property

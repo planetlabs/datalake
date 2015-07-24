@@ -34,10 +34,9 @@ class TestArchiveS3Tests(TestCase):
         with NamedTemporaryFile() as tf:
             tf.write(content)
             tf.flush()
-            log = Log.from_atl_metadata(metadata, tf.name)
+            log = Log(tf.name, metadata)
             url = self.atl.push(log)
-            self.assertEqual(log.metadata['url'], url)
-            return log
+            return url, log
 
     def get_s3_key(self, url):
         url = urlparse(url)
@@ -47,8 +46,8 @@ class TestArchiveS3Tests(TestCase):
 
     def test_push_log(self):
         expected_content = 'mwahaha'
-        log = self.create_archived_log_file(expected_content, self.metadata)
-        from_s3 = self.get_s3_key(log.metadata['url'])
+        url, log = self.create_archived_log_file(expected_content, self.metadata)
+        from_s3 = self.get_s3_key(url)
         self.assertEqual(from_s3.get_contents_as_string(), expected_content)
         metadata = from_s3.get_metadata('atl')
         self.assertIsNotNone(metadata)
