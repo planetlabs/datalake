@@ -20,15 +20,15 @@ def get_version():
         return metadata.version
     else:
         import pyver
-        version, version_info = pyver.get_version(pkg="atl", public=True)
+        version, version_info = pyver.get_version(pkg="datalake", public=True)
         return version
 
-setup(name='allthelogs',
-      url='https://github.com/planetlabs/atl',
+setup(name='datalake',
+      url='https://github.com/planetlabs/datalake',
       version=get_version(),
-      description='atl: "all the logs" (or "archive the log")',
+      description='datalake: a metadata-aware archive',
       author='Brian Cavagnolo',
-      author_email='brian.cavagnolo@planet.com',
-      packages=['atl'],
+      author_email='brian@planet.com',
+      packages=['datalake'],
       install_requires=get_requirements(),
      )

@@ -1,18 +1,18 @@
 from configargparse import ArgParser
 
-'''atl configuration
+'''datalake configuration
 
-A number of configuration variables influence the behavior of atl. This is the
+A number of configuration variables influence the behavior of datalake. This is the
 one place where configuration variables should be declared and
 described. Configuration can conveniently come from environment variables or
 config files.
 '''
-config_parser = ArgParser(default_config_files=['/etc/atl.conf'])
+config_parser = ArgParser(default_config_files=['/etc/datalake.conf'])
 
 DEFAULT_STORAGE_URL = 's3://allthelogs-test'
 config_parser.add('-u', '--storage-url',
-                  help=('The URL to the top-level storage resource where atl '
-                        'will archive all the logs.'),
+                  help=('The URL to the top-level storage resource where '
+                        'datalake will archive all the files.'),
                   env_var='STORAGE_URL',
                   default=DEFAULT_STORAGE_URL)
 

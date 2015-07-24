@@ -5,7 +5,7 @@ from moto import mock_s3
 from urlparse import urlparse
 import simplejson as json
 
-from atl import Log, Archive
+from datalake import Log, Archive
 
 
 class TestArchiveS3Tests(TestCase):
@@ -21,9 +21,9 @@ class TestArchiveS3Tests(TestCase):
             'where': 'nebraska',
             'what': 'apache',
         }
-        self.bucket_name = 'atl-test'
+        self.bucket_name = 'datalake-test'
         self.bucket_url = 's3://' + self.bucket_name + '/'
-        self.atl = Archive(self.bucket_url)
+        self.datalake = Archive(self.bucket_url)
         self.conn = boto.connect_s3()
         self.conn.create_bucket(self.bucket_name)
 
@@ -35,7 +35,7 @@ class TestArchiveS3Tests(TestCase):
             tf.write(content)
             tf.flush()
             log = Log(tf.name, metadata)
-            url = self.atl.push(log)
+            url = self.datalake.push(log)
             return url, log
 
     def get_s3_key(self, url):
@@ -49,6 +49,6 @@ class TestArchiveS3Tests(TestCase):
         url, log = self.create_archived_log_file(expected_content, self.metadata)
         from_s3 = self.get_s3_key(url)
         self.assertEqual(from_s3.get_contents_as_string(), expected_content)
-        metadata = from_s3.get_metadata('atl')
+        metadata = from_s3.get_metadata('datalake')
         self.assertIsNotNone(metadata)
         self.assertDictEqual(json.loads(metadata), log.metadata)
