@@ -34,7 +34,7 @@ class Archive(object):
         updated with the url.
         '''
         key = self._s3_key_from_metadata(log)
-        key.set_metadata('atl', json.dumps(log.metadata))
+        key.set_metadata('datalake', json.dumps(log.metadata))
         key.set_contents_from_string(log.read())
         return self._get_s3_url(log)
 

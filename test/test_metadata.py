@@ -1,6 +1,7 @@
 from unittest import TestCase
 
-from atl import Metadata, InvalidATLMetadata, UnsupportedATLMetadataVersion
+from datalake import Metadata, InvalidDatalakeMetadata, \
+    UnsupportedDatalakeMetadataVersion
 
 
 class TestMetadataValidation(TestCase):
@@ -16,12 +17,12 @@ class TestMetadataValidation(TestCase):
 
     def test_missing_version(self):
         del(self.metadata['version'])
-        with self.assertRaises(InvalidATLMetadata):
+        with self.assertRaises(InvalidDatalakeMetadata):
             Metadata(self.metadata)
 
     def test_unsupported_version(self):
         self.metadata['version'] = '100'
-        with self.assertRaises(UnsupportedATLMetadataVersion):
+        with self.assertRaises(UnsupportedDatalakeMetadataVersion):
             Metadata(self.metadata)
 
     def test_normalize_date(self):
@@ -31,5 +32,5 @@ class TestMetadataValidation(TestCase):
 
     def test_invalid_date(self):
         self.metadata['end'] = 'bxfl230'
-        with self.assertRaises(InvalidATLMetadata):
+        with self.assertRaises(InvalidDatalakeMetadata):
             Metadata(self.metadata)
