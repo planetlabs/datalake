@@ -27,21 +27,20 @@ class Archive(object):
     def _parsed_storage_url(self):
         return urlparse.urlparse(self.storage_url)
 
-    def push(self, log):
-        '''push a log to the archive
+    def push(self, f):
+        '''push a file f to the archive
 
-        returns the url to which the log was pushed. The log's metadata is also
-        updated with the url.
+        returns the url to which the file was pushed.
         '''
-        key = self._s3_key_from_metadata(log)
-        key.set_metadata('datalake', json.dumps(log.metadata))
-        key.set_contents_from_string(log.read())
-        return self._get_s3_url(log)
+        key = self._s3_key_from_metadata(f)
+        key.set_metadata('datalake', json.dumps(f.metadata))
+        key.set_contents_from_string(f.read())
+        return self._get_s3_url(f)
 
     _URL_FORMAT = 's3://{bucket}/{key}'
 
-    def _get_s3_url(self, log):
-        key = self._s3_key_from_metadata(log)
+    def _get_s3_url(self, f):
+        key = self._s3_key_from_metadata(f)
         return self._URL_FORMAT.format(bucket=self._s3_bucket_name,
                                        key=key.name)
 
@@ -55,8 +54,8 @@ class Archive(object):
 
     _KEY_FORMAT = '{where}/{what}/{name}'
 
-    def _s3_key_from_metadata(self, log):
-        key_name = self._KEY_FORMAT.format(name=log.name, **log.metadata)
+    def _s3_key_from_metadata(self, f):
+        key_name = self._KEY_FORMAT.format(name=f.name, **f.metadata)
         return Key(self._s3_bucket, name=key_name)
 
     @property

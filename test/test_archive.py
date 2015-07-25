@@ -5,7 +5,7 @@ from moto import mock_s3
 from urlparse import urlparse
 import simplejson as json
 
-from datalake import Log, Archive
+from datalake import File, Archive
 
 
 class TestArchiveS3Tests(TestCase):
@@ -30,13 +30,13 @@ class TestArchiveS3Tests(TestCase):
     def tearDown(self):
         self.mock.stop()
 
-    def create_archived_log_file(self, content, metadata):
+    def create_archived_file(self, content, metadata):
         with NamedTemporaryFile() as tf:
             tf.write(content)
             tf.flush()
-            log = Log(tf.name, metadata)
-            url = self.datalake.push(log)
-            return url, log
+            f = File(tf.name, metadata)
+            url = self.datalake.push(f)
+            return url, f
 
     def get_s3_key(self, url):
         url = urlparse(url)
@@ -44,11 +44,11 @@ class TestArchiveS3Tests(TestCase):
         bucket = self.conn.get_bucket(url.netloc)
         return bucket.get_key(url.path)
 
-    def test_push_log(self):
+    def test_push_file(self):
         expected_content = 'mwahaha'
-        url, log = self.create_archived_log_file(expected_content, self.metadata)
+        url, f = self.create_archived_file(expected_content, self.metadata)
         from_s3 = self.get_s3_key(url)
         self.assertEqual(from_s3.get_contents_as_string(), expected_content)
         metadata = from_s3.get_metadata('datalake')
         self.assertIsNotNone(metadata)
-        self.assertDictEqual(json.loads(metadata), log.metadata)
+        self.assertDictEqual(json.loads(metadata), f.metadata)

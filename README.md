@@ -84,21 +84,23 @@ with each file. In JSON, the metadata looks something like this:
 
 version: This is the metadata version. It should be "0".
 
-start: This is the time of the first event in the log. It is required.
-
-end: This is the time of the last event in the log. It is required.
-
-where: This is the location or server that generated the log file. It is
+start: This is the time of the first event in the file. Alternatively, if the
+file is associated with an instant, this is the only relevant time. It is
 required.
 
-what: This is the process or program that generated the log. It is required.
+end: This is the time of the last event in the file. If it is not present, the
+file represents a snapshot of something like a weekly report.
+
+where: This is the location or server that generated the file. It is required.
+
+what: This is the process or program that generated the file. It is required.
 
 data-version: This is the data version. The format of the version is up to the
-user. If the format of the contents of the log files changes, this version
-should change so that consumers of the data can know to use a different
-parser. It is required.
+user. If the format of the contents of the file changes, this version should
+change so that consumers of the data can know to use a different parser. It is
+required.
 
-tags: Arbitrary extra tags specified when the log was archived.
+tags: Arbitrary extra tags specified when the file was archived.
 
 Developer Notes
 ===============
