@@ -2,11 +2,11 @@ from metadata import Metadata
 import os
 
 
-class Log(object):
-    '''A Log to be manipulated by the Archive
+class File(object):
+    '''A File to be manipulated by the Archive
 
-    A Log is a file and its associated metadata. To create a new Log, you must
-    provide the path to the log and the required Metadata.
+    A File is a file and its associated metadata. To create a new File, you
+    must provide the path to the file and the required Metadata.
     '''
     def __init__(self, path, metadata):
         if type(metadata) is not Metadata:

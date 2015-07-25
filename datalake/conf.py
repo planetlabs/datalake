@@ -9,7 +9,7 @@ config files.
 '''
 config_parser = ArgParser(default_config_files=['/etc/datalake.conf'])
 
-DEFAULT_STORAGE_URL = 's3://allthelogs-test'
+DEFAULT_STORAGE_URL = 's3://datalake-test'
 config_parser.add('-u', '--storage-url',
                   help=('The URL to the top-level storage resource where '
                         'datalake will archive all the files.'),
@@ -25,7 +25,7 @@ config_parser.add('-s', '--aws-secret',
                   env_var='AWS_SECRET_ACCESS_KEY')
 
 config_parser.add('-r', '--aws-region',
-                  help=('The AWS region where logs should be stored.'),
+                  help=('The AWS region where files should be stored.'),
                   env_var='AWS_REGION')
 
 _config = config_parser.parse_args(args=[])
