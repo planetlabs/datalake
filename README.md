@@ -102,17 +102,15 @@ required.
 
 tags: Arbitrary extra tags specified when the file was archived.
 
-Developer Notes
+Developer Setup
 ===============
 
-To fetch the dependencies and run the tests:
+- Get the dependencies and run the tests:
 
+        mkvirtualenv datalake # Or however you like to manage virtualenvs
         pip install -r requirements.txt -r test-requirements.txt
         nosetests
 
-To package up datalake and publish it, get yourself added as an owner or
-maintainer for the project in pypi, prepare a [.pypirc
-file](https://docs.python.org/3.1/distutils/packageindex.html#pypirc), and
-upload the package:
+- Prepare a package:
 
-        python setup.py sdist upload
+        python setup.py bdist_wheel
