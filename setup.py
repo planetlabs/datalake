@@ -29,4 +29,5 @@ setup(name='datalake',
       author_email='brian@planet.com',
       packages=['datalake'],
       install_requires=get_requirements(),
+      scripts=['bin/datalake'],
      )
