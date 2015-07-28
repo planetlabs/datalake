@@ -1,7 +1,5 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 from setuptools import distutils
-import subprocess
-import sys
 from pip.req import parse_requirements
 from pip.download import PipSession
 import os
