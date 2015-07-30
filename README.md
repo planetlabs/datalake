@@ -107,4 +107,4 @@ Developer Setup
 
         mkvirtualenv datalake # Or however you like to manage virtualenvs
         pip install -e .[test]
-        nosetests
+        py.test
