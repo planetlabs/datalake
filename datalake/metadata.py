@@ -43,6 +43,8 @@ class Metadata(dict):
     def _normalize_dates(self):
         for d in ['start', 'end']:
             date = self._normalize_date(self[d])
+            # keep the datetimes around for internal convenience
+            setattr(self, '_' + d, date)
             self[d] = date.isoformat() + 'Z'
 
     @staticmethod

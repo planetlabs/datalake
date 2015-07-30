@@ -15,7 +15,7 @@ class File(object):
         self.metadata = metadata
         self._fd = open(path, 'r')
         self._path = path
-        self.name = os.path.basename(path)
+        self._basename = os.path.basename(path)
         self._initialize_methods_from_fd()
 
     def _initialize_methods_from_fd(self):
