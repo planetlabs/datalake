@@ -22,6 +22,7 @@ def random_metadata():
         'end': end,
         'where': random_word(10),
         'what': random_word(10),
+        'who': random_word(10),
     }
 
 def random_file(tmpdir):

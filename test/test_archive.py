@@ -20,6 +20,7 @@ class TestArchiveS3Tests(TestCase):
             'end': '2015-03-20T23:59:59.999Z',
             'where': 'nebraska',
             'what': 'apache',
+            'who': 'yourmom',
         }
         self.bucket_name = 'datalake-test'
         self.bucket_url = 's3://' + self.bucket_name + '/'

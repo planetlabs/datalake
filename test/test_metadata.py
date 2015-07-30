@@ -13,6 +13,7 @@ class TestMetadataValidation(TestCase):
             'end': '2015-03-20T23:59:59.999Z',
             'where': 'nebraska',
             'what': 'apache',
+            'who': 'me',
         }
 
     def test_missing_version(self):

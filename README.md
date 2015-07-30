@@ -41,27 +41,28 @@ Push a log file:
 
         datalake push --start 2015-03-20T00:05.345Z
             --end 2015-03-20T23:59.114Z \
-            --where webserver01 --what nginx /path/to/nginx.log \
-            --data-version 0
+            --data-version 0 --who webteam \
+            --where webserver01 --what nginx /path/to/nginx.log
 
 Push a log file, specifying some extra detail:
 
         datalake push --start 2015-03-20T00:00:05.345Z \
             --end 2015-03-20T23:59:59.114Z \
-            --what syslog --where webserver01 --data-version 0 \
+            --data-version 0 --who webteam \
+            --what syslog --where webserver01 \
             --tags app=MemeGenerator,magic=123 /path/to/my.log
 
 List the syslog and foobar files available from webserver01 since the specified
 start date.
 
         datalake list --where webserver01 --start 2015-03-20 --end `date -u` \
-            --what syslog,foobar
+            --what syslog,foobar --who webteam
 
 Fetch the nginx log files from webserver01 and webserver02 to the current
 directory:
 
         datalake fetch --where webserver01,webserver02 --start 2015-03-20 \
-            --end `date -u` --what nginx
+            --end `date -u` --what nginx --who webteam
 
 Metadata
 ========
@@ -75,6 +76,7 @@ with each file. In JSON, the metadata looks something like this:
             "end": "2015-03-20T23:59:59.114Z",
             "where": "webserver02",
             "what": "syslog",
+            "who": "webteam",
             "data-version": "0",
             "tags": {
                 "app": "MemeGenerator",
@@ -94,6 +96,9 @@ file represents a snapshot of something like a weekly report.
 where: This is the location or server that generated the file. It is required.
 
 what: This is the process or program that generated the file. It is required.
+
+who: This is the organizational unit (e.g., team, project) responsible for the
+generation of the data. It is required.
 
 data-version: This is the data version. The format of the version is up to the
 user. If the format of the contents of the file changes, this version should
