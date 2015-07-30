@@ -106,5 +106,5 @@ Developer Setup
 ===============
 
         mkvirtualenv datalake # Or however you like to manage virtualenvs
-        pip install -r requirements.txt -r test-requirements.txt
+        pip install -e .[test]
         nosetests
