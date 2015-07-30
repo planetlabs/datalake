@@ -44,7 +44,7 @@ setup(name='datalake',
       ],
       extras_require={
           'test': [
-              'nose==1.3.6',
+              'pytest==2.7.2',
               'moto==0.4.2',
               'twine==1.5.0',
               'pip==7.1.0',
