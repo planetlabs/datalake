@@ -1,5 +1,7 @@
 from copy import deepcopy
 from dateutil.parser import parse as dateparse
+from datetime import datetime
+from pytz import utc
 
 
 class InvalidDatalakeMetadata(Exception):
@@ -9,6 +11,7 @@ class InvalidDatalakeMetadata(Exception):
 class UnsupportedDatalakeMetadataVersion(Exception):
     pass
 
+_EPOCH = datetime.fromtimestamp(0, utc)
 
 class Metadata(dict):
 
@@ -41,15 +44,29 @@ class Metadata(dict):
 
     def _normalize_dates(self):
         for d in ['start', 'end']:
-            date = self._normalize_date(self[d])
-            # keep the datetimes around for internal convenience
-            setattr(self, '_' + d, date)
-            self[d] = date.isoformat() + 'Z'
+            self[d] = self._normalize_date(self[d])
 
     @staticmethod
     def _normalize_date(date):
+        if type(date) is int:
+            return date
+        elif type(date) is float:
+            return int(date * 1000.0)
+        else:
+            return Metadata._normalize_date_from_string(date)
+
+    @staticmethod
+    def _normalize_date_from_string(date):
         try:
-            return dateparse(date)
+            d = dateparse(date)
+            if not d.tzinfo:
+                d = d.replace(tzinfo=utc)
+            return Metadata._datetime_to_milliseconds(d)
         except ValueError:
             msg = 'could not parse a date from {}'.format(date)
             raise InvalidDatalakeMetadata(msg)
+
+    @staticmethod
+    def _datetime_to_milliseconds(d):
+        delta = d - _EPOCH
+        return int(delta.total_seconds()*1000.0)
