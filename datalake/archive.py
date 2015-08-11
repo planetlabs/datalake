@@ -59,7 +59,7 @@ class Archive(object):
         # sequence:
         # https://aws.amazon.com/blogs/aws/amazon-s3-performance-tips-tricks-seattle-hiring-event/
         # http://docs.aws.amazon.com/AmazonS3/latest/dev/request-rate-perf-considerations.html
-        name = f._basename + '-' + f.id
+        name = f.id + '-' + f._basename
         key_name = self._KEY_FORMAT.format(name=name,
                                            prefix=f.id[0],
                                            **f.metadata)
