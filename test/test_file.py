@@ -40,3 +40,7 @@ def random_files(tmpdir):
 def test_file_hash_different(random_files):
     files = random_files(2)
     assert files[0].hash != files[1].hash
+
+def test_non_existent_file():
+    with pytest.raises(IOError):
+        File('surelythisfiledoesnotexist.txt', random_metadata())
