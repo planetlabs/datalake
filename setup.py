@@ -42,6 +42,7 @@ setup(name='datalake',
           'memoized_property>=1.0.2',
           'simplejson>=3.7',
           'pyblake2>=0.9.3',
+          'click>=4.1',
       ],
       extras_require={
           'test': [
@@ -52,5 +53,8 @@ setup(name='datalake',
               'wheel==0.24.0',
           ]
       },
-      scripts=['bin/datalake'],
+      entry_points="""
+      [console_scripts]
+      datalake=datalake.scripts.cli:cli
+      """
      )
