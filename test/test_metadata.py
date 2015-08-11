@@ -39,3 +39,8 @@ class TestMetadataValidation(TestCase):
         m = Metadata(self.metadata)
         assert 'id' in m
         assert m['id'] is not None
+
+    def test_none_for_required_field(self):
+        self.metadata['where'] = None
+        with self.assertRaises(InvalidDatalakeMetadata):
+            Metadata(self.metadata)
