@@ -8,17 +8,18 @@ class TestMetadataValidation(TestCase):
 
     def setUp(self):
         self.metadata = {
-            'version': '0',
+            'version': 0,
             'start': 1426809600000,
             'end': 1426895999999,
             'where': 'nebraska',
             'what': 'apache',
         }
 
-    def test_missing_version(self):
+    def test_version_default(self):
         del(self.metadata['version'])
-        with self.assertRaises(InvalidDatalakeMetadata):
-            Metadata(self.metadata)
+        m = Metadata(self.metadata)
+        assert 'version' in m
+        assert m['version'] == 0
 
     def test_unsupported_version(self):
         self.metadata['version'] = '100'

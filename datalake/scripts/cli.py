@@ -38,7 +38,6 @@ def _prepare_archive_or_fail(ctx, storage_url):
 @click.argument('file')
 def push(**kwargs):
     filename = kwargs.pop('file')
-    kwargs['version'] = '0'
     f = File(filename, kwargs)
     url = archive.push(f)
     click.echo('Pushed {} to {}'.format(filename, url))
