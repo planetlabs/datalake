@@ -17,7 +17,7 @@ def random_interval():
 def random_metadata():
     start, end = random_interval()
     return {
-        'version': '0',
+        'version': 0,
         'start': start,
         'end': end,
         'where': random_word(10),
