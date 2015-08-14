@@ -15,7 +15,7 @@ class TestArchiveS3Tests(TestCase):
         self.mock.start()
 
         self.metadata = {
-            'version': '0',
+            'version': 0,
             'start': '2015-03-20T00:00:00Z',
             'end': '2015-03-20T23:59:59.999Z',
             'where': 'nebraska',
