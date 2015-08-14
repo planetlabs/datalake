@@ -30,13 +30,13 @@ class Metadata(dict):
     def _validate_required_fields(self):
         for f in self._REQUIRED_METADATA_FIELDS:
             if f not in self:
-                msg = '%s is a require field'.format(f)
+                msg = '"{}" is a require field'.format(f)
                 raise InvalidDatalakeMetadata(msg)
 
     def _validate_version(self):
         v = self['version']
         if v != '0':
-            msg = 'Found version %s. Only "0" is supported'.format(v)
+            msg = 'Found version {}. Only "0" is supported'.format(v)
             raise UnsupportedDatalakeMetadataVersion(msg)
 
     def _normalize_dates(self):
@@ -49,5 +49,5 @@ class Metadata(dict):
         try:
             return dateparse(date)
         except ValueError:
-            msg = 'could not parse a date from %s'.format(date)
+            msg = 'could not parse a date from {}'.format(date)
             raise InvalidDatalakeMetadata(msg)
