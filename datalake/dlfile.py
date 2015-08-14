@@ -27,7 +27,7 @@ class File(object):
 
     def _calculate_hash(self):
         # this takes just under 2s on my laptop for a 1GB file.
-        b2 = blake2b()
+        b2 = blake2b(digest_size=20)
         with open(self._path, 'rb') as f:
             while True:
                 data = f.read(self._HASH_BUF_SIZE)
