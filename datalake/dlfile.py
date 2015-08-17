@@ -5,20 +5,14 @@ from pyblake2 import blake2b
 
 
 class File(object):
-    '''A File to be manipulated by the Archive
+    '''A File to be manipulated by the Archive'''
 
-    A File is a file and its associated metadata. To create a new File, you
-    must provide the path to the file and the required Metadata.
-    '''
-    def __init__(self, path, metadata):
-        if type(metadata) is not Metadata:
-            metadata = Metadata(metadata)
-        self.metadata = metadata
+    def __init__(self, path):
         self._fd = open(path, 'r')
         self._path = os.path.abspath(path)
         self._basename = os.path.basename(path)
         self._initialize_methods_from_fd()
-        self.metadata['hash'] = self.hash
+        self.metadata = None
 
     def _initialize_methods_from_fd(self):
         for m in ['read', 'readlines', 'seek', 'tell', 'close']:

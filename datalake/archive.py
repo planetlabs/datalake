@@ -2,6 +2,7 @@ from conf import get_config
 import urlparse
 from memoized_property import memoized_property
 import simplejson as json
+from datalake import File, Metadata
 
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
@@ -27,15 +28,26 @@ class Archive(object):
     def _parsed_storage_url(self):
         return urlparse.urlparse(self.storage_url)
 
-    def push(self, f):
-        '''push a file f to the archive
+    def push(self, path, **metadata):
+        '''push a file f to the archive with the specified metadata
 
         returns the url to which the file was pushed.
         '''
+        f = self._prepare_file(path, metadata)
+        self._upload_file(f)
+        return self._get_s3_url(f)
+
+    def _prepare_file(self, path, metadata):
+        f = File(path)
+        metadata['hash'] = f.hash
+        m = Metadata(metadata)
+        f.metadata = m
+        return f
+
+    def _upload_file(self, f):
         key = self._s3_key_from_metadata(f)
         key.set_metadata('datalake', json.dumps(f.metadata))
         key.set_contents_from_string(f.read())
-        return self._get_s3_url(f)
 
     _URL_FORMAT = 's3://{bucket}/{key}'
 

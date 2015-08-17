@@ -34,9 +34,8 @@ class TestArchiveS3Tests(TestCase):
         with NamedTemporaryFile() as tf:
             tf.write(content)
             tf.flush()
-            f = File(tf.name, metadata)
-            url = self.datalake.push(f)
-            return url, f
+            url = self.datalake.push(tf.name, **metadata)
+            return url
 
     def get_s3_key(self, url):
         url = urlparse(url)
@@ -46,9 +45,11 @@ class TestArchiveS3Tests(TestCase):
 
     def test_push_file(self):
         expected_content = 'mwahaha'
-        url, f = self.create_archived_file(expected_content, self.metadata)
+        url = self.create_archived_file(expected_content, self.metadata)
         from_s3 = self.get_s3_key(url)
         self.assertEqual(from_s3.get_contents_as_string(), expected_content)
         metadata = from_s3.get_metadata('datalake')
         self.assertIsNotNone(metadata)
-        self.assertDictEqual(json.loads(metadata), f.metadata)
+        metadata = json.loads(metadata)
+        common_keys = set(metadata.keys()).intersection(self.metadata.keys())
+        assert common_keys == set(self.metadata.keys())
