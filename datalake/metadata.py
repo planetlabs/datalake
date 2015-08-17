@@ -2,6 +2,7 @@ from copy import deepcopy
 from dateutil.parser import parse as dateparse
 from datetime import datetime
 from pytz import utc
+from uuid import uuid4
 
 
 class InvalidDatalakeMetadata(Exception):
@@ -21,8 +22,12 @@ class Metadata(dict):
         args = deepcopy(args)
         kwargs = deepcopy(kwargs)
         super(Metadata, self).__init__(*args, **kwargs)
+        self._add_id()
         self._validate()
         self._normalize_dates()
+
+    def _add_id(self):
+        self['id'] = uuid4().hex
 
     def _validate(self):
         self._validate_required_fields()

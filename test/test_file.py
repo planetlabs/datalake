@@ -37,6 +37,6 @@ def random_files(tmpdir):
         return [random_file(tmpdir) for _ in range(n)]
     return get_randfiles
 
-def test_file_id_probably_unique(random_files):
+def test_file_hash_different(random_files):
     files = random_files(2)
-    assert files[0].id != files[1].id
+    assert files[0].hash != files[1].hash
