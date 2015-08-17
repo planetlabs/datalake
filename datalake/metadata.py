@@ -40,7 +40,8 @@ class Metadata(dict):
         self._validate_required_fields()
         self._validate_version()
 
-    _REQUIRED_METADATA_FIELDS = ['version', 'start', 'end', 'where', 'what']
+    _REQUIRED_METADATA_FIELDS = ['version', 'start', 'end', 'where', 'what',
+                                 'id', 'hash']
 
     def _validate_required_fields(self):
         for f in self._REQUIRED_METADATA_FIELDS:
