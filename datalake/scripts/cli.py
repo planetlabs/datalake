@@ -1,5 +1,5 @@
 import click
-from datalake import File, Archive
+from datalake import Archive
 
 
 archive = None
@@ -38,6 +38,5 @@ def _prepare_archive_or_fail(ctx, storage_url):
 @click.argument('file')
 def push(**kwargs):
     filename = kwargs.pop('file')
-    f = File(filename, kwargs)
-    url = archive.push(f)
+    url = archive.push(filename, **kwargs)
     click.echo('Pushed {} to {}'.format(filename, url))
