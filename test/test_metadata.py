@@ -34,3 +34,8 @@ class TestMetadataValidation(TestCase):
         self.metadata['end'] = 'bxfl230'
         with self.assertRaises(InvalidDatalakeMetadata):
             Metadata(self.metadata)
+
+    def test_id_gets_assigned(self):
+        m = Metadata(self.metadata)
+        assert 'id' in m
+        assert m['id'] is not None

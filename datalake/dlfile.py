@@ -18,6 +18,7 @@ class File(object):
         self._path = os.path.abspath(path)
         self._basename = os.path.basename(path)
         self._initialize_methods_from_fd()
+        self.metadata['hash'] = self.hash
 
     def _initialize_methods_from_fd(self):
         for m in ['read', 'readlines', 'seek', 'tell', 'close']:
@@ -27,7 +28,7 @@ class File(object):
 
     def _calculate_hash(self):
         # this takes just under 2s on my laptop for a 1GB file.
-        b2 = blake2b(digest_size=20)
+        b2 = blake2b(digest_size=16)
         with open(self._path, 'rb') as f:
             while True:
                 data = f.read(self._HASH_BUF_SIZE)
@@ -37,6 +38,6 @@ class File(object):
         return b2.hexdigest()
 
     @memoized_property
-    def id(self):
-        '''a unique id for this file'''
+    def hash(self):
+        '''16-byte blake2b hash over the content of this file'''
         return self._calculate_hash()

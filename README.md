@@ -76,10 +76,8 @@ with each file. In JSON, the metadata looks something like this:
             "where": "webserver02",
             "what": "syslog",
             "data-version": "0",
-            "tags": {
-                "app": "MemeGenerator",
-                "magic": 123
-            }
+            "id": "6309e115c2914d0f8622973422626954",
+            "hash": "a3e75ee4f45f676422e038f2c116d000"
         }
 
 version: This is the metadata version. It should be "0".
@@ -101,7 +99,10 @@ user. If the format of the contents of the file changes, this version should
 change so that consumers of the data can know to use a different parser. It is
 required.
 
-tags: Arbitrary extra tags specified when the file was archived.
+id: An ID for the file assigned by the datalake. It is required.
+
+hash: A 16-byte blake2 hash of the file content. This is calcluated and
+assigned by the datalake. It is required.
 
 Developer Setup
 ===============
