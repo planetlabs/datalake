@@ -13,6 +13,7 @@ class TestMetadataValidation(TestCase):
             'end': 1426895999999,
             'where': 'nebraska',
             'what': 'apache',
+            'hash': '12345'
         }
 
     def test_version_default(self):
