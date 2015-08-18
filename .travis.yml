@@ -1,8 +1,12 @@
 language: python
+
 python:
-- '2.7'
-- '3.3'
-- pypy
+  - '2.7'
+  - pypy
+
+install:
+  - pip install -e .[test]
+
 deploy:
   provider: pypi
   user: planet
