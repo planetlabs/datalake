@@ -57,8 +57,9 @@ not prepared to wait this long should make smaller requests.
 To enable these queries, we have two hash-and-range indexes. They have the
 following HASH-KEY:RANGE-KEY format:
 
-TIME_BUCKET-WHAT:WHERE-ID
-WORK_ID-WHAT:WHERE-ID
+        TIME_BUCKET-WHAT:WHERE-ID
+
+        WORK_ID-WHAT:WHERE-ID
 
 The first index is to support query types 1 and 2. By using TIME_BUCKET-WHAT as
 the hash key we prevent "hot" hash keys by distributing writes and queries
