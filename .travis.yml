@@ -5,7 +5,6 @@ python:
   - pypy
 
 before_install:
-  - pwd
   - ./scripts/init.sh
 
 install:
