@@ -9,13 +9,13 @@ Architecture Notes
 
 The backend looks something like this:
 
-                                  +----------+     +---------+
-   +-------+    +------------+    |          |---->| storage |
--->| queue |--->| translator |--->| ingester |     +---------+
-   +-------+    +------------+    |          |--+
-                                  +----------+  |  +----------+
-                                                +->| reporter |
-                                                   +----------+
+                                          +----------+     +---------+
+           +-------+    +------------+    |          |---->| storage |
+        -->| queue |--->| translator |--->| ingester |     +---------+
+           +-------+    +------------+    |          |--+
+                                          +----------+  |  +----------+
+                                                        +->| reporter |
+                                                           +----------+
 
 
 A queue receives notice that a new file has been uploaded to the datalake. A
