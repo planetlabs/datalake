@@ -55,19 +55,19 @@ data?  Well, we examine a bunch of buckets and it takes a while. Users that are
 not prepared to wait this long should make smaller requests.
 
 To enable these queries, we have two hash-and-range indexes. They have the
-following <HASH-KEY>:<RANGE-KEY> format:
+following HASH-KEY:RANGE-KEY format:
 
-<TIME_BUCKET>-<WHAT>:<WHERE>-<ID>
-<WORK_ID>-<WHAT>:<WHERE>-<ID>
+TIME_BUCKET-WHAT:WHERE-ID
+WORK_ID-WHAT:WHERE-ID
 
-The first index is to support query types 1 and 2. By using
-<TIME_BUCKET>-<WHAT> as the hash key we prevent "hot" hash keys by distributing
-writes and queries across WHATs. So while all the records for a day will be
-written to the same TIME_BUCKET, and while users are much more likely to query
-recent things from the last few TIME_BUCKETs, we spread the load across a
-diversity of WHATs. The <WHERE>-<ID> range key can be used to retrieve a subset
-of WHEREs if necessary. Finally, we append the file <ID> to ensure that the key
-is unique as required by DynamoDB.
+The first index is to support query types 1 and 2. By using TIME_BUCKET-WHAT as
+the hash key we prevent "hot" hash keys by distributing writes and queries
+across WHATs. So while all the records for a day will be written to the same
+TIME_BUCKET, and while users are much more likely to query recent things from
+the last few TIME_BUCKETs, we spread the load across a diversity of WHATs. The
+WHERE-ID range key can be used to retrieve a subset of WHEREs if
+necessary. Finally, we append the file ID to ensure that the key is unique as
+required by DynamoDB.
 
 The second index supports query types 3 and 4 and follows a pattern similar to
 the first. However, it should be noted that the WORK_ID is optional metadata,
@@ -82,14 +82,14 @@ The datalake client specifies metadata that is recorded when a file is pushed
 to the datalake. We need to store some administrative fields to get our queries
 to work with dynamodb. These records have the following format:
 
-{
-    "version": 0,
-    "url": "s3://datalake/d-nebraska/nginx/1437375600000/91dd2525a5924c6c972e3d67fee8cda9-nginx-523.txt",
-    "time_index_key": "16636-nginx",
-    "work_id_index_key": "nullc177bfc032c548ba9e056c8e8672dba8-nginx",
-	"range_key": "nebraska-91dd2525a5924c6c972e3d67fee8cda9",
-    "metadata": { ... },
-}
+        {
+            "version": 0,
+            "url": "s3://datalake/d-nebraska/nginx/1437375600000/91dd2525a5924c6c972e3d67fee8cda9-nginx-523.txt",
+            "time_index_key": "16636-nginx",
+            "work_id_index_key": "nullc177bfc032c548ba9e056c8e8672dba8-nginx",
+            "range_key": "nebraska-91dd2525a5924c6c972e3d67fee8cda9",
+            "metadata": { ... },
+        }
 
 version: the version of the datalake record format. What we describe here is
 version 0.
