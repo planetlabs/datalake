@@ -7,6 +7,9 @@ python:
 install:
   - pip install -e .[test]
 
+script: 
+  - py.test
+
 deploy:
   provider: pypi
   user: planet
