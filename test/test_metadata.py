@@ -9,8 +9,8 @@ class TestMetadataValidation(TestCase):
     def setUp(self):
         self.metadata = {
             'version': '0',
-            'start': '2015-03-20T00:00:00Z',
-            'end': '2015-03-20T23:59:59.999Z',
+            'start': 1426809600000,
+            'end': 1426895999999,
             'where': 'nebraska',
             'what': 'apache',
         }
@@ -28,9 +28,14 @@ class TestMetadataValidation(TestCase):
     def test_normalize_date(self):
         self.metadata['start'] = '2015-03-20'
         m = Metadata(self.metadata)
-        self.assertEqual(m['start'], '2015-03-20T00:00:00Z')
+        self.assertEqual(m['start'], 1426809600000)
 
     def test_invalid_date(self):
         self.metadata['end'] = 'bxfl230'
         with self.assertRaises(InvalidDatalakeMetadata):
             Metadata(self.metadata)
+
+    def test_id_gets_assigned(self):
+        m = Metadata(self.metadata)
+        assert 'id' in m
+        assert m['id'] is not None

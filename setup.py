@@ -41,6 +41,7 @@ setup(name='datalake',
           'boto>=2.38.0',
           'memoized_property>=1.0.2',
           'simplejson>=3.7',
+          'pyblake2>=0.9.3',
       ],
       extras_require={
           'test': [

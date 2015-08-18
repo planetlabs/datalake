@@ -39,14 +39,14 @@ you can do with the other. Here's how it works:
 
 Push a log file:
 
-        datalake push --start 2015-03-20T00:05.345Z
+        datalake push --start 2015-03-20T00:05:32.345Z
             --end 2015-03-20T23:59.114Z \
             --where webserver01 --what nginx /path/to/nginx.log \
             --data-version 0
 
 Push a log file, specifying some extra detail:
 
-        datalake push --start 2015-03-20T00:00:05.345Z \
+        datalake push --start 2015-03-20T00:00:05:32.345Z \
             --end 2015-03-20T23:59:59.114Z \
             --what syslog --where webserver01 --data-version 0 \
             --tags app=MemeGenerator,magic=123 /path/to/my.log
@@ -71,25 +71,24 @@ with each file. In JSON, the metadata looks something like this:
 
         {
             "version": "0",
-            "start": "2015-03-20T00:05:00.345Z",
-            "end": "2015-03-20T23:59:59.114Z",
+            "start": 1426809920345,
+            "end": 1426895999114,
             "where": "webserver02",
             "what": "syslog",
             "data-version": "0",
-            "tags": {
-                "app": "MemeGenerator",
-                "magic": 123
-            }
+            "id": "6309e115c2914d0f8622973422626954",
+            "hash": "a3e75ee4f45f676422e038f2c116d000"
         }
 
 version: This is the metadata version. It should be "0".
 
-start: This is the time of the first event in the file. Alternatively, if the
-file is associated with an instant, this is the only relevant time. It is
-required.
+start: This is the time of the first event in the file in milliseconds since
+the epoch. Alternatively, if the file is associated with an instant, this is
+the only relevant time. It is required.
 
-end: This is the time of the last event in the file. If it is not present, the
-file represents a snapshot of something like a weekly report.
+end: This is the time of the last event in the file in milliseconds since the
+epoch. If it is not present, the file represents a snapshot of something like a
+weekly report.
 
 where: This is the location or server that generated the file. It is required.
 
@@ -100,7 +99,10 @@ user. If the format of the contents of the file changes, this version should
 change so that consumers of the data can know to use a different parser. It is
 required.
 
-tags: Arbitrary extra tags specified when the file was archived.
+id: An ID for the file assigned by the datalake. It is required.
+
+hash: A 16-byte blake2 hash of the file content. This is calcluated and
+assigned by the datalake. It is required.
 
 Developer Setup
 ===============
