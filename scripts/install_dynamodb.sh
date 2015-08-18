@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -e
+set -x
 
 DYNAMODB_HOME=~/opt/dynamodb
 DYNAMODB_FILE=dynamodb_local_latest.tar.gz

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-exit 1
 set -e
 set -x
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -e
+set -x
 
 [ ! -z $(which java) ] && exit 0
 
