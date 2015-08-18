@@ -1,6 +1,8 @@
 Introduction
 ============
 
+[![Build Status](https://travis-ci.org/planetlabs/datalake-backend.svg)](https://travis-ci.org/planetlabs/datalake-backend)
+
 The datalake-backend ingests datalake metadata records into a database so that
 they may be queried by the datalake client.
 
