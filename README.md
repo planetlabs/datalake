@@ -110,3 +110,6 @@ Developer Setup
         mkvirtualenv datalake # Or however you like to manage virtualenvs
         pip install -e .[test]
         py.test
+
+Please note that you must periodically re-run the pip install to ensure that
+the command-line client is installed properly or some tests may not pass.
