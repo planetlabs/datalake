@@ -16,6 +16,8 @@ _EPOCH = datetime.fromtimestamp(0, utc)
 
 class Metadata(dict):
 
+    _VERSION = 0
+
     def __init__(self, *args, **kwargs):
         # we want to own all of our bits so we can normalize them without
         # altering the caller's data unexpectedly. So deepcopy.
@@ -23,28 +25,35 @@ class Metadata(dict):
         kwargs = deepcopy(kwargs)
         super(Metadata, self).__init__(*args, **kwargs)
         self._add_id()
+        self._ensure_version()
         self._validate()
         self._normalize_dates()
 
     def _add_id(self):
         self['id'] = uuid4().hex
 
+    def _ensure_version(self):
+        if 'version' not in self:
+            self['version'] = self._VERSION
+
     def _validate(self):
         self._validate_required_fields()
         self._validate_version()
 
-    _REQUIRED_METADATA_FIELDS = ['version', 'start', 'end', 'where', 'what']
+    _REQUIRED_METADATA_FIELDS = ['version', 'start', 'end', 'where', 'what',
+                                 'id', 'hash']
 
     def _validate_required_fields(self):
         for f in self._REQUIRED_METADATA_FIELDS:
-            if f not in self:
+            if f not in self or self[f] is None:
                 msg = '"{}" is a require field'.format(f)
                 raise InvalidDatalakeMetadata(msg)
 
     def _validate_version(self):
         v = self['version']
-        if v != '0':
-            msg = 'Found version {}. Only "0" is supported'.format(v)
+        if v != self._VERSION:
+            msg = ('Found version {}. '
+                   'Only {} is supported').format(v, self._VERSION)
             raise UnsupportedDatalakeMetadataVersion(msg)
 
     def _normalize_dates(self):
