@@ -15,7 +15,7 @@ def get_version_from_pyver():
             raise ImportError('You must install pyver to create a package')
         else:
             return 'noversion'
-    version, version_info = pyver.get_version(pkg="datalake", public=True)
+    version, version_info = pyver.get_version(pkg="datalake_backend", public=True)
     return version
 
 def get_version():
