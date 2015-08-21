@@ -57,18 +57,18 @@ data?  Well, we examine a bunch of buckets and it takes a while. Users that are
 not prepared to wait this long should make smaller requests.
 
 To enable these queries, we have two hash-and-range indexes. They have the
-following HASH-KEY:RANGE-KEY format:
+following HASHKEY RANGEKEY format:
 
-        TIME_BUCKET-WHAT:WHERE-ID
+        TIME_BUCKET:WHAT WHERE:ID
 
-        WORK_ID-WHAT:WHERE-ID
+        WORK_ID:WHAT WHERE:ID
 
-The first index is to support query types 1 and 2. By using TIME_BUCKET-WHAT as
+The first index is to support query types 1 and 2. By using TIME_BUCKET:WHAT as
 the hash key we prevent "hot" hash keys by distributing writes and queries
 across WHATs. So while all the records for a day will be written to the same
 TIME_BUCKET, and while users are much more likely to query recent things from
 the last few TIME_BUCKETs, we spread the load across a diversity of WHATs. The
-WHERE-ID range key can be used to retrieve a subset of WHEREs if
+WHERE:ID range key can be used to retrieve a subset of WHEREs if
 necessary. Finally, we append the file ID to ensure that the key is unique as
 required by DynamoDB.
 
