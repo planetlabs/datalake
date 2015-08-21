@@ -1,5 +1,6 @@
 import click
 from datalake import Archive
+from datalake.conf import datalake_click_option
 
 
 archive = None
@@ -8,7 +9,7 @@ archive = None
 @click.group(invoke_without_command=True)
 @click.version_option()
 @click.pass_context
-@click.option('--storage-url')
+@datalake_click_option('storage_url')
 def cli(ctx, **kwargs):
     _subcommand_or_fail(ctx)
     _prepare_archive_or_fail(ctx, kwargs.pop('storage_url'))
@@ -21,8 +22,6 @@ def _subcommand_or_fail(ctx):
 
 def _prepare_archive_or_fail(ctx, storage_url):
     global archive
-    if storage_url is None:
-        ctx.fail('You must specify --storage-url')
     archive = Archive(storage_url=storage_url)
 
 
