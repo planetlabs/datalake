@@ -45,7 +45,7 @@ class Metadata(dict):
 
     def _validate_required_fields(self):
         for f in self._REQUIRED_METADATA_FIELDS:
-            if f not in self or self[f] is None:
+            if self.get(f) is None:
                 msg = '"{}" is a require field'.format(f)
                 raise InvalidDatalakeMetadata(msg)
 
