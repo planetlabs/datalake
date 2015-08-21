@@ -34,6 +34,8 @@ setup(name='datalake_backend',
       install_requires=[
           'pyver>=1.0.18',
           'boto>=2.38.0',
+          'configargparse>=0.9.3',
+          'memoized_property>=1.0.2',
       ],
       extras_require={
           'test': [
