@@ -1,55 +1,55 @@
-from unittest import TestCase
+import pytest
 from tempfile import NamedTemporaryFile
 import boto
 from moto import mock_s3
 from urlparse import urlparse
 import simplejson as json
+from . import random_metadata, tmpfile
 
 from datalake import File, Archive
 
+@pytest.fixture
+def s3_conn(request):
+    mock = mock_s3()
+    mock.start()
+    conn = boto.connect_s3()
 
-class TestArchiveS3Tests(TestCase):
+    def tear_down():
+        mock.stop()
+    request.addfinalizer(tear_down)
 
-    def setUp(self):
-        self.mock = mock_s3()
-        self.mock.start()
+    return conn
 
-        self.metadata = {
-            'version': 0,
-            'start': '2015-03-20T00:00:00Z',
-            'end': '2015-03-20T23:59:59.999Z',
-            'where': 'nebraska',
-            'what': 'apache',
-        }
-        self.bucket_name = 'datalake-test'
-        self.bucket_url = 's3://' + self.bucket_name + '/'
-        self.datalake = Archive(self.bucket_url)
-        self.conn = boto.connect_s3()
-        self.conn.create_bucket(self.bucket_name)
+BUCKET_NAME = 'datalake-test'
 
-    def tearDown(self):
-        self.mock.stop()
+@pytest.fixture
+def s3_bucket(s3_conn):
+    return s3_conn.create_bucket(BUCKET_NAME)
 
-    def create_archived_file(self, content, metadata):
-        with NamedTemporaryFile() as tf:
-            tf.write(content)
-            tf.flush()
-            url = self.datalake.push(tf.name, **metadata)
-            return url
+@pytest.fixture
+def archive(s3_bucket):
+    bucket_url = 's3://' + s3_bucket.name + '/'
+    return Archive(bucket_url)
 
-    def get_s3_key(self, url):
+@pytest.fixture
+def s3_key(s3_conn):
+
+    def get_s3_key(url):
         url = urlparse(url)
-        self.assertEqual(url.scheme, 's3')
-        bucket = self.conn.get_bucket(url.netloc)
+        assert url.scheme == 's3'
+        bucket = s3_conn.get_bucket(url.netloc)
         return bucket.get_key(url.path)
 
-    def test_push_file(self):
-        expected_content = 'mwahaha'
-        url = self.create_archived_file(expected_content, self.metadata)
-        from_s3 = self.get_s3_key(url)
-        self.assertEqual(from_s3.get_contents_as_string(), expected_content)
-        metadata = from_s3.get_metadata('datalake')
-        self.assertIsNotNone(metadata)
-        metadata = json.loads(metadata)
-        common_keys = set(metadata.keys()).intersection(self.metadata.keys())
-        assert common_keys == set(self.metadata.keys())
+    return get_s3_key
+
+def test_push_file(archive, random_metadata, tmpfile, s3_key):
+    expected_content = 'mwahaha'
+    f = tmpfile(expected_content)
+    url = archive.push(f, **random_metadata)
+    from_s3 = s3_key(url)
+    assert from_s3.get_contents_as_string() == expected_content
+    metadata = from_s3.get_metadata('datalake')
+    assert metadata is not None
+    metadata = json.loads(metadata)
+    common_keys = set(metadata.keys()).intersection(random_metadata.keys())
+    assert common_keys == set(random_metadata.keys())

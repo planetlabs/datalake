@@ -1,4 +1,7 @@
 from configargparse import ArgParser
+from copy import deepcopy
+import click
+
 
 '''datalake configuration
 
@@ -7,39 +10,69 @@ one place where configuration variables should be declared and
 described. Configuration can conveniently come from environment variables or
 config files.
 '''
+
+config_schema = {
+    'storage_url': {
+        'args': ['-u', '--storage-url'],
+        'kwargs': dict(
+            help=('The URL to the top-level storage resource where '
+                  'datalake will archive all the files.'),
+            env_var='DL_STORAGE_URL'
+        )
+    },
+    'aws_key': {
+        'args': ['-k', '--aws-key'],
+        'kwargs': dict(
+            help='The AWS access key used to read and write s3.',
+            env_var='AWS_ACCESS_KEY_ID'
+        )
+    },
+    'aws_secret': {
+        'args': ['-s', '--aws-secret'],
+        'kwargs': dict(
+            help=('The AWS secret key used to read and write s3.'),
+            env_var='AWS_SECRET_ACCESS_KEY'
+        )
+    },
+    'aws_region': {
+        'args': ['-r', '--aws-region'],
+        'kwargs': dict(
+            help=('The AWS region where files should be stored.'),
+            env_var='AWS_REGION'
+        )
+    },
+}
+
+
+def get_click_option_args(option_name):
+    option = deepcopy(config_schema[option_name])
+    option['kwargs']['envvar'] = option['kwargs'].pop('env_var', None)
+    return option
+
+
+class datalake_click_option(object):
+    '''just like @click.option, except read our custom option schema
+
+    This simply allows interoperation with configargparse so we can get command
+    line, ENV_VAR, and config file support all in one place.
+    '''
+    def __init__(self, name):
+        self.name = name
+
+    def __call__(self, f):
+        option = get_click_option_args(self.name)
+        @click.option(*option['args'], **option['kwargs'])
+        def wrapped_f(*args, **kwargs):
+            f(*args, **kwargs)
+        return wrapped_f
+
+
 config_parser = ArgParser(default_config_files=['/etc/datalake.conf'])
 
-DEFAULT_STORAGE_URL = 's3://datalake-test'
-config_parser.add('-u', '--storage-url',
-                  help=('The URL to the top-level storage resource where '
-                        'datalake will archive all the files.'),
-                  env_var='STORAGE_URL',
-                  default=DEFAULT_STORAGE_URL)
-
-config_parser.add('-k', '--aws-key',
-                  help=('The AWS access key used to read and write s3.'),
-                  env_var='AWS_ACCESS_KEY_ID')
-
-config_parser.add('-s', '--aws-secret',
-                  help=('The AWS secret key used to read and write s3.'),
-                  env_var='AWS_SECRET_ACCESS_KEY')
-
-config_parser.add('-r', '--aws-region',
-                  help=('The AWS region where files should be stored.'),
-                  env_var='AWS_REGION')
+for v in config_schema.values():
+    config_parser.add(*v['args'], **v['kwargs'])
 
 _config = config_parser.parse_args(args=[])
-
-def set_config(c):
-    '''set the configuration
-
-    This is generally only something that a command-line utility might do if it
-    wants to parse command line arugments using the
-    config_parser. Configuration variables are read at runtime. So the
-    configuration should be set before any objects are created.
-    '''
-    global _config
-    _config = c
 
 def get_config():
     return _config

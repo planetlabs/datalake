@@ -14,14 +14,17 @@ class UnsupportedStorageError(Exception):
 
 class Archive(object):
 
-    def __init__(self, storage_url=None, **kwargs):
+    def __init__(self, storage_url=None):
         self.storage_url = storage_url or get_config().storage_url
         self._validate_storage_url()
 
     def _validate_storage_url(self):
+        if not self.storage_url:
+            raise UnsupportedStorageError('Please specify a storage URL')
+
         if not self._parsed_storage_url.scheme == 's3':
             msg = 'Unsupported storage scheme ' + \
-                self._parsed_url.scheme
+                self._parsed_storage_url.scheme
             raise UnsupportedStorageError(msg)
 
     @property
