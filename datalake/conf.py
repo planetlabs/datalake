@@ -69,7 +69,7 @@ class datalake_click_option(object):
 
 config_parser = ArgParser(default_config_files=['/etc/datalake.conf'])
 
-for k, v in config_schema.items():
+for v in config_schema.values():
     config_parser.add(*v['args'], **v['kwargs'])
 
 _config = config_parser.parse_args(args=[])
