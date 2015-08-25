@@ -34,6 +34,7 @@ def _prepare_archive_or_fail(ctx, storage_url):
 @click.option('--where')
 @click.option('--what')
 @click.option('--data-version')
+@click.option('--work-id')
 @click.argument('file')
 def push(**kwargs):
     filename = kwargs.pop('file')
