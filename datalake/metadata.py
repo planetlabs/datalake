@@ -19,6 +19,17 @@ class Metadata(dict):
     _VERSION = 0
 
     def __init__(self, *args, **kwargs):
+        '''prepare compliant, normalized metadata from inputs
+
+        Args:
+
+            kwargs: key-value pairs for metadata fields.
+
+        Raises:
+
+            InvalidDatalakeMetadata if required fields are missing and cannot
+            be inferred.
+        '''
         # we want to own all of our bits so we can normalize them without
         # altering the caller's data unexpectedly. So deepcopy.
         args = deepcopy(args)
@@ -26,6 +37,7 @@ class Metadata(dict):
         super(Metadata, self).__init__(*args, **kwargs)
         self._add_id()
         self._ensure_version()
+        self._ensure_work_id()
         self._validate()
         self._normalize_dates()
 
@@ -35,6 +47,10 @@ class Metadata(dict):
     def _ensure_version(self):
         if 'version' not in self:
             self['version'] = self._VERSION
+
+    def _ensure_work_id(self):
+        if 'work_id' not in self:
+            self['work_id'] = None
 
     def _validate(self):
         self._validate_required_fields()

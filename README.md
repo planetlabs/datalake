@@ -44,12 +44,17 @@ Push a log file:
             --where webserver01 --what nginx /path/to/nginx.log \
             --data-version 0
 
-Push a log file, specifying some extra detail:
+Push a log file with a specific work-id:
 
         datalake push --start 2015-03-20T00:00:05:32.345Z \
-            --end 2015-03-20T23:59:59.114Z \
-            --what syslog --where webserver01 --data-version 0 \
-            --tags app=MemeGenerator,magic=123 /path/to/my.log
+            --end 2015-03-20T00:00:34.114Z \
+            --what blappo-etl --where backend01 --data-version 0 \
+            --work-id blappo-14321359
+
+The work-id is convenient for tracking processing jobs or other entities that
+may pass through many log-generating machines as they proceed through life. It
+must be unique within the datalake. So usually some kind of domain-specific
+prefix is recommended here.
 
 List the syslog and foobar files available from webserver01 since the specified
 start date.
@@ -57,11 +62,10 @@ start date.
         datalake list --where webserver01 --start 2015-03-20 --end `date -u` \
             --what syslog,foobar
 
-Fetch the nginx log files from webserver01 and webserver02 to the current
-directory:
+Fetch the blappo gather, etl, and cleanup log files with work id
+blappo-14321359:
 
-        datalake fetch --where webserver01,webserver02 --start 2015-03-20 \
-            --end `date -u` --what nginx
+        datalake fetch --what gather,etl,cleanup --work-id blappo-14321359
 
 Metadata
 ========
@@ -73,6 +77,7 @@ with each file. In JSON, the metadata looks something like this:
             "version": "0",
             "start": 1426809920345,
             "end": 1426895999114,
+            "work_id": null,
             "where": "webserver02",
             "what": "syslog",
             "data-version": "0",
@@ -90,19 +95,33 @@ end: This is the time of the last event in the file in milliseconds since the
 epoch. If it is not present, the file represents a snapshot of something like a
 weekly report.
 
-where: This is the location or server that generated the file. It is required.
+where: This is the location or server that generated the file. It is required
+and must only contain alpha-numeric characters, - and _. It should be
+concise. 'localhost' and 'vagrant' are bad names. Something like
+'whirlyweb02-prod' is good.
 
-what: This is the process or program that generated the file. It is required.
+what: This is the process or program that generated the file. It is required
+and must only contain alpha-numeric characters, - and _. It must not have
+trailing file extension (e.g., .log). The name should be concise to limit the
+chances that it conflicts with other whats in the datalake. So names like 'job'
+or 'task' are bad. Names like 'balyhoo-source-audit' or 'rawfood-ingester' are
+good.
 
-data-version: This is the data version. The format of the version is up to the
-user. If the format of the contents of the file changes, this version should
-change so that consumers of the data can know to use a different parser. It is
-required.
+data-version: This is the data version. It must only contain alpha-numeric
+characters, -, and _. But the format is otherwise up to the user. If the format
+of the contents of the file changes, this version should change so that
+consumers of the data can know to use a different parser. It is required.
 
 id: An ID for the file assigned by the datalake. It is required.
 
 hash: A 16-byte blake2 hash of the file content. This is calcluated and
 assigned by the datalake. It is required.
+
+work_id: This is an application-specific id that can be used later to retrieve
+the file. It is required but may be null. In fact the datalake utilities will
+generally default it to null if it is not set. It must not be the string
+"null". It should be prepended with a domain-specific prefix to prevent
+conflicts with other work id spaces.
 
 Developer Setup
 ===============
