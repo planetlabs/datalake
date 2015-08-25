@@ -42,6 +42,7 @@ setup(name='datalake_backend',
               'pytest==2.7.2',
               'pip==7.1.0',
               'wheel==0.24.0',
+              'moto==0.4.10',
           ]
       }
      )

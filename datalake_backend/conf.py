@@ -12,6 +12,11 @@ config_parser.add('-r', '--aws-region',
                   help=('region to use for aws services (e.g., s3, dynamodb)'),
                   env_var='DL_AWS_REGION')
 
+config_parser.add('-k', '--report-key',
+                  help=('key under which reports should be published. '
+                        'This is the ARN for SNS topics.'),
+                  env_var='DL_REPORT_KEY')
+
 config = config_parser.parse_args(args=[])
 
 def get_config():
