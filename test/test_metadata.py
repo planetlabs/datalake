@@ -35,3 +35,8 @@ def test_none_for_required_field(basic_metadata):
     basic_metadata['where'] = None
     with pytest.raises(InvalidDatalakeMetadata):
         Metadata(basic_metadata)
+
+def test_work_id_gets_assigned(basic_metadata):
+    m = Metadata(basic_metadata)
+    assert 'work_id' in m
+    assert m['work_id'] is None
