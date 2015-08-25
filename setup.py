@@ -36,6 +36,7 @@ setup(name='datalake_backend',
           'boto>=2.38.0',
           'configargparse>=0.9.3',
           'memoized_property>=1.0.2',
+          'simplejson>=3.3.1',
       ],
       extras_require={
           'test': [
