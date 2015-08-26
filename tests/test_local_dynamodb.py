@@ -3,7 +3,7 @@
 Just a basic test to validate the dev environment.
 '''
 import pytest
-from . import *
+
 
 def test_list_table(dynamodb_users_table, dynamodb_connection):
     table_list = dynamodb_connection.list_tables()

@@ -1,9 +1,12 @@
 import pytest
+from moto import mock_sns, mock_sqs
 
 from boto.dynamodb2.layer1 import DynamoDBConnection
 from boto.dynamodb2.table import Table
 from boto.exception import JSONResponseError
 from boto.dynamodb2.fields import HashKey, RangeKey
+import boto.sns
+import boto.sqs
 
 
 @pytest.fixture
@@ -55,3 +58,39 @@ def dynamodb_users_table(dynamodb_table_maker):
     schema = [HashKey('name'), RangeKey('last_name')]
     return dynamodb_table_maker('users', schema)
 
+
+@pytest.fixture
+def aws_connector(request):
+
+    def create_connection(mocker, connector):
+        mock = mocker()
+        mock.start()
+
+        def tear_down():
+            mock.stop()
+        request.addfinalizer(tear_down)
+
+        return connector()
+
+    return create_connection
+
+
+@pytest.fixture
+def sns_connection(aws_connector):
+    return aws_connector(mock_sns, boto.connect_sns)
+
+
+@pytest.fixture
+def sns_topic_arn(sns_connection):
+    topic = sns_connection.create_topic('foo')
+    return topic['CreateTopicResponse']['CreateTopicResult']['TopicArn']
+
+
+@pytest.fixture
+def sqs_connection(aws_connector):
+    return aws_connector(mock_sqs, boto.connect_sqs)
+
+
+@pytest.fixture
+def sqs_queue(sqs_connection):
+    return sqs_connection.create_queue("test-queue")

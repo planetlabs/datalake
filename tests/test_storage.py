@@ -1,5 +1,4 @@
 import pytest
-from . import *
 
 from datalake_backend import DynamoDBStorage
 
