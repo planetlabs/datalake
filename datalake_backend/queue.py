@@ -26,11 +26,17 @@ class SQSQueue(object):
     def drain(self, timeout=None):
         '''drain the queue of message, invoking the handler for each item
         '''
-        long_poll_timeout = timeout or self.LONG_POLL_TIMEOUT
+        long_poll_timeout = timeout or self._LONG_POLL_TIMEOUT
         while True:
             raw_msg = self._queue.read(wait_time_seconds=long_poll_timeout)
-            if raw_msg is None and timeout:
-                return
-            msg = json.loads(raw_msg.get_body())
-            self.handler(msg)
-            self._queue.delete_message(raw_msg)
+            if raw_msg is None:
+                if timeout:
+                    return
+                else:
+                    continue
+            self._handle_raw_message(raw_msg)
+
+    def _handle_raw_message(self, raw_msg):
+        msg = json.loads(raw_msg.get_body())
+        self.handler(msg)
+        self._queue.delete_message(raw_msg)
