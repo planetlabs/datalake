@@ -46,3 +46,8 @@ def test_id_not_overwritten(basic_metadata):
     m = Metadata(basic_metadata)
     assert 'id' in m
     assert m['id'] == '123'
+
+def test_no_end_allowed(basic_metadata):
+    del(basic_metadata['end'])
+    m = Metadata(basic_metadata)
+    assert 'end' not in m

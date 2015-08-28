@@ -57,8 +57,8 @@ class Metadata(dict):
         self._validate_required_fields()
         self._validate_version()
 
-    _REQUIRED_METADATA_FIELDS = ['version', 'start', 'end', 'where', 'what',
-                                 'id', 'hash']
+    _REQUIRED_METADATA_FIELDS = ['version', 'start', 'where', 'what', 'id',
+                                 'hash']
 
     def _validate_required_fields(self):
         for f in self._REQUIRED_METADATA_FIELDS:
@@ -75,7 +75,8 @@ class Metadata(dict):
 
     def _normalize_dates(self):
         for d in ['start', 'end']:
-            self[d] = self._normalize_date(self[d])
+            if d in self:
+                self[d] = self._normalize_date(self[d])
 
     @staticmethod
     def _normalize_date(date):
