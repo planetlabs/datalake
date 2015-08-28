@@ -1,5 +1,4 @@
 import pytest
-from . import basic_metadata
 
 from datalake import Metadata, InvalidDatalakeMetadata, \
     UnsupportedDatalakeMetadataVersion

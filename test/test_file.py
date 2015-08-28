@@ -1,5 +1,5 @@
 import pytest
-from . import random_word
+from conftest import random_word
 
 from datalake import File
 
