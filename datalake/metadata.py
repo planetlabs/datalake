@@ -3,6 +3,7 @@ from dateutil.parser import parse as dateparse
 from datetime import datetime
 from pytz import utc
 from uuid import uuid4
+import re
 
 
 class InvalidDatalakeMetadata(Exception):
@@ -35,14 +36,15 @@ class Metadata(dict):
         args = deepcopy(args)
         kwargs = deepcopy(kwargs)
         super(Metadata, self).__init__(*args, **kwargs)
-        self._add_id()
+        self._ensure_id()
         self._ensure_version()
         self._ensure_work_id()
         self._validate()
         self._normalize_dates()
 
-    def _add_id(self):
-        self['id'] = uuid4().hex
+    def _ensure_id(self):
+        if 'id' not in self:
+            self['id'] = uuid4().hex
 
     def _ensure_version(self):
         if 'version' not in self:
@@ -55,14 +57,16 @@ class Metadata(dict):
     def _validate(self):
         self._validate_required_fields()
         self._validate_version()
+        self._validate_slug_fields()
+        self._validate_work_id()
 
-    _REQUIRED_METADATA_FIELDS = ['version', 'start', 'end', 'where', 'what',
-                                 'id', 'hash']
+    _REQUIRED_METADATA_FIELDS = ['version', 'start', 'where', 'what', 'id',
+                                 'hash']
 
     def _validate_required_fields(self):
         for f in self._REQUIRED_METADATA_FIELDS:
             if self.get(f) is None:
-                msg = '"{}" is a require field'.format(f)
+                msg = '"{}" is a required field'.format(f)
                 raise InvalidDatalakeMetadata(msg)
 
     def _validate_version(self):
@@ -72,9 +76,29 @@ class Metadata(dict):
                    'Only {} is supported').format(v, self._VERSION)
             raise UnsupportedDatalakeMetadataVersion(msg)
 
+    _SLUG_FIELDS = ['where', 'what']
+
+    def _validate_slug_fields(self):
+        [self._validate_slug_field(f) for f in self._SLUG_FIELDS]
+
+    def _validate_slug_field(self, f):
+        if not re.match(r'^[a-z0-9_-]+$', self[f]):
+            msg = ('Invalid value "{}" for "{}". Only lower-case letters, '
+                   '_ and - are allowed.').format(self[f], f)
+            raise InvalidDatalakeMetadata(msg)
+
+    def _validate_work_id(self):
+        if self['work_id'] is None:
+            return
+        self._validate_slug_field('work_id')
+        if self['work_id'] == 'null':
+            msg = '"work_id" cannot be the string "null"'
+            raise InvalidDatalakeMetadata(msg)
+
     def _normalize_dates(self):
         for d in ['start', 'end']:
-            self[d] = self._normalize_date(self[d])
+            if d in self:
+                self[d] = self._normalize_date(self[d])
 
     @staticmethod
     def _normalize_date(date):

@@ -40,3 +40,45 @@ def test_work_id_gets_assigned(basic_metadata):
     m = Metadata(basic_metadata)
     assert 'work_id' in m
     assert m['work_id'] is None
+
+def test_id_not_overwritten(basic_metadata):
+    basic_metadata['id'] = '123'
+    m = Metadata(basic_metadata)
+    assert 'id' in m
+    assert m['id'] == '123'
+
+def test_no_end_allowed(basic_metadata):
+    del(basic_metadata['end'])
+    m = Metadata(basic_metadata)
+    assert 'end' not in m
+
+def test_unallowed_characters(basic_metadata):
+    basic_metadata['what'] = '123#$'
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
+
+def test_unallowed_capitals(basic_metadata):
+    basic_metadata['what'] = 'MYFILE'
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
+
+def test_unallowed_spaces(basic_metadata):
+    basic_metadata['where'] = 'SAN FRANCISCO'
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
+
+def test_unallowed_dots(basic_metadata):
+    basic_metadata['where'] = 'this.that.com'
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
+
+def test_work_id_null_string_unallowed(basic_metadata):
+    basic_metadata['work_id'] = 'null'
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
+
+def test_work_id_with_unallowed_characters(basic_metadata):
+    basic_metadata['work_id'] = 'foojob#123'
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
+
