@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools import distutils
 from pip.req import parse_requirements
 from pip.download import PipSession
@@ -32,7 +32,7 @@ setup(name='datalake',
       description='datalake: a metadata-aware archive',
       author='Brian Cavagnolo',
       author_email='brian@planet.com',
-      packages=['datalake'],
+      packages=find_packages(exclude=['test']),
       install_requires=[
           'python-dateutil>=2.4.2',
           'pytz>=2015.4',
