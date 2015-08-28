@@ -4,7 +4,6 @@ import boto
 from moto import mock_s3
 from urlparse import urlparse
 import simplejson as json
-from . import random_metadata, tmpfile
 
 from datalake import File, Archive
 
