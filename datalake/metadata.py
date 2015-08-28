@@ -35,14 +35,15 @@ class Metadata(dict):
         args = deepcopy(args)
         kwargs = deepcopy(kwargs)
         super(Metadata, self).__init__(*args, **kwargs)
-        self._add_id()
+        self._ensure_id()
         self._ensure_version()
         self._ensure_work_id()
         self._validate()
         self._normalize_dates()
 
-    def _add_id(self):
-        self['id'] = uuid4().hex
+    def _ensure_id(self):
+        if 'id' not in self:
+            self['id'] = uuid4().hex
 
     def _ensure_version(self):
         if 'version' not in self:

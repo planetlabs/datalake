@@ -40,3 +40,9 @@ def test_work_id_gets_assigned(basic_metadata):
     m = Metadata(basic_metadata)
     assert 'work_id' in m
     assert m['work_id'] is None
+
+def test_id_not_overwritten(basic_metadata):
+    basic_metadata['id'] = '123'
+    m = Metadata(basic_metadata)
+    assert 'id' in m
+    assert m['id'] == '123'
