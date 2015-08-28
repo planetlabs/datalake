@@ -96,16 +96,16 @@ epoch. If it is not present, the file represents a snapshot of something like a
 weekly report.
 
 where: This is the location or server that generated the file. It is required
-and must only contain alpha-numeric characters, - and _. It should be
+and must only contain lowercase alpha-numeric characters, - and _. It should be
 concise. 'localhost' and 'vagrant' are bad names. Something like
 'whirlyweb02-prod' is good.
 
 what: This is the process or program that generated the file. It is required
-and must only contain alpha-numeric characters, - and _. It must not have
-trailing file extension (e.g., .log). The name should be concise to limit the
-chances that it conflicts with other whats in the datalake. So names like 'job'
-or 'task' are bad. Names like 'balyhoo-source-audit' or 'rawfood-ingester' are
-good.
+and must only contain lowercase alpha-numeric characters, - and _. It must not
+have trailing file extension (e.g., .log). The name should be concise to limit
+the chances that it conflicts with other whats in the datalake. So names like
+'job' or 'task' are bad. Names like 'balyhoo-source-audit' or
+'rawfood-ingester' are good.
 
 data-version: This is the data version. It must only contain alpha-numeric
 characters, -, and _. But the format is otherwise up to the user. If the format
@@ -121,7 +121,8 @@ work_id: This is an application-specific id that can be used later to retrieve
 the file. It is required but may be null. In fact the datalake utilities will
 generally default it to null if it is not set. It must not be the string
 "null". It should be prepended with a domain-specific prefix to prevent
-conflicts with other work id spaces.
+conflicts with other work id spaces. It must only contain lowercase
+alpha-numeric characters, -, and _.
 
 Developer Setup
 ===============
