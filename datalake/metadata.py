@@ -96,9 +96,14 @@ class Metadata(dict):
             raise InvalidDatalakeMetadata(msg)
 
     def _normalize_dates(self):
-        for d in ['start', 'end']:
-            if d in self:
-                self[d] = self._normalize_date(self[d])
+        self['start'] = self._normalize_date(self['start'])
+        self._normalize_end()
+
+    def _normalize_end(self):
+        if 'end' not in self:
+            return
+        if self['end'] is not None:
+            self['end'] = self._normalize_date(self['end'])
 
     @staticmethod
     def _normalize_date(date):
