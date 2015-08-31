@@ -1,6 +1,6 @@
 import pytest
 
-from datalake import Metadata, InvalidDatalakeMetadata, \
+from datalake_common import Metadata, InvalidDatalakeMetadata, \
     UnsupportedDatalakeMetadataVersion
 
 
