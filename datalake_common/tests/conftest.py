@@ -23,10 +23,12 @@ def random_hex(length):
     return ('%0' + str(length) + 'x') % random.randrange(16**length)
 
 def random_interval():
-    now = datetime.now()
-    start = now - timedelta(days=random.randint(0, 365*3))
-    end = start + timedelta(days=random.randint(1, 10))
-    return start.isoformat(), end.isoformat()
+    year_2010 = 1262304000000
+    five_years = 5 * 365 * 24 * 60 * 60 * 1000
+    three_days = 3 * 24 * 60 * 60 * 1000
+    start = year_2010 + random.randint(0, five_years)
+    end = start + random.randint(0, three_days)
+    return start, end
 
 def random_work_id():
     if random.randint(0, 1):
