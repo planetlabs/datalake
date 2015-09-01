@@ -38,6 +38,7 @@ setup(name='datalake-common',
           'python-dateutil>=2.4.2',
           'pytz>=2015.4',
           'pyver>=1.0.18',
+          'simplejson>=3.3.1',
       ],
       extras_require={
           'test': [

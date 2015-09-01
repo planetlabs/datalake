@@ -1,4 +1,5 @@
 import pytest
+import simplejson as json
 
 from datalake_common import Metadata, InvalidDatalakeMetadata, \
     UnsupportedDatalakeMetadataVersion
@@ -81,3 +82,11 @@ def test_work_id_with_unallowed_characters(basic_metadata):
     with pytest.raises(InvalidDatalakeMetadata):
         Metadata(basic_metadata)
 
+basic_json = ('{"start": 1426809600000, "what": "apache", "version": 0, '
+              '"end": 1426895999999, "hash": "12345", "where": "nebraska", '
+              '"id": "9f8f8b618f48424c8d69a7ed76c88f05", "work_id": null}')
+
+def test_from_to_json(basic_metadata):
+    m1 = Metadata.from_json(basic_json)
+    m2 = m1.json
+    assert sorted(m2) == sorted(basic_json)

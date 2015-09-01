@@ -4,6 +4,7 @@ from datetime import datetime
 from pytz import utc
 from uuid import uuid4
 import re
+import simplejson as json
 
 
 class InvalidDatalakeMetadata(Exception):
@@ -41,6 +42,14 @@ class Metadata(dict):
         self._ensure_work_id()
         self._validate()
         self._normalize_dates()
+
+    @classmethod
+    def from_json(cls, j):
+        return cls(json.loads(j))
+
+    @property
+    def json(self):
+        return json.dumps(self)
 
     def _ensure_id(self):
         if 'id' not in self:
