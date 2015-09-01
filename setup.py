@@ -42,7 +42,6 @@ setup(name='datalake-common',
       extras_require={
           'test': [
               'pytest==2.7.2',
-              'moto==0.4.2',
               'pip==7.1.0',
               'wheel==0.24.0',
           ]
