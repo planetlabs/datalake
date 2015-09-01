@@ -25,7 +25,7 @@ def random_hex(length):
 def random_interval():
     now = datetime.now()
     start = now - timedelta(days=random.randint(0, 365*3))
-    end = start - timedelta(days=random.randint(1, 10))
+    end = start + timedelta(days=random.randint(1, 10))
     return start.isoformat(), end.isoformat()
 
 def random_work_id():

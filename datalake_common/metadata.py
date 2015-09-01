@@ -42,6 +42,7 @@ class Metadata(dict):
         self._ensure_work_id()
         self._validate()
         self._normalize_dates()
+        self._validate_interval() # must occur after normalizing
 
     @classmethod
     def from_json(cls, j):
@@ -102,6 +103,13 @@ class Metadata(dict):
         self._validate_slug_field('work_id')
         if self['work_id'] == 'null':
             msg = '"work_id" cannot be the string "null"'
+            raise InvalidDatalakeMetadata(msg)
+
+    def _validate_interval(self):
+        if self.get('end') is None:
+            return
+        if self['end'] < self['start']:
+            msg = '"end" must be greater than "start"'
             raise InvalidDatalakeMetadata(msg)
 
     def _normalize_dates(self):

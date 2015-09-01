@@ -90,3 +90,10 @@ def test_from_to_json(basic_metadata):
     m1 = Metadata.from_json(basic_json)
     m2 = m1.json
     assert sorted(m2) == sorted(basic_json)
+
+def test_end_before_start(basic_metadata):
+    end = basic_metadata['end']
+    basic_metadata['end'] = basic_metadata['start']
+    basic_metadata['start'] = end
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
