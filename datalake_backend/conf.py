@@ -22,6 +22,10 @@ config_parser.add('-s', '--s3-host',
                         's3-us-gov-west-1.amazonaws.com)'),
                   env_var='DL_S3_HOST')
 
+config_parser.add('-q', '--queue',
+                  help=('name of the ingestion queue (e.g., sqs)'),
+                  env_var='DL_QUEUE')
+
 config = config_parser.parse_args(args=[])
 
 def get_config():

@@ -5,6 +5,8 @@ from glob import glob
 
 from datalake_backend import S3ToDatalakeTranslator
 from datalake_backend.errors import InvalidS3Notification, InvalidS3Event
+from datalake_common import InvalidDatalakeMetadata
+
 
 from conftest import test_data_path
 
@@ -61,5 +63,5 @@ def test_no_metadata(s3_file_from_record):
     record = spec['expected_datalake_records'][0]
     s3_file_from_record(record['url'], None)
     t = S3ToDatalakeTranslator()
-    with pytest.raises(InvalidS3Event):
+    with pytest.raises(InvalidDatalakeMetadata):
         t.translate(spec['s3_notification'])
