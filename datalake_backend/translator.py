@@ -3,6 +3,7 @@ from boto.s3.key import Key
 from memoized_property import memoized_property
 import simplejson as json
 from datalake_common import Metadata
+from urlparse import urlparse
 
 from conf import get_config
 from errors import InvalidS3Notification, InvalidS3Event
@@ -39,32 +40,8 @@ class S3ToDatalakeTranslator(object):
     def _datalake_records_from_s3_record(self, s3_record):
         if not s3_record['eventName'].startswith('ObjectCreated'):
             raise StopIteration()
-        metadata = self._get_metadata(s3_record)
-        for dlr in DatalakeRecord.list_from_url(s3_record.url, metadata):
+        for dlr in DatalakeRecord.list_from_url(s3_record.url):
             yield dlr
-
-    def _get_metadata(self, s3_record):
-        bucket = self._get_bucket(s3_record.bucket_name)
-        key = bucket.get_key(s3_record.key_name)
-        metadata = key.get_metadata('datalake')
-        if not metadata:
-            raise InvalidS3Event('No datalake metadata for ' + s3_record.url)
-        return Metadata.from_json(metadata)
-
-    _BUCKETS = {}
-
-    def _get_bucket(self, bucket_name):
-        if bucket_name not in self._BUCKETS:
-            self._BUCKETS[bucket_name] = self._connection.get_bucket(bucket_name)
-        return self._BUCKETS[bucket_name]
-
-    @memoized_property
-    def _connection(self):
-        kwargs = {}
-        s3_host = get_config().s3_host 
-        if s3_host:
-            kwargs['host'] = s3_host
-        return boto.connect_s3(**kwargs)
 
 
 class DatalakeRecord(dict):
@@ -83,13 +60,48 @@ class DatalakeRecord(dict):
 
 
     @classmethod
-    def list_from_url(cls, url, metadata):
+    def list_from_url(cls, url):
         '''return a list of DatalakeRecords for the specified url'''
+        metadata = cls._get_metadata(url)
         time_buckets = cls.get_time_buckets(metadata)
         return [cls(url, metadata, t) for t in time_buckets]
 
-    _ONE_DAY_IN_MS = 24*60*60*1000
+    @classmethod
+    def _get_metadata(cls, url):
+        parsed_url = urlparse(url)
+        bucket = cls._get_bucket(parsed_url.netloc)
+        key = bucket.get_key(parsed_url.path)
+        metadata = key.get_metadata('datalake')
+        if not metadata:
+            raise InvalidS3Event('No datalake metadata for ' + url)
+        return Metadata.from_json(metadata)
 
+    _BUCKETS = {}
+
+    @classmethod
+    def _get_bucket(cls, bucket_name):
+        if bucket_name not in cls._BUCKETS:
+            bucket = cls._connection().get_bucket(bucket_name)
+            DatalakeRecord._BUCKETS[bucket_name] = bucket
+        return cls._BUCKETS[bucket_name]
+
+    _CONNECTION = None
+
+    @classmethod
+    def _connection(cls):
+        if cls._CONNECTION is None:
+            cls._CONNECTION = cls._prepare_connection()
+        return cls._CONNECTION
+
+    @classmethod
+    def _prepare_connection(cls):
+        kwargs = {}
+        s3_host = get_config().s3_host
+        if s3_host:
+            kwargs['host'] = s3_host
+        return boto.connect_s3(**kwargs)
+
+    _ONE_DAY_IN_MS = 24*60*60*1000
 
     @staticmethod
     def get_time_buckets(metadata):
