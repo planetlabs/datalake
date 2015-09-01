@@ -88,9 +88,9 @@ to work with dynamodb. These records have the following format:
         {
             "version": 0,
             "url": "s3://datalake/d-nebraska/nginx/1437375600000/91dd2525a5924c6c972e3d67fee8cda9-nginx-523.txt",
-            "time_index_key": "16636-nginx",
-            "work_id_index_key": "nullc177bfc032c548ba9e056c8e8672dba8-nginx",
-            "range_key": "nebraska-91dd2525a5924c6c972e3d67fee8cda9",
+            "time_index_key": "16636:nginx",
+            "work_id_index_key": "nullc177bfc032c548ba9e056c8e8672dba8:nginx",
+            "range_key": "nebraska:91dd2525a5924c6c972e3d67fee8cda9",
             "metadata": { ... },
         }
 
@@ -102,10 +102,11 @@ url: the url of the resource to which the datalake record pertains.
 time_index_key: the hash key for the index used for time-based queries. It is
 formed by joining the "time bucket" number and the "what" from the metadata.
 
-work_id_index_hash: the hash key for the index used for work_id-based
+work_id_index_key: the hash key for the index used for work_id-based
 queries. It is formed by joining the work_id and the "what" from the
 metadata. Note that if the work_id is null, a random work_id will be generated
-to prevent ingestion failures and hot hash keys.
+to prevent ingestion failures and hot hash keys. Of course in this case
+retrieving by work_id is not meaninful or possible.
 
 range_key: the range key used by the time-based and work_id-based indexes. It
 is formed by joining the "where" and the "id" from the metadata.

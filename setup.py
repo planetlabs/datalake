@@ -43,11 +43,7 @@ setup(name='datalake_backend',
               'pytest==2.7.2',
               'pip==7.1.0',
               'wheel==0.24.0',
-              # we need an unreleased feature for sqs testing
-              'moto==0.4.10dev9',
+              'moto==0.4.12',
           ]
       },
-      dependency_links=[
-          'git+https://github.com/spulec/moto.git@ebfe7bb7b8214b92f3f0e043a1e5f393cfb3a931#egg=moto-0.4.10dev9'
-      ]
      )

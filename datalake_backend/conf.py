@@ -17,6 +17,11 @@ config_parser.add('-k', '--report-key',
                         'This is the ARN for SNS topics.'),
                   env_var='DL_REPORT_KEY')
 
+config_parser.add('-s', '--s3-host',
+                  help=('s3 host to connect to (e.g., '
+                        's3-us-gov-west-1.amazonaws.com)'),
+                  env_var='DL_S3_HOST')
+
 config = config_parser.parse_args(args=[])
 
 def get_config():
