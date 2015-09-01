@@ -11,4 +11,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell",
   inline: "cd /vagrant/ && ./scripts/init.sh && pip install -e .[test]"
 
+  # mount extra directories
+  if ENV['VAGRANT_EXTRA_DIRS']
+    extra_dirs = ENV['VAGRANT_EXTRA_DIRS'].split(',')
+    for d in extra_dirs
+      mount_point = File.basename(d)
+      config.vm.synced_folder d, "/opt/" + mount_point
+    end
+  end
+
 end
