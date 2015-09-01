@@ -37,7 +37,7 @@ setup(name='datalake_backend',
           'configargparse>=0.9.3',
           'memoized_property>=1.0.2',
           'simplejson>=3.3.1',
-          'datalake-common>=0.2',
+          'datalake-common>=0.3',
       ],
       extras_require={
           'test': [

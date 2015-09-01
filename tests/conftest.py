@@ -45,16 +45,22 @@ def _delete_table_if_exists(conn, name):
 
 
 @pytest.fixture
-def dynamodb_table_maker(dynamodb_connection):
+def dynamodb_table_maker(request, dynamodb_connection):
 
     def table_maker(name, schema):
         _delete_table_if_exists(dynamodb_connection, name)
         throughput = {'read': 5, 'write': 5}
-        return Table.create(name,
-                            schema=schema,
-                            throughput=throughput,
-                            connection=dynamodb_connection)
+        table = Table.create(name,
+                             schema=schema,
+                             throughput=throughput,
+                             connection=dynamodb_connection)
+
+        def tear_down():
+            _delete_table_if_exists(dynamodb_connection, name)
+        request.addfinalizer(tear_down)
+
         return table
+
     return table_maker
 
 
@@ -62,6 +68,12 @@ def dynamodb_table_maker(dynamodb_connection):
 def dynamodb_users_table(dynamodb_table_maker):
     schema = [HashKey('name'), RangeKey('last_name')]
     return dynamodb_table_maker('users', schema)
+
+
+@pytest.fixture
+def dynamodb_records_table(dynamodb_table_maker):
+    schema = [HashKey('time_index_key'), RangeKey('range_key')]
+    return dynamodb_table_maker('records', schema)
 
 
 @pytest.fixture
