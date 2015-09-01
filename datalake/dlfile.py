@@ -1,4 +1,3 @@
-from metadata import Metadata
 import os
 from memoized_property import memoized_property
 from pyblake2 import blake2b

@@ -2,7 +2,8 @@ from conf import get_config
 import urlparse
 from memoized_property import memoized_property
 import simplejson as json
-from datalake import File, Metadata
+from datalake_common import Metadata
+from datalake import File
 
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key

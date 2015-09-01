@@ -34,8 +34,6 @@ setup(name='datalake',
       author_email='brian@planet.com',
       packages=find_packages(exclude=['test']),
       install_requires=[
-          'python-dateutil>=2.4.2',
-          'pytz>=2015.4',
           'pyver>=1.0.18',
           'ConfigArgParse>=0.9.3',
           'boto>=2.38.0',
@@ -43,6 +41,7 @@ setup(name='datalake',
           'simplejson>=3.7',
           'pyblake2>=0.9.3',
           'click>=4.1',
+          'datalake-common>=0.1',
       ],
       extras_require={
           'test': [
