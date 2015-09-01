@@ -1,20 +1,16 @@
 language: python
-
 python:
-  - '2.7'
-  - pypy
-
+- '2.7'
+- pypy
 install:
-  - pip install -e .[test]
-
-script: 
-  - py.test
-
+- pip install -e .[test]
+script:
+- py.test
 deploy:
   provider: pypi
   user: planet
   password:
-    secure: FqKVdqk4Ly6ve6oOY+glRk8AyZTao2zPPXdzlKra8NxfWxDoi4eZkZ0mwRweLP+C6gR8bMkwsz68NyluRVSNq8VhKeAOIfjVfqM+jR+Ys26dSLQ9Rnef9WeMpAC32YcEeZ1hQ4DS80F8p8DwTHOemw0fofS501sG48LGtSnfbbffsvB8E7kB3uTnkea4qaH5/G1Hi1uIia5fJX6NeI/Gi3YYJur5r/h9suS/KNxKYYA5oLhxIiYj0HOAURyCN7nxFd/RoZ3FhD0VAalwLjETudmOCO8Sg+6NOBjyY7xghYDauNxfz87SGfGO1cPSUptR5HfWaQNh/TM9RKRRI/ynGGLdBCu4tQdbDEoaplkFtIAteRBgjA0y3IM2dQ//Nf62bxkNA3dcmJoLM8aX00JOmWLOAmTZmFh7orRgVMCso+ucXOF5lbw8v6HuXCQ+bD1zh5y0J+oxLjbRGDfZre/jWZJKBZYoHSw/jF7Rn0Wbt/71jDbtkCertj7U4edE7bD++ZPSxAFUstxAvfdfux4yCYduTUUgzmQIlv5PCU5nMImo4+Jk+xZYNU6iMkWUqh/OF7cdG66QcHGcawlwB6xesprH725xaCsM/s8Ntc4QDlYNn6CkG0HQb5/Zx2ggi9QWtpzVK5hc+gyJHelgodUGEZDMUBBz2tyctz4w5HiTziA=
+    secure: CFIlyylx0ICkStCq6H6ztpbEYrA2u6HM3kPycZJCZpGgdBFJbuNyCzlZKFQVTfJuBw2d195K0YACWutRTaUSjuVvZfBMglvI2Nxs1q6dTJQeFVqEmnYJNjocR4EORO1BC/HmbuN/seOuVcWMu+nz76OKiPiYOsuYA1JbtKaE7HspxmTDaVDYqicKi7aMiwRyeIG+BkHa+ZONenk4NlKiQA0pmsGKLAmlPEmfoLW65Fp5Dz7IrjrW2YM3y8mUAlphBAw1yrMgm/2SlATDkftACpCADZkuCXN+iMyUVz9AnUfJfPF5X6sbYdQZ/r9rSoGzFrYjhxSWPZ/Z/IJ6OT/0oZywRdTL76e83B9l9ZohtrYlrv6xClceb95RTdPP9c62oEoXpu73WJsEsd3ivNIjuW+O4WxUGZuObFnJESvJg80lK914+xLHW7jg2SRHaFJiQXDpZCsw9PtnOm21+WdEzOF2itdv51aCJWcbDqzza7lW1a/57rQvDsCXubkXWu0ffEETN/snMkxGtoAugiOBdyq1lbGNzpvJGidU/pU4QOe8jmPTlEX+YkrLfsiwSm5Ru5KUBwY5enDtmsXzD+Lz3MDRyM7gugeXPIp6griTSFWOQ5hvZcwG3hZaF31nvVR8UxfH2plbefC6VEZ9G9Wvo3buDqoO/B1I7PmZ254XR3c=
   on:
     tags: true
     repo: planetlabs/datalake-common
