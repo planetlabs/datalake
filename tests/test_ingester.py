@@ -1,5 +1,6 @@
 import pytest
 from datalake_common.tests import random_metadata
+import time
 
 from conftest import all_s3_notification_specs
 
@@ -63,4 +64,67 @@ def ingestion_listener_tester(request, ingester_with_queue, spec_maker,
 
 
 def test_ingestion_listener_tests(ingestion_listener_tester):
+    pass
+
+
+
+from datalake_backend import SQSQueue, SNSReporter
+import os
+from conftest import test_data_path
+import json
+
+@pytest.fixture
+def report_listener(sqs_queue_maker, sns_connection, sns_topic_arn):
+
+    class ReportListener(object):
+
+        def __init__(self):
+            self.messages = []
+            q = sqs_queue_maker('reporter-queue')
+            self._queue = SQSQueue(q.name, self.handler)
+            sns_connection.subscribe_sqs_queue(sns_topic_arn, q)
+
+        def handler(self, msg):
+            self.messages.append(msg)
+
+        def drain(self):
+            self._queue.drain(timeout=1)
+
+    return ReportListener()
+
+
+@pytest.fixture
+def full_ingester(storage, sqs_queue, sns_topic_arn):
+    reporter = SNSReporter(sns_topic_arn)
+    return Ingester(storage, queue_name=sqs_queue.name, reporter=reporter)
+
+
+@pytest.fixture
+def report_comparator():
+
+    def sort(l):
+        return sorted(l, key=lambda k: k['url'])
+
+    def comparator(actual, expected):
+        for a, e in zip(actual, expected):
+            err = abs(time.time() - a['start']/1000.0)
+            assert err < 5.0
+            assert sort(a['records']) == sort(e['records'])
+            assert type(a['duration']) is float
+            assert a['status'] == e['status']
+
+    return comparator
+
+
+@pytest.fixture(params=all_s3_notification_specs)
+def listener_report_tester(request, full_ingester, report_listener, sqs_sender,
+                           spec_maker, report_comparator):
+    spec = spec_maker(request.param)
+    sqs_sender(spec['s3_notification'])
+    full_ingester.listen(timeout=1)
+    report_listener.drain()
+    report_comparator(report_listener.messages, spec['expected_reports'])
+
+
+def test_listener_reports(listener_report_tester):
     pass

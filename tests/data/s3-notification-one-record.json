@@ -27,5 +27,26 @@
       "end": 1430096400000,
       "hash": "12345"
 	}
+  }],
+  "expected_reports": [{
+    "version": 0,
+    "status": "success",
+	"start": 123,
+	"duration": 1.0,
+	"records": [
+	  {
+        "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+        "metadata": {
+          "version": 0,
+          "work_id": null,
+          "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+          "what": "syslog",
+          "where": "california",
+          "start": 1430092800000,
+          "end": 1430096400000,
+          "hash": "12345"
+	    }
+      }
+    ]
   }]
 }

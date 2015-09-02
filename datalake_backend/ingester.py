@@ -3,13 +3,53 @@ from record import DatalakeRecord
 from errors import InsufficientConfiguration
 from queue import SQSQueue
 from translator import S3ToDatalakeTranslator
+import time
+
+class IngesterReport(dict):
+
+    def start(self):
+        self.start = time.time()
+        self['start'] = int(self.start * 1000)
+        self.records = {}
+        return self
+
+    def add_record(self, r):
+        self.records[r['url']] = r
+
+    def end(self):
+        self['status'] = 'success'
+        self._finalize_report()
+        return self
+
+    def error(self, message):
+        self['status'] = 'error'
+        self['message'] = message
+        self._finalize_report()
+        return self
+
+    def _finalize_report(self):
+        self._set_records()
+        self._set_duration()
+
+    def _set_duration(self):
+        self['duration'] = time.time() - self.start
+
+    def _set_records(self):
+        self['records'] = [self._make_record(r) for r in self.records.values()]
+
+    def _make_record(self, r):
+        return {
+            'url': r['url'],
+            'metadata': r['metadata']
+        }
 
 
 class Ingester(object):
 
-    def __init__(self, storage, queue_name=None):
+    def __init__(self, storage, queue_name=None, reporter=None):
         self.storage = storage
         self.queue_name = queue_name
+        self.reporter = reporter
 
     def ingest(self, url):
         '''ingest the metadata associated with the given url'''
@@ -28,9 +68,17 @@ class Ingester(object):
         return S3ToDatalakeTranslator()
 
     def handler(self, msg):
+        ir = IngesterReport().start()
         records = self._translator.translate(msg)
         for r in records:
+            ir.add_record(r)
             self.storage.store(r)
+        self._report(ir.end())
+
+    def _report(self, r):
+        if self.reporter is None:
+            return
+        self.reporter.report(r)
 
     def listen(self, timeout=None):
         '''listen to the queue, ingest what you hear, and report'''
