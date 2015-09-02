@@ -110,16 +110,27 @@ def sqs_connection(aws_connector):
 
 
 @pytest.fixture
-def sqs_queue(sqs_connection):
-    return sqs_connection.create_queue("test-queue")
+def sqs_queue_maker(sqs_connection):
+
+    def maker(queue_name):
+        return sqs_connection.get_queue(queue_name) or \
+            sqs_connection.create_queue(queue_name)
+
+    return maker
 
 
 @pytest.fixture
-def sqs_sender(sqs_queue):
+def sqs_queue(sqs_queue_maker):
+    return sqs_queue_maker('test-queue')
 
-    def sender(msg):
-        msg = sqs_queue.new_message(json.dumps(msg))
-        sqs_queue.write(msg)
+
+@pytest.fixture
+def sqs_sender(sqs_queue_maker):
+
+    def sender(msg, queue_name='test-queue'):
+        q = sqs_queue_maker(queue_name)
+        msg = q.new_message(json.dumps(msg))
+        q.write(msg)
 
     return sender
 
