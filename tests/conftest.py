@@ -3,6 +3,7 @@ from moto import mock_sns, mock_sqs, mock_s3
 import os
 import simplejson as json
 from urlparse import urlparse
+from glob import glob
 
 from boto.dynamodb2.layer1 import DynamoDBConnection
 from boto.dynamodb2.table import Table
@@ -113,6 +114,16 @@ def sqs_queue(sqs_connection):
     return sqs_connection.create_queue("test-queue")
 
 
+@pytest.fixture
+def sqs_sender(sqs_queue):
+
+    def sender(msg):
+        msg = sqs_queue.new_message(json.dumps(msg))
+        sqs_queue.write(msg)
+
+    return sender
+
+
 _here = os.path.abspath(os.path.dirname(__file__))
 test_data_path = os.path.join(_here, 'data')
 
@@ -152,5 +163,21 @@ def s3_file_from_record(s3_file_maker):
         url = urlparse(url)
         assert url.scheme == 's3'
         s3_file_maker(url.netloc, url.path, '', metadata)
+
+    return maker
+
+
+_s3_notification_path = os.path.join(test_data_path, 's3-notification-*.json')
+all_s3_notification_specs = glob(_s3_notification_path)
+
+
+@pytest.fixture
+def spec_maker(s3_file_from_record):
+
+    def maker(spec_file):
+        spec = json.load(open(spec_file))
+        expected_records = spec['expected_datalake_records']
+        [s3_file_from_record(d['url'], d['metadata']) for d in expected_records]
+        return spec
 
     return maker

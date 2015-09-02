@@ -1,28 +1,21 @@
 import pytest
 import simplejson as json
 import os
-from glob import glob
 
 from datalake_backend import S3ToDatalakeTranslator
 from datalake_backend.errors import InvalidS3Notification, InvalidS3Event
 from datalake_common import InvalidDatalakeMetadata
 
 
-from conftest import test_data_path
+from conftest import test_data_path, all_s3_notification_specs
 
 
-_spec_path = os.path.join(test_data_path, 's3-notification-*.json')
-_specs = glob(_spec_path)
-
-
-@pytest.fixture(params=_specs)
-def s3_notification_tester(request, s3_file_from_record):
-    spec = json.load(open(request.param))
-    expected_records = spec['expected_datalake_records']
-    [s3_file_from_record(d['url'], d['metadata']) for d in expected_records]
+@pytest.fixture(params=all_s3_notification_specs)
+def s3_notification_tester(request, spec_maker):
+    spec = spec_maker(request.param)
     t = S3ToDatalakeTranslator()
     translated = t.translate(spec['s3_notification'])
-    assert translated == expected_records
+    assert translated == spec['expected_datalake_records']
 
 
 def test_sample_s3_notifications(s3_notification_tester):
