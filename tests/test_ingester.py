@@ -113,7 +113,7 @@ def report_comparator():
             assert sort(a['records']) == sort(e['records'])
             assert type(a['duration']) is float
             assert a['status'] == e['status']
-            if e['status']:
+            if e['status'] == 'error':
                 assert 'message' in a
     return comparator
 
