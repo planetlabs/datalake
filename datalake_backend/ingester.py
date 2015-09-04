@@ -4,6 +4,11 @@ from errors import InsufficientConfiguration
 from queue import SQSQueue
 from translator import S3ToDatalakeTranslator
 import time
+import logging
+
+
+logger = logging.getLogger('ingester')
+
 
 class IngesterReport(dict):
 
@@ -69,11 +74,21 @@ class Ingester(object):
 
     def handler(self, msg):
         ir = IngesterReport().start()
+        try:
+            self._handler(msg, ir)
+            ir.end()
+        except Exception as e:
+            logger.exception(e)
+            ir.error(e.message)
+            raise e
+        finally:
+            self._report(ir)
+
+    def _handler(self, msg, ir):
         records = self._translator.translate(msg)
         for r in records:
             ir.add_record(r)
             self.storage.store(r)
-        self._report(ir.end())
 
     def _report(self, r):
         if self.reporter is None:

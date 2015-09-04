@@ -1,6 +1,7 @@
 from memoized_property import memoized_property
 import boto.sqs
 import simplejson as json
+import logging
 
 from conf import get_config
 
@@ -11,6 +12,7 @@ class SQSQueue(object):
         self.queue_name = queue_name
         self.translator = translator
         self.handler = handler
+        self.logger = logging.getLogger(queue_name)
 
     @memoized_property
     def _queue(self):
@@ -37,6 +39,9 @@ class SQSQueue(object):
             self._handle_raw_message(raw_msg)
 
     def _handle_raw_message(self, raw_msg):
+
+        self.logger.info('RECEIVED: %s', raw_msg.get_body())
         msg = json.loads(raw_msg.get_body())
+
         self.handler(msg)
         self._queue.delete_message(raw_msg)

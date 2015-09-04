@@ -38,6 +38,7 @@ setup(name='datalake_backend',
           'memoized_property>=1.0.2',
           'simplejson>=3.3.1',
           'datalake-common>=0.3',
+          'raven>=5.6.0',
       ],
       extras_require={
           'test': [
