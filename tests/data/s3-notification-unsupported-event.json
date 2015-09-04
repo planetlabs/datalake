@@ -12,5 +12,11 @@
 	"UnsubscribeURL" : "https://sns.us-gov-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws-us-gov:sns:us-gov-west-1:223494142213:datalake-v0-DatalakeS3Topic-1SCQLYR01AWJB:8a32cf22-a357-4e79-8d3f-9deeda09ac46"
   },
   "expected_datalake_records": [],
-  "expected_reports": []
+  "expected_reports": [{
+    "version": 0,
+    "status": "success",
+	"start": 123,
+	"duration": 1.0,
+	"records": []
+  }]
 }
