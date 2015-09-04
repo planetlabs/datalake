@@ -67,7 +67,7 @@ class DatalakeRecord(dict):
     def get_time_buckets(metadata):
         '''return a list of time buckets in which the metadata falls'''
         start = metadata['start']
-        end = metadata['end']
+        end = metadata['end'] or start
         d = DatalakeRecord._ONE_DAY_IN_MS
         num_buckets = (end - start)/d + 1
         return [(start + i * d)/d for i in xrange(num_buckets)]
