@@ -13,15 +13,10 @@ conf = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
+            'level': 'INFO',
             'formatter': 'simple',
             'stream': 'ext://sys.stdout'
         },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.handlers.logging.SentryHandler',
-            'dsn': os.environ.get('SENTRY_APP_URL')
-        }
     },
     'root': {
         'level': 'DEBUG',
@@ -30,6 +25,11 @@ conf = {
 }
 
 if os.environ.get('SENTRY_APP_URL'):
+    conf['handlers']['sentry'] = {
+        'level': 'ERROR',
+        'class': 'raven.handlers.logging.SentryHandler',
+        'dsn': os.environ.get('SENTRY_APP_URL')
+    }
     conf['root']['handlers'].append('sentry')
 
 logging.config.dictConfig(conf)
