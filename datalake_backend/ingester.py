@@ -1,7 +1,6 @@
 from memoized_property import memoized_property
 from record import DatalakeRecord
 from errors import InsufficientConfiguration
-from queue import SQSQueue
 from translator import S3ToDatalakeTranslator
 import time
 import logging
@@ -51,10 +50,10 @@ class IngesterReport(dict):
 
 class Ingester(object):
 
-    def __init__(self, storage, queue_name=None, reporter=None,
+    def __init__(self, storage, queue=None, reporter=None,
                  catch_exceptions=False):
         self.storage = storage
-        self.queue_name = queue_name
+        self.queue = queue
         self.reporter = reporter
         self.catch_exceptions = catch_exceptions
 
@@ -63,12 +62,6 @@ class Ingester(object):
         records = DatalakeRecord.list_from_url(url)
         for r in records:
             self.storage.store(r)
-
-    @memoized_property
-    def _queue(self):
-        if not self.queue_name:
-            raise InsufficientConfiguration('No queue configured.')
-        return SQSQueue(self.queue_name, self.handler)
 
     @memoized_property
     def _translator(self):
@@ -100,4 +93,8 @@ class Ingester(object):
 
     def listen(self, timeout=None):
         '''listen to the queue, ingest what you hear, and report'''
-        self._queue.drain(timeout=timeout)
+        if not self.queue:
+            raise InsufficientConfiguration('No queue configured.')
+
+        self.queue.set_handler(self.handler)
+        self.queue.drain(timeout=timeout)

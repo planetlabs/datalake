@@ -1,11 +1,13 @@
 import pytest
 from datalake_common.tests import random_metadata
 import time
-
-from conftest import all_s3_notification_specs, all_bad_s3_notification_specs
+import os
 
 from datalake_backend import DynamoDBStorage, Ingester, \
-    InsufficientConfiguration, InvalidS3Error
+    InsufficientConfiguration, InvalidS3Error, SQSQueue, \
+    SNSReporter
+
+from conftest import all_s3_notification_specs, all_bad_s3_notification_specs
 
 
 @pytest.fixture
@@ -41,7 +43,7 @@ def test_listen_no_queue(storage):
 
 @pytest.fixture
 def ingester_with_queue(storage, sqs_queue):
-    return Ingester(storage, queue_name=sqs_queue.name)
+    return Ingester(storage, queue=sqs_queue)
 
 
 @pytest.fixture
@@ -67,20 +69,14 @@ def test_ingestion_listener_tests(ingestion_listener_tester):
     pass
 
 
-
-from datalake_backend import SQSQueue, SNSReporter
-import os
-from conftest import test_data_path
-import json
-
 @pytest.fixture
-def report_listener(sqs_queue_maker, sns_connection, sns_topic_arn):
+def report_listener(bare_sqs_queue_maker, sns_connection, sns_topic_arn):
 
     class ReportListener(object):
 
         def __init__(self):
             self.messages = []
-            q = sqs_queue_maker('reporter-queue')
+            q = bare_sqs_queue_maker('reporter-queue')
             self._queue = SQSQueue(q.name, self.handler)
             sns_connection.subscribe_sqs_queue(sns_topic_arn, q)
 
@@ -96,7 +92,7 @@ def report_listener(sqs_queue_maker, sns_connection, sns_topic_arn):
 @pytest.fixture
 def full_ingester(storage, sqs_queue, sns_topic_arn):
     reporter = SNSReporter(sns_topic_arn)
-    return Ingester(storage, queue_name=sqs_queue.name, reporter=reporter)
+    return Ingester(storage, queue=sqs_queue, reporter=reporter)
 
 
 @pytest.fixture
@@ -149,7 +145,7 @@ def test_bad_reports_raise(bad_notification_ingester):
 @pytest.fixture
 def full_catchy_ingester(storage, sqs_queue, sns_topic_arn):
     reporter = SNSReporter(sns_topic_arn)
-    return Ingester(storage, queue_name=sqs_queue.name, reporter=reporter,
+    return Ingester(storage, queue=sqs_queue, reporter=reporter,
                     catch_exceptions=True)
 
 

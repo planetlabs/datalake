@@ -8,11 +8,13 @@ from conf import get_config
 class SQSQueue(object):
     '''A queue that hears events on an SQS queue and translates them'''
 
-    def __init__(self, queue_name, handler, translator=None):
+    def __init__(self, queue_name, handler=None):
         self.queue_name = queue_name
-        self.translator = translator
         self.handler = handler
         self.logger = logging.getLogger(queue_name)
+
+    def set_handler(self, h):
+        self.handler = h
 
     @memoized_property
     def _queue(self):
@@ -39,6 +41,10 @@ class SQSQueue(object):
             self._handle_raw_message(raw_msg)
 
     def _handle_raw_message(self, raw_msg):
+
+        if not self.handler:
+            self.logger.error('NO HANDLER CONFIGURED: %s', raw_msg.get_body())
+            return
 
         self.logger.info('RECEIVED: %s', raw_msg.get_body())
         msg = json.loads(raw_msg.get_body())

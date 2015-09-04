@@ -14,6 +14,8 @@ import boto.sqs
 import boto.s3
 from boto.s3.key import Key
 
+from datalake_backend import SQSQueue
+
 
 @pytest.fixture
 def dynamodb_connection(request):
@@ -110,7 +112,7 @@ def sqs_connection(aws_connector):
 
 
 @pytest.fixture
-def sqs_queue_maker(sqs_connection):
+def bare_sqs_queue_maker(sqs_connection):
 
     def maker(queue_name):
         return sqs_connection.get_queue(queue_name) or \
@@ -120,15 +122,30 @@ def sqs_queue_maker(sqs_connection):
 
 
 @pytest.fixture
+def sqs_queue_maker(bare_sqs_queue_maker):
+
+    def maker(queue_name):
+        q = bare_sqs_queue_maker(queue_name)
+        return SQSQueue(q.name)
+
+    return maker
+
+
+@pytest.fixture
+def bare_sqs_queue(bare_sqs_queue_maker):
+    return bare_sqs_queue_maker('test-queue')
+
+
+@pytest.fixture
 def sqs_queue(sqs_queue_maker):
     return sqs_queue_maker('test-queue')
 
 
 @pytest.fixture
-def sqs_sender(sqs_queue_maker):
+def sqs_sender(bare_sqs_queue_maker):
 
     def sender(msg, queue_name='test-queue'):
-        q = sqs_queue_maker(queue_name)
+        q = bare_sqs_queue_maker(queue_name)
         msg = q.new_message(json.dumps(msg))
         q.write(msg)
 
