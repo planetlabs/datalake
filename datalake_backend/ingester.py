@@ -5,6 +5,11 @@ from translator import S3ToDatalakeTranslator
 import time
 import logging
 
+from conf import get_config_var
+from storage import DynamoDBStorage
+from queue import SQSQueue
+from reporter import SNSReporter
+
 
 logger = logging.getLogger('ingester')
 
@@ -56,6 +61,15 @@ class Ingester(object):
         self.queue = queue
         self.reporter = reporter
         self.catch_exceptions = catch_exceptions
+
+    @classmethod
+    def from_config(cls):
+        storage = DynamoDBStorage.from_config()
+        queue = SQSQueue.from_config()
+        reporter = SNSReporter.from_config()
+        catch_exceptions = get_config_var('catch_exceptions') or False
+        return cls(storage, queue=queue, reporter=reporter,
+                   catch_exceptions=catch_exceptions)
 
     def ingest(self, url):
         '''ingest the metadata associated with the given url'''

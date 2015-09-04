@@ -1,24 +1,27 @@
 from memoized_property import memoized_property
+import boto.dynamodb2
 from boto.dynamodb2.table import Table
 
-from conf import get_config
+from conf import get_config_var
 from errors import InsufficientConfiguration
 
 
 class DynamoDBStorage(object):
     '''store datalake records in a dynamoDB table'''
 
-    def __init__(self, table_name=None, connection=None):
-        self._set_table_name(table_name)
+    def __init__(self, table_name, connection=None):
+        self.table_name = table_name
         self._prepare_connection(connection)
 
-    def _set_table_name(self, table_name):
-        self.table_name = table_name or get_config().dynamodb_table
-        if self.table_name is None:
+    @classmethod
+    def from_config(cls):
+        table_name = get_config_var('dynamodb_table')
+        if table_name is None:
             raise InsufficientConfiguration('Please specify a dynamodb table')
+        return cls(table_name)
 
     def _prepare_connection(self, connection):
-        region = get_config().aws_region
+        region = get_config_var('aws_region')
         if connection:
             self._connection = connection
         elif region:

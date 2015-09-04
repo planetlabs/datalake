@@ -3,7 +3,8 @@ import boto.sqs
 import simplejson as json
 import logging
 
-from conf import get_config
+from conf import get_config_var
+from errors import InsufficientConfiguration
 
 class SQSQueue(object):
     '''A queue that hears events on an SQS queue and translates them'''
@@ -12,6 +13,13 @@ class SQSQueue(object):
         self.queue_name = queue_name
         self.handler = handler
         self.logger = logging.getLogger(queue_name)
+
+    @classmethod
+    def from_config(cls):
+        queue_name = get_config_var('queue')
+        if queue_name is None:
+            raise InsufficientConfiguration('Please configure a queue')
+        return cls(queue_name)
 
     def set_handler(self, h):
         self.handler = h
@@ -22,8 +30,11 @@ class SQSQueue(object):
 
     @memoized_property
     def _connection(self):
-        region = get_config().aws_region
-        return boto.connect_sqs(region=region)
+        region = get_config_var('aws_region')
+        if region:
+            return boto.sqs.connect_to_region(region)
+        else:
+            return boto.connect_sqs()
 
     _LONG_POLL_TIMEOUT = 20
 

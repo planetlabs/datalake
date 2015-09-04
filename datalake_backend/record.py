@@ -1,7 +1,7 @@
 import boto.s3
 from datalake_common import Metadata, InvalidDatalakeMetadata
 from urlparse import urlparse
-from conf import get_config
+from conf import get_config_var
 
 
 class DatalakeRecord(dict):
@@ -56,7 +56,7 @@ class DatalakeRecord(dict):
     @classmethod
     def _prepare_connection(cls):
         kwargs = {}
-        s3_host = get_config().s3_host
+        s3_host = get_config_var('s3_host')
         if s3_host:
             kwargs['host'] = s3_host
         return boto.connect_s3(**kwargs)

@@ -39,6 +39,7 @@ setup(name='datalake_backend',
           'simplejson>=3.3.1',
           'datalake-common>=0.3',
           'raven>=5.6.0',
+          'click>=5.1',
       ],
       extras_require={
           'test': [
@@ -48,4 +49,7 @@ setup(name='datalake_backend',
               'moto==0.4.12',
           ]
       },
-     )
+      entry_points="""
+      [console_scripts]
+      datalake_tool=datalake_backend.cli:cli
+      """)
