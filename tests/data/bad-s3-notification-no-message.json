@@ -1,6 +1,14 @@
 {
-  "Type" : "Notification",
-  "MessageId" : "d736618a-1a92-5f35-bfe8-2fdd2a010abe",
-  "TopicArn" : "arn:aws-us-gov:sns:us-gov-west-1:223494142213:datalake-v0-DatalakeS3Topic-1SCQLYR01AWJB",
-  "Subject" : "Amazon S3 Notification"
+  "s3_notification": {
+    "Type" : "Notification",
+    "MessageId" : "d736618a-1a92-5f35-bfe8-2fdd2a010abe",
+    "TopicArn" : "arn:aws-us-gov:sns:us-gov-west-1:223494142213:datalake-v0-DatalakeS3Topic-1SCQLYR01AWJB",
+    "Subject" : "Amazon S3 Notification"
+  },
+  "expected_datalake_records": [],
+  "expected_reports": [{
+    "status": "error",
+	"records": []
+  }]
 }
+

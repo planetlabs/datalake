@@ -2,10 +2,10 @@ import pytest
 from datalake_common.tests import random_metadata
 import time
 
-from conftest import all_s3_notification_specs
+from conftest import all_s3_notification_specs, all_bad_s3_notification_specs
 
 from datalake_backend import DynamoDBStorage, Ingester, \
-    InsufficientConfiguration
+    InsufficientConfiguration, InvalidS3Error
 
 
 @pytest.fixture
@@ -106,13 +106,15 @@ def report_comparator():
         return sorted(l, key=lambda k: k['url'])
 
     def comparator(actual, expected):
+        assert len(actual) == len(expected)
         for a, e in zip(actual, expected):
             err = abs(time.time() - a['start']/1000.0)
             assert err < 5.0
             assert sort(a['records']) == sort(e['records'])
             assert type(a['duration']) is float
             assert a['status'] == e['status']
-
+            if e['status']:
+                assert 'message' in a
     return comparator
 
 
@@ -128,3 +130,42 @@ def listener_report_tester(request, full_ingester, report_listener, sqs_sender,
 
 def test_listener_reports(listener_report_tester):
     pass
+
+
+@pytest.fixture(params=all_bad_s3_notification_specs)
+def bad_notification_ingester(request, ingester_with_queue, sqs_sender,
+                              spec_maker):
+    def ingester():
+        spec = spec_maker(request.param)
+        sqs_sender(spec['s3_notification'])
+        return ingester_with_queue
+    return ingester
+
+def test_bad_reports_raise(bad_notification_ingester):
+    with pytest.raises(InvalidS3Error):
+        bad_notification_ingester().listen(timeout=1)
+
+
+@pytest.fixture
+def full_catchy_ingester(storage, sqs_queue, sns_topic_arn):
+    reporter = SNSReporter(sns_topic_arn)
+    return Ingester(storage, queue_name=sqs_queue.name, reporter=reporter,
+                    catch_exceptions=True)
+
+
+@pytest.fixture(params=all_bad_s3_notification_specs)
+def bad_ingestion_reporter(request, full_catchy_ingester, report_listener,
+                           sqs_sender, spec_maker):
+    def reporter():
+        spec = spec_maker(request.param)
+        sqs_sender(spec['s3_notification'])
+        full_catchy_ingester.listen(timeout=1)
+        report_listener.drain()
+        return report_listener.messages, spec['expected_reports']
+
+    return reporter
+
+
+def test_bad_ingestion_reports(bad_ingestion_reporter, report_comparator):
+    actual, expected = bad_ingestion_reporter()
+    report_comparator(actual, expected)

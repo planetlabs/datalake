@@ -31,7 +31,7 @@ def bad_notification_tester():
         n = json.load(open(f))
         t = S3ToDatalakeTranslator()
         with pytest.raises(exception):
-            t.translate(n)
+            t.translate(n['s3_notification'])
     return tester
 
 

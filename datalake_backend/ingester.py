@@ -51,10 +51,12 @@ class IngesterReport(dict):
 
 class Ingester(object):
 
-    def __init__(self, storage, queue_name=None, reporter=None):
+    def __init__(self, storage, queue_name=None, reporter=None,
+                 catch_exceptions=False):
         self.storage = storage
         self.queue_name = queue_name
         self.reporter = reporter
+        self.catch_exceptions = catch_exceptions
 
     def ingest(self, url):
         '''ingest the metadata associated with the given url'''
@@ -80,7 +82,8 @@ class Ingester(object):
         except Exception as e:
             logger.exception(e)
             ir.error(e.message)
-            raise e
+            if not self.catch_exceptions:
+                raise e
         finally:
             self._report(ir)
 

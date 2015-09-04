@@ -181,6 +181,9 @@ def s3_file_from_record(s3_file_maker):
 _s3_notification_path = os.path.join(test_data_path, 's3-notification-*.json')
 all_s3_notification_specs = glob(_s3_notification_path)
 
+_bad_s3_notification_path = os.path.join(test_data_path,
+                                         'bad-s3-notification-*.json')
+all_bad_s3_notification_specs = glob(_bad_s3_notification_path)
 
 @pytest.fixture
 def spec_maker(s3_file_from_record):
