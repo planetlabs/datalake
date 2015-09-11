@@ -52,13 +52,14 @@ class SQSQueue(object):
             self._handle_raw_message(raw_msg)
 
     def _handle_raw_message(self, raw_msg):
-
+        # eliminate newlines in raw message so it all logs to one line
+        raw = raw_msg.get_body().replace('\n', ' ')
         if not self.handler:
-            self.logger.error('NO HANDLER CONFIGURED: %s', raw_msg.get_body())
+            self.logger.error('NO HANDLER CONFIGURED: %s', raw)
             return
 
-        self.logger.info('RECEIVED: %s', raw_msg.get_body())
-        msg = json.loads(raw_msg.get_body())
+        self.logger.info('RECEIVED: %s', raw)
+        msg = json.loads(raw)
 
         self.handler(msg)
         self._queue.delete_message(raw_msg)
