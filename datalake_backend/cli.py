@@ -22,6 +22,8 @@ DEFAULT_CONFIG = '/etc/datalake-backend.json'
               help='s3 host (e.g., s3-us-gov-west-1.amazonaws.com)')
 @click.option('-q', '--queue',
               help='name of the ingestion queue (e.g., datalake-sqs)')
+@click.option('--catch-exceptions',
+              help='log exceptions and move on')
 @click.pass_context
 def cli(ctx, **kwargs):
     conf = _read_config_file(kwargs.pop('config'))
