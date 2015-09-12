@@ -66,6 +66,8 @@ class S3Event(dict):
 
     @memoized_property
     def records(self):
+        if self.get('Event') == 's3:TestEvent':
+            return []
         return [S3Record(r) for r in self['Records']]
 
 

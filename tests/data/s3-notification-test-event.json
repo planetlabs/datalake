@@ -1,0 +1,19 @@
+{
+  "s3_notification": {
+	"Type" : "Notification",
+	"MessageId" : "21bea1fe-1015-572d-af23-ef9251c6982b",
+	"TopicArn" : "arn:aws-us-gov:sns:us-gov-west-1:223494142213:datalake-ci-archive",
+	"Subject" : "Amazon S3 Notification",
+	"Message" : "{\"Service\":\"Amazon S3\",\"Event\":\"s3:TestEvent\",\"Time\":\"2015-09-11T02:42:27.666Z\",\"Bucket\":\"datalake-ci\",\"RequestId\":\"79417A942B66D657\",\"HostId\":\"aa6cBcuCyKy/OyojJVbZJK460/Vu5IHAFmYMeDAkANGqOrRFUQuA08DdIu8BzEtZ\"}",
+	"Timestamp" : "2015-09-11T02:42:27.712Z",
+	"SignatureVersion" : "1",
+	"Signature" : "EF7wV8F1EEQ6bnRXf2c9BBbGEJV+Tf+W/kzl/eQ4edKTdj5QiwH7XqxWquFLlhCjeGiujkQjIhwB8DL6HvJBBgYy/JG/FzSkdD9sH3x7ZlRx1qj4/iMYCsRSzIDyfFFyGQMHKcGYuV9gLiWQzII+mRazCMMSNABSdt1i47/bG8+xHxz81XUB54NnYzny2/JzzVA9QADDM2colgl/I1iDxbtvQAA3yiJK6dtckgxRMCm0R83VpkToRgbYW8i3A5GXnLfsYwkxG5Z3z3uiKjHxcyRZ6xRhmrIWfeQ24zTb75yyd/HsbyX+Gk8h9q84on9PkMSQyEWWDO2dbdzYMRnt/A==",
+	"SigningCertURL" : "https://sns.us-gov-west-1.amazonaws.com/SimpleNotificationService-615221360fa38fcacc145ca7e25e3f7c.pem",
+	"UnsubscribeURL" : "https://sns.us-gov-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws-us-gov:sns:us-gov-west-1:223494142213:datalake-ci-archive:1fccf7a7-48a0-4a14-bd5e-282d63f2fbda"
+  },
+  "expected_datalake_records": [],
+  "expected_reports": [{"duration": 3.814697265625e-05,
+						"records": [],
+						"start": 1442020478828,
+						"status": "success"}]
+}
