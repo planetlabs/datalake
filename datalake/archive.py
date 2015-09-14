@@ -1,4 +1,4 @@
-from conf import get_config
+from conf import get_config_var
 import urlparse
 from memoized_property import memoized_property
 import simplejson as json
@@ -7,6 +7,7 @@ from datalake import File
 
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
+from boto.s3.connection import NoHostProvided
 
 
 class UnsupportedStorageError(Exception):
@@ -16,7 +17,7 @@ class UnsupportedStorageError(Exception):
 class Archive(object):
 
     def __init__(self, storage_url=None):
-        self.storage_url = storage_url or get_config().storage_url
+        self.storage_url = storage_url or get_config_var('storage_url')
         self._validate_storage_url()
 
     def _validate_storage_url(self):
@@ -82,7 +83,19 @@ class Archive(object):
         return Key(self._s3_bucket, name=key_name)
 
     @property
+    def _s3_host(self):
+        r = get_config_var('aws_region')
+        if r is not None:
+            return 's3-' + r + '.amazonaws.com'
+        else:
+            return NoHostProvided
+
+    @property
     def _s3_conn(self):
         if not hasattr(self, '_conn'):
-            self._conn = S3Connection()
+            k = get_config_var('aws_key')
+            s = get_config_var('aws_secret')
+            self._conn = S3Connection(aws_access_key_id=k,
+                                      aws_secret_access_key=s,
+                                      host=self._s3_host)
         return self._conn

@@ -35,7 +35,6 @@ setup(name='datalake',
       packages=find_packages(exclude=['test']),
       install_requires=[
           'pyver>=1.0.18',
-          'ConfigArgParse>=0.9.3',
           'boto>=2.38.0',
           'memoized_property>=1.0.2',
           'simplejson>=3.7',

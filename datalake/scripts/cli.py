@@ -1,18 +1,50 @@
 import click
 from datalake import Archive
-from datalake.conf import datalake_click_option
+from datalake.conf import set_config
+import os
 
+
+DEFAULT_CONFIG = '/etc/datalake.json'
 
 archive = None
-
 
 @click.group(invoke_without_command=True)
 @click.version_option()
 @click.pass_context
-@datalake_click_option('storage_url')
+@click.option('-c', '--config',
+              help=('config file. The format is just a flat json with key '
+                    'names that you can guess'))
+@click.option('-u', '--storage-url',
+              help=('The URL to the top-level storage resource where '
+                    'datalake will archive all the files.'),
+              envvar='DL_STORAGE_URL')
+@click.option('-k', '--aws-key',
+              help='The AWS access key used to read and write s3.',
+              envvar='AWS_ACCESS_KEY_ID')
+@click.option('-s', '--aws-secret',
+              help='The AWS secret key used to read and write s3.',
+              envvar='AWS_SECRET_ACCESS_KEY')
+@click.option('-r', '--aws-region',
+              help='The AWS region where files should be stored.',
+              envvar='AWS_REGION')
 def cli(ctx, **kwargs):
+    conf = _read_config_file(kwargs.pop('config'))
+    conf.update({k: v for k, v in kwargs.iteritems() if v is not None})
+    set_config(conf)
     _subcommand_or_fail(ctx)
     _prepare_archive_or_fail(ctx, kwargs.pop('storage_url'))
+
+
+def _read_config_file(config):
+    if config is None:
+        if os.path.exists(DEFAULT_CONFIG):
+            return json.load(open(DEFAULT_CONFIG))
+        else:
+            return {}
+    elif os.path.exists(config):
+        return json.load(open(config))
+    else:
+        raise click.UsageError('Config file {} not exist'.format(config))
 
 
 def _subcommand_or_fail(ctx):
