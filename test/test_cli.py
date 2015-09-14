@@ -33,3 +33,9 @@ def test_push_with_metadata(cli_tester, tmpfile):
 def test_push_without_end(cli_tester, tmpfile):
     cmd = 'push --start=2015-05-15 --where=cron --what=report ' + tmpfile('')
     cli_tester(cmd)
+
+
+def test_push_with_aws_vars(cli_tester, tmpfile):
+    cmd = '-k abcd -s 1234 -r us-gov-west-1 '
+    cmd += 'push --start=2015-09-14 --where=cron --what=report ' + tmpfile('')
+    cli_tester(cmd)
