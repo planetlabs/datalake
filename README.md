@@ -1,6 +1,8 @@
 Introduction
 ============
 
+[![Build Status](https://travis-ci.org/planetlabs/datalake.svg)](https://travis-ci.org/planetlabs/datalake-ingester)
+
 NOTE: Much of this README is an aspirational.
 
 A datalake is an archive that contains files and
