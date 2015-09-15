@@ -7,6 +7,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.box = "ubuntu/trusty64"
 
+  if ENV['VAGRANT_IP']
+    config.vm.network :private_network, ip: ENV['VAGRANT_IP']
+  end
+
   config.vm.provision "shell",
   inline: "cd /vagrant/ && ./init.sh && pip install -e .[test]"
 
