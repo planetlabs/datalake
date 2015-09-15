@@ -37,6 +37,7 @@ setup(name='datalake_api',
           'memoized_property>=1.0.2',
           'simplejson>=3.3.1',
           'datalake-common>=0.4',
+          'Flask>=10.1',
       ],
       extras_require={
           'test': [
