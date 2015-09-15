@@ -48,3 +48,13 @@ def random_metadata():
         'id': random_hex(40),
         'hash': random_hex(40),
     }
+
+@pytest.fixture
+def tmpfile(tmpdir):
+    name = random_word(10)
+    def get_tmpfile(content):
+        f = tmpdir.join(name)
+        f.write(content)
+        return str(f)
+
+    return get_tmpfile
