@@ -1,7 +1,7 @@
 Introduction
 ============
 
-[![Build Status](https://travis-ci.org/planetlabs/datalake.svg)](https://travis-ci.org/planetlabs/datalake-ingester)
+[![Build Status](https://travis-ci.org/planetlabs/datalake.svg)](https://travis-ci.org/planetlabs/datalake)
 
 NOTE: Much of this README is an aspirational.
 
