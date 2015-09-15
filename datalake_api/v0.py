@@ -1,8 +1,10 @@
 import flask
+from flask import request, jsonify, Response
 import simplejson as json
 import logging
-
-from flask import jsonify, Response
+from webargs import Arg
+from webargs.flaskparser import use_args
+from copy import copy
 
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
@@ -24,9 +26,46 @@ def archive_get():
     return Response(json.dumps({}), content_type='application/json')
 
 
+@v0.errorhandler(400)
+def handle_bad_request(err):
+    return jsonify({'message': err.response, 'code': err.description}), 400
+
+
+def _convert_param_to_ms(params, key):
+    if key not in params:
+        return
+    try:
+        params[key] = int(params[key])
+    except ValueError:
+        msg = key + ' must be milliseconds since the epoch.'
+        flask.abort(400, 'InvalidTime', msg)
+
+
+def _validate_files_params(params):
+    if len(params) == 0:
+        flask.abort(400, 'NoArgs', 'Please provide minimal query arguments')
+    if 'what' not in params:
+        flask.abort(400, 'NoWhat', 'You must provide the `what` paramater')
+    if 'work_id' not in params and 'start' not in params and \
+       'end' not in params:
+        msg = 'You must provide either work_id or start/end'
+        flask.abort(400, 'NoWorkInterval', msg)
+    if 'work_id' in params and ('start' in params or 'end' in params):
+        msg = 'You must provide only work_id or start/end. Not both.'
+        flask.abort(400, 'InvalidWorkInterval', msg)
+    if ('start' in params and 'end' not in params) or \
+       ('end' in params and 'start' not in params):
+        msg = 'start and end must always be provided together.'
+        flask.abort(400, 'InvalidWorkInterval', msg)
+    validated = {k: v for k, v in params.iteritems()}
+    _convert_param_to_ms(validated, 'start')
+    _convert_param_to_ms(validated, 'end')
+    return validated
+
+
 @v0.route('/archive/files/')
 def files_get():
-    """List files
+    '''List files
 
     Retrieve metadata for files subject to query parameters.
 
@@ -164,5 +203,7 @@ def files_get():
                   type: string
                   description: human-readable message indicating why the
                                request failed
-    """
+    '''
+    params = flask.request.args
+    params = _validate_files_params(params)
     return Response(json.dumps({}), content_type='application/json')

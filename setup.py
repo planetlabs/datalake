@@ -38,6 +38,7 @@ setup(name='datalake_api',
           'simplejson>=3.3.1',
           'datalake-common>=0.4',
           'Flask>=0.10.1',
+          'flask-swagger==0.2.8',
       ],
       extras_require={
           'test': [
