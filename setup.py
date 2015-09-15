@@ -40,7 +40,7 @@ setup(name='datalake',
           'simplejson>=3.7',
           'pyblake2>=0.9.3',
           'click>=4.1',
-          'datalake-common>=0.1',
+          'datalake-common>=0.4',
       ],
       extras_require={
           'test': [
