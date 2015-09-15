@@ -3,7 +3,7 @@ from datalake_common.tests import random_metadata
 import time
 import os
 
-from datalake_backend import DynamoDBStorage, Ingester, \
+from datalake_ingester import DynamoDBStorage, Ingester, \
     InsufficientConfiguration, InvalidS3Error, SQSQueue, \
     SNSReporter
 

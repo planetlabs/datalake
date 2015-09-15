@@ -5,7 +5,7 @@ from conf import set_config
 
 from ingester import Ingester
 
-DEFAULT_CONFIG = '/etc/datalake-backend.json'
+DEFAULT_CONFIG = '/etc/datalake-ingester.json'
 
 @click.group(invoke_without_command=True)
 @click.version_option()

@@ -1,6 +1,6 @@
 import pytest
 
-from datalake_backend import DynamoDBStorage
+from datalake_ingester import DynamoDBStorage
 
 
 def test_dynamodb_store(dynamodb_users_table, dynamodb_connection):

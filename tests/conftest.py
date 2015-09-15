@@ -14,7 +14,7 @@ import boto.sqs
 import boto.s3
 from boto.s3.key import Key
 
-from datalake_backend import SQSQueue
+from datalake_ingester import SQSQueue
 
 
 @pytest.fixture

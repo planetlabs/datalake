@@ -20,4 +20,4 @@ deploy:
     secure: FqKVdqk4Ly6ve6oOY+glRk8AyZTao2zPPXdzlKra8NxfWxDoi4eZkZ0mwRweLP+C6gR8bMkwsz68NyluRVSNq8VhKeAOIfjVfqM+jR+Ys26dSLQ9Rnef9WeMpAC32YcEeZ1hQ4DS80F8p8DwTHOemw0fofS501sG48LGtSnfbbffsvB8E7kB3uTnkea4qaH5/G1Hi1uIia5fJX6NeI/Gi3YYJur5r/h9suS/KNxKYYA5oLhxIiYj0HOAURyCN7nxFd/RoZ3FhD0VAalwLjETudmOCO8Sg+6NOBjyY7xghYDauNxfz87SGfGO1cPSUptR5HfWaQNh/TM9RKRRI/ynGGLdBCu4tQdbDEoaplkFtIAteRBgjA0y3IM2dQ//Nf62bxkNA3dcmJoLM8aX00JOmWLOAmTZmFh7orRgVMCso+ucXOF5lbw8v6HuXCQ+bD1zh5y0J+oxLjbRGDfZre/jWZJKBZYoHSw/jF7Rn0Wbt/71jDbtkCertj7U4edE7bD++ZPSxAFUstxAvfdfux4yCYduTUUgzmQIlv5PCU5nMImo4+Jk+xZYNU6iMkWUqh/OF7cdG66QcHGcawlwB6xesprH725xaCsM/s8Ntc4QDlYNn6CkG0HQb5/Zx2ggi9QWtpzVK5hc+gyJHelgodUGEZDMUBBz2tyctz4w5HiTziA=
   on:
     tags: true
-    repo: planetlabs/datalake-backend
+    repo: planetlabs/datalake-ingester

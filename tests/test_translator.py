@@ -2,8 +2,8 @@ import pytest
 import simplejson as json
 import os
 
-from datalake_backend import S3ToDatalakeTranslator
-from datalake_backend.errors import InvalidS3Notification, InvalidS3Event
+from datalake_ingester import S3ToDatalakeTranslator
+from datalake_ingester.errors import InvalidS3Notification, InvalidS3Event
 from datalake_common import InvalidDatalakeMetadata
 
 

@@ -1,15 +1,15 @@
 Introduction
 ============
 
-[![Build Status](https://travis-ci.org/planetlabs/datalake-backend.svg)](https://travis-ci.org/planetlabs/datalake-backend)
+[![Build Status](https://travis-ci.org/planetlabs/datalake-ingester.svg)](https://travis-ci.org/planetlabs/datalake-ingester)
 
-The datalake-backend ingests datalake metadata records into a database so that
-they may be queried by the datalake client.
+The datalake-ingester ingests datalake metadata records into a database so that
+they may be queried by other datalake components.
 
 Architecture Notes
 ==================
 
-The backend looks something like this:
+The ingester looks something like this:
 
                                           +----------+     +---------+
            +-------+    +------------+    |          |---->| storage |
@@ -114,7 +114,7 @@ is formed by joining the "where" and the "id" from the metadata.
 Datalake Ingester Report Format
 ===============================
 
-The datalake backend emits a Datalake Ingester Report for each file that it
+The datalake ingester emits a Datalake Ingester Report for each file that it
 ingests. The report has the following format:
 
         {

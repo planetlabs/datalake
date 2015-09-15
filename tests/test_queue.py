@@ -2,7 +2,7 @@ import pytest
 import time
 import simplejson as json
 
-from datalake_backend import SQSQueue
+from datalake_ingester import SQSQueue
 
 
 @pytest.fixture

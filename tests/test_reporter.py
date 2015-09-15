@@ -1,7 +1,7 @@
 import pytest
 import simplejson as json
 
-from datalake_backend import SNSReporter
+from datalake_ingester import SNSReporter
 
 
 def test_snsreporter_sends(sns_connection, sns_topic_arn, bare_sqs_queue):

@@ -15,7 +15,8 @@ def get_version_from_pyver():
             raise ImportError('You must install pyver to create a package')
         else:
             return 'noversion'
-    version, version_info = pyver.get_version(pkg="datalake_backend", public=True)
+    version, version_info = pyver.get_version(pkg="datalake_ingester",
+                                              public=True)
     return version
 
 def get_version():
@@ -24,13 +25,13 @@ def get_version():
     else:
         return get_version_from_pyver()
 
-setup(name='datalake_backend',
-      url='https://github.com/planetlabs/datalake-backend',
+setup(name='datalake_ingester',
+      url='https://github.com/planetlabs/datalake-ingester',
       version=get_version(),
-      description='datalake_backend ingests datalake metadata records',
+      description='datalake_ingester ingests datalake metadata records',
       author='Brian Cavagnolo',
       author_email='brian@planet.com',
-      packages=['datalake_backend'],
+      packages=['datalake_ingester'],
       install_requires=[
           'pyver>=1.0.18',
           'boto>=2.38.0',
@@ -51,5 +52,5 @@ setup(name='datalake_backend',
       },
       entry_points="""
       [console_scripts]
-      datalake_tool=datalake_backend.cli:cli
+      datalake_tool=datalake_ingester.cli:cli
       """)
