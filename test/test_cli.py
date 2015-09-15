@@ -2,6 +2,7 @@ import pytest
 from click.testing import CliRunner
 from datalake.scripts.cli import cli
 import os
+from datalake_common.tests import tmpfile
 
 
 @pytest.fixture

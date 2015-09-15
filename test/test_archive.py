@@ -2,6 +2,7 @@ import pytest
 from tempfile import NamedTemporaryFile
 from urlparse import urlparse
 import simplejson as json
+from datalake_common.tests import random_metadata, tmpfile
 
 from datalake import File, Archive
 
