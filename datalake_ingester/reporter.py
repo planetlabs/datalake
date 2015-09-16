@@ -3,8 +3,8 @@ import simplejson as json
 import logging
 from memoized_property import memoized_property
 
-from conf import get_config_var
-from errors import InsufficientConfiguration
+from datalake_common.conf import get_config_var
+from datalake_common.errors import InsufficientConfiguration
 
 
 class SNSReporter(object):

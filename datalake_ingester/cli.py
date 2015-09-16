@@ -1,7 +1,7 @@
 import click
 import simplejson as json
 import os
-from conf import set_config
+from datalake_common.conf import set_config
 
 from ingester import Ingester
 

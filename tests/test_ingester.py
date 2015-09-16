@@ -4,8 +4,8 @@ import time
 import os
 
 from datalake_ingester import DynamoDBStorage, Ingester, \
-    InsufficientConfiguration, InvalidS3Error, SQSQueue, \
-    SNSReporter
+    InvalidS3Error, SQSQueue, SNSReporter
+from datalake_common.errors import InsufficientConfiguration
 
 from conftest import all_s3_notification_specs, all_bad_s3_notification_specs
 
@@ -17,10 +17,10 @@ def storage(dynamodb_records_table, dynamodb_connection):
 
 
 @pytest.fixture
-def random_s3_file_maker(s3_file_from_record, random_metadata):
+def random_s3_file_maker(s3_file_from_metadata, random_metadata):
     def maker():
         url = 's3://foo/' + random_metadata['id']
-        s3_file_from_record(url, random_metadata)
+        s3_file_from_metadata(url, random_metadata)
         return url, random_metadata
     return maker
 

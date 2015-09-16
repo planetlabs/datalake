@@ -1,8 +1,7 @@
 import pytest
-from moto import mock_sns, mock_sqs, mock_s3
+from moto import mock_sns, mock_sqs
 import os
 import simplejson as json
-from urlparse import urlparse
 from glob import glob
 
 from boto.dynamodb2.layer1 import DynamoDBConnection
@@ -11,8 +10,8 @@ from boto.exception import JSONResponseError
 from boto.dynamodb2.fields import HashKey, RangeKey
 import boto.sns
 import boto.sqs
-import boto.s3
-from boto.s3.key import Key
+
+from datalake_common.tests import *
 
 from datalake_ingester import SQSQueue
 
@@ -80,22 +79,6 @@ def dynamodb_records_table(dynamodb_table_maker):
 
 
 @pytest.fixture
-def aws_connector(request):
-
-    def create_connection(mocker, connector):
-        mock = mocker()
-        mock.start()
-
-        def tear_down():
-            mock.stop()
-        request.addfinalizer(tear_down)
-
-        return connector()
-
-    return create_connection
-
-
-@pytest.fixture
 def sns_connection(aws_connector):
     return aws_connector(mock_sns, boto.connect_sns)
 
@@ -155,46 +138,6 @@ def sqs_sender(bare_sqs_queue_maker):
 _here = os.path.abspath(os.path.dirname(__file__))
 test_data_path = os.path.join(_here, 'data')
 
-
-@pytest.fixture
-def s3_connection(aws_connector):
-    return aws_connector(mock_s3, boto.connect_s3)
-
-
-@pytest.fixture
-def s3_bucket_maker(s3_connection):
-
-    def maker(bucket_name):
-        return s3_connection.create_bucket(bucket_name)
-
-    return maker
-
-
-@pytest.fixture
-def s3_file_maker(s3_bucket_maker):
-
-    def maker(bucket, key, content, metadata):
-        b = s3_bucket_maker(bucket)
-        k = Key(b)
-        k.key = key
-        if metadata:
-            k.set_metadata('datalake', json.dumps(metadata))
-        k.set_contents_from_string(content)
-
-    return maker
-
-
-@pytest.fixture
-def s3_file_from_record(s3_file_maker):
-
-    def maker(url, metadata):
-        url = urlparse(url)
-        assert url.scheme == 's3'
-        s3_file_maker(url.netloc, url.path, '', metadata)
-
-    return maker
-
-
 _s3_notification_path = os.path.join(test_data_path, 's3-notification-*.json')
 all_s3_notification_specs = glob(_s3_notification_path)
 
@@ -203,12 +146,13 @@ _bad_s3_notification_path = os.path.join(test_data_path,
 all_bad_s3_notification_specs = glob(_bad_s3_notification_path)
 
 @pytest.fixture
-def spec_maker(s3_file_from_record):
+def spec_maker(s3_file_from_metadata):
 
     def maker(spec_file):
         spec = json.load(open(spec_file))
         expected_records = spec['expected_datalake_records']
-        [s3_file_from_record(d['url'], d['metadata']) for d in expected_records]
+        [s3_file_from_metadata(d['url'], d['metadata'])
+         for d in expected_records]
         return spec
 
     return maker

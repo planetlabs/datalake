@@ -1,6 +1,3 @@
-class InsufficientConfiguration(Exception):
-    pass
-
 class InvalidS3Error(Exception):
     pass
 

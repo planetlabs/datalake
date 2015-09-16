@@ -2,8 +2,8 @@ from memoized_property import memoized_property
 import boto.dynamodb2
 from boto.dynamodb2.table import Table
 
-from conf import get_config_var
-from errors import InsufficientConfiguration
+from datalake_common.conf import get_config_var
+from datalake_common.errors import InsufficientConfiguration
 
 
 class DynamoDBStorage(object):

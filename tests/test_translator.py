@@ -6,6 +6,8 @@ from datalake_ingester import S3ToDatalakeTranslator
 from datalake_ingester.errors import InvalidS3Notification, InvalidS3Event
 from datalake_common import InvalidDatalakeMetadata
 
+from datalake_common.tests import s3_file_from_metadata
+
 
 from conftest import test_data_path, all_s3_notification_specs
 
@@ -50,11 +52,11 @@ def test_unsuppored_event_version_raises_exception(bad_notification_tester):
     bad_notification_tester(spec, InvalidS3Event)
 
 
-def test_no_metadata(s3_file_from_record):
+def test_no_metadata(s3_file_from_metadata):
     f = os.path.join(test_data_path, 's3-notification-one-record.json')
     spec = json.load(open(f))
     record = spec['expected_datalake_records'][0]
-    s3_file_from_record(record['url'], None)
+    s3_file_from_metadata(record['url'], None)
     t = S3ToDatalakeTranslator()
     with pytest.raises(InvalidDatalakeMetadata):
         t.translate(spec['s3_notification'])

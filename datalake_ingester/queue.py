@@ -3,8 +3,8 @@ import boto.sqs
 import simplejson as json
 import logging
 
-from conf import get_config_var
-from errors import InsufficientConfiguration
+from datalake_common.conf import get_config_var
+from datalake_common.errors import InsufficientConfiguration
 
 class SQSQueue(object):
     '''A queue that hears events on an SQS queue and translates them'''

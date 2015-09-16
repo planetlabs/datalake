@@ -1,11 +1,10 @@
 from memoized_property import memoized_property
-from record import DatalakeRecord
-from errors import InsufficientConfiguration
+from datalake_common import DatalakeRecord
+from datalake_common.errors import InsufficientConfiguration
 from translator import S3ToDatalakeTranslator
 import time
 import logging
-
-from conf import get_config_var
+from datalake_common.conf import get_config_var
 from storage import DynamoDBStorage
 from queue import SQSQueue
 from reporter import SNSReporter
