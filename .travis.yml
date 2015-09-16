@@ -5,7 +5,7 @@ python:
 
 env:
   - EXTRAS='[test]'
-  - EXTRAS='[test,s3,s3-test]'
+  - EXTRAS='[test,s3,test-s3]'
 
 install:
 - pip install -e .${EXTRAS}
