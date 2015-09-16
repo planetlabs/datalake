@@ -1,11 +1,18 @@
 language: python
+
 python:
 - '2.7'
-- pypy
+
+env:
+  - EXTRAS='[test]'
+  - EXTRAS='[test,s3,s3-test]'
+
 install:
-- pip install -e .[test]
+- pip install -e .${EXTRAS}
+
 script:
 - py.test
+
 deploy:
   provider: pypi
   user: planet
