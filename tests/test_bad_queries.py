@@ -85,3 +85,12 @@ def test_invalid_end(client):
     }
     res = get_bad_request(client, params)
     assert res['code'] == 'InvalidTime'
+
+def test_start_after_end(client):
+    params = {
+        'what': 'syslog',
+        'end': 100,
+        'start': 200,
+    }
+    res = get_bad_request(client, params)
+    assert res['code'] == 'InvalidWorkInterval'

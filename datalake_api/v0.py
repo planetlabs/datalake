@@ -58,6 +58,10 @@ def _validate_files_params(params):
     validated = {k: v for k, v in params.iteritems()}
     _convert_param_to_ms(validated, 'start')
     _convert_param_to_ms(validated, 'end')
+    if 'start' in validated and 'end' in validated:
+        if validated['start'] > validated['end']:
+            msg = 'start must be before end'
+            flask.abort(400, 'InvalidWorkInterval', msg)
     return validated
 
 
