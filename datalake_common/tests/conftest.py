@@ -2,12 +2,17 @@ import pytest
 import random
 import string
 from datetime import datetime, timedelta
-from moto import mock_s3
-import boto.s3
-from boto.s3.key import Key
-from urlparse import urlparse
-import simplejson as json
 
+try:
+    from moto import mock_s3
+    import boto.s3
+    from boto.s3.key import Key
+    from urlparse import urlparse
+    import simplejson as json
+except ImportError:
+    # if developers use s3-test features without having installed s3 stuff,
+    # things will fail. So it goes.
+    pass
 
 @pytest.fixture
 def basic_metadata():
