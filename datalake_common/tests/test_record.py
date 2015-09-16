@@ -18,3 +18,11 @@ def test_list_from_s3_url(s3_file_from_metadata, random_metadata):
 def test_from_url_fails_without_boto():
     with pytest.raises(InsufficientConfiguration):
         DatalakeRecord.list_from_url('s3://foo/bar')
+
+
+def test_list_from_metadata(random_metadata):
+    url = 's3://foo/baz'
+    records = DatalakeRecord.list_from_metadata(url, random_metadata)
+    assert len(records) >= 1
+    for r in records:
+        assert r['metadata'] == random_metadata

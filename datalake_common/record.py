@@ -50,6 +50,13 @@ class DatalakeRecord(dict):
         return [cls(url, metadata, t) for t in time_buckets]
 
     @classmethod
+    def list_from_metadata(cls, url, metadata):
+        '''return a list of DatalakeRecords for the url and metadata'''
+        metadata = Metadata(**metadata)
+        time_buckets = cls.get_time_buckets(metadata)
+        return [cls(url, metadata, t) for t in time_buckets]
+
+    @classmethod
     def _get_metadata(cls, url):
         parsed_url = urlparse(url)
         bucket = cls._get_bucket(parsed_url.netloc)
