@@ -45,6 +45,12 @@ setup(name='datalake-common',
               'pytest==2.7.2',
               'pip==7.1.0',
               'wheel==0.24.0',
+          ],
+          's3': [
+              'boto>=2.38.0',
+          ],
+          'test-s3': [
+              'moto==0.4.12',
           ]
       }
      )

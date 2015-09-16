@@ -1,0 +1,3 @@
+
+class InsufficientConfiguration(Exception):
+    pass
