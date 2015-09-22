@@ -14,7 +14,7 @@ class ArchiveQuerier(object):
         if where is not None:
             self._add_range_key_condition(kwargs, where)
         response = self._table.query(**kwargs)
-        return response['Items']
+        return self._deduplicate(response['Items'])
 
     def _prepare_work_id_kwargs(self, work_id, what):
         i = work_id + ':' + what
@@ -28,6 +28,17 @@ class ArchiveQuerier(object):
         new_condition = And(condition, Key('range_key').begins_with(where + ':'))
         kwargs['KeyConditionExpression'] = new_condition
 
+    def _deduplicate(self, records):
+        # http://stackoverflow.com/questions/480214/how-do-you-remove-duplicates-from-a-list-in-python-whilst-preserving-order
+        seen = set()
+        seen_add = seen.add
+
+        def _already_seen(r):
+            id = r['metadata']['id']
+            return id in seen or seen_add(id)
+
+        return [r for r in records if not _already_seen(r)]
+
     def query_by_time(self, start, end, what, where=None):
         results = []
         for b in DatalakeRecord.get_time_buckets(start, end):
@@ -36,7 +47,7 @@ class ArchiveQuerier(object):
                 self._add_range_key_condition(kwargs, where)
             response = self._table.query(**kwargs)
             results += self._exclude_outside(response['Items'], start, end)
-        return results
+        return self._deduplicate(results)
 
     def _exclude_outside(self, records, start, end):
         return [r for r in records if self._is_between(r, start, end)]
