@@ -46,14 +46,14 @@ class DatalakeRecord(dict):
     def list_from_url(cls, url):
         '''return a list of DatalakeRecords for the specified url'''
         metadata = cls._get_metadata(url)
-        time_buckets = cls.get_time_buckets(metadata)
+        time_buckets = cls.get_time_buckets_from_metadata(metadata)
         return [cls(url, metadata, t) for t in time_buckets]
 
     @classmethod
     def list_from_metadata(cls, url, metadata):
         '''return a list of DatalakeRecords for the url and metadata'''
         metadata = Metadata(**metadata)
-        time_buckets = cls.get_time_buckets(metadata)
+        time_buckets = cls.get_time_buckets_from_metadata(metadata)
         return [cls(url, metadata, t) for t in time_buckets]
 
     @classmethod
@@ -94,10 +94,15 @@ class DatalakeRecord(dict):
     _ONE_DAY_IN_MS = 24*60*60*1000
 
     @staticmethod
-    def get_time_buckets(metadata):
+    def get_time_buckets_from_metadata(metadata):
         '''return a list of time buckets in which the metadata falls'''
         start = metadata['start']
         end = metadata['end'] or start
+        return DatalakeRecord.get_time_buckets(start, end)
+
+    @staticmethod
+    def get_time_buckets(start, end):
+        '''get the time buckets spanned by the start and end times'''
         d = DatalakeRecord._ONE_DAY_IN_MS
         num_buckets = (end - start)/d + 1
         return [(start + i * d)/d for i in xrange(num_buckets)]
