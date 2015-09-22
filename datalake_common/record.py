@@ -93,6 +93,15 @@ class DatalakeRecord(dict):
 
     _ONE_DAY_IN_MS = 24*60*60*1000
 
+    '''The size of a time bucket in milliseconds
+
+    Each datalake record appears once in each time bucket that it covers. For
+    example, suppose the time buckets are one day long. If a record has a start
+    time of 1994-01-01T00:00:00 and an end time of 1994-01-03T02:33:29, it will
+    appear in the bucket for 1994-01-01, 1994-01-02, and 1994-01-03.
+    '''
+    TIME_BUCKET_SIZE_IN_MS = _ONE_DAY_IN_MS
+
     @staticmethod
     def get_time_buckets_from_metadata(metadata):
         '''return a list of time buckets in which the metadata falls'''
@@ -103,7 +112,7 @@ class DatalakeRecord(dict):
     @staticmethod
     def get_time_buckets(start, end):
         '''get the time buckets spanned by the start and end times'''
-        d = DatalakeRecord._ONE_DAY_IN_MS
+        d = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
         num_buckets = (end - start)/d + 1
         return [(start + i * d)/d for i in xrange(num_buckets)]
 
