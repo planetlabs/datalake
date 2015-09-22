@@ -1,5 +1,7 @@
 from memoized_property import memoized_property
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, And
+from datalake_common import DatalakeRecord
+
 
 class ArchiveQuerier(object):
 
@@ -8,13 +10,49 @@ class ArchiveQuerier(object):
         self.dynamodb = dynamodb
 
     def query_by_work_id(self, work_id, what, where=None):
+        kwargs = self._prepare_work_id_kwargs(work_id, what)
+        if where is not None:
+            self._add_range_key_condition(kwargs, where)
+        response = self._table.query(**kwargs)
+        return response['Items']
+
+    def _prepare_work_id_kwargs(self, work_id, what):
         i = work_id + ':' + what
-        kwargs = dict(
+        return dict(
             IndexName='work-id-index',
             KeyConditionExpression=Key('work_id_index_key').eq(i)
         )
-        response = self._table.query(**kwargs)
-        return response['Items']
+
+    def _add_range_key_condition(self, kwargs, where):
+        condition = kwargs['KeyConditionExpression']
+        new_condition = And(condition, Key('range_key').begins_with(where + ':'))
+        kwargs['KeyConditionExpression'] = new_condition
+
+    def query_by_time(self, start, end, what, where=None):
+        results = []
+        for b in DatalakeRecord.get_time_buckets(start, end):
+            kwargs = self._prepare_time_bucket_kwargs(b, what)
+            if where is not None:
+                self._add_range_key_condition(kwargs, where)
+            response = self._table.query(**kwargs)
+            results += self._exclude_outside(response['Items'], start, end)
+        return results
+
+    def _exclude_outside(self, records, start, end):
+        return [r for r in records if self._is_between(r, start, end)]
+
+    def _is_between(self, record, start, end):
+        if record['metadata']['end'] < start:
+            return False
+        if record['metadata']['start'] > end:
+            return False
+        return True
+
+    def _prepare_time_bucket_kwargs(self, bucket, what):
+        i = str(bucket) + ':' + what
+        return dict(
+            KeyConditionExpression=Key('time_index_key').eq(i)
+        )
 
     @memoized_property
     def _table(self):

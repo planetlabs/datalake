@@ -5,20 +5,89 @@ from datalake_common.tests import random_metadata
 from datalake_api.querier import ArchiveQuerier
 
 
-def test_query_work_id(table_maker, dynamodb):
-    metadata = [random_metadata() for i in range(2)]
-    metadata[0]['work_id'] = 'work0'
-    metadata[1]['work_id'] = 'work1'
-    records = []
-    for m in metadata:
-        url = 's3://' + m['work_id']
-        records += DatalakeRecord.list_from_metadata(url, m)
-    table = table_maker(records)
-    
-    aq = ArchiveQuerier('test', dynamodb=dynamodb)
-    results = aq.query_by_work_id('work0', metadata[0]['what'])
-    assert len(results) >= 1
-    for r in results:
-        assert r['metadata'] == metadata[0]
-        assert r['url'] == 's3://work0'
+@pytest.fixture
+def archive_querier(dynamodb):
+    return ArchiveQuerier('test', dynamodb=dynamodb)
 
+
+def create_test_record(**kwargs):
+    m = random_metadata()
+    m.update(**kwargs)
+    url = '/'.join(['s3'] + [str(v) for v in kwargs.values()])
+    return DatalakeRecord.list_from_metadata(url, m)
+
+
+def in_url(result, part):
+    url = result['url']
+    parts = url.split('/')
+    return part in parts
+
+
+def in_metadata(result, **kwargs):
+    m = result['metadata']
+    return all([k in m and m[k] == kwargs[k] for k in kwargs.keys()])
+
+
+def all_results(results, **kwargs):
+    assert len(results) >= 1
+    return all([in_metadata(r, **kwargs) for r in results])
+
+
+def result_between(result, start, end):
+    assert start < end
+    assert result['metadata']['start'] < result['metadata']['end']
+    if result['metadata']['end'] < start:
+        return False
+    if result['metadata']['start'] > end:
+        return False
+    return True
+
+
+def all_results_between(results, start, end):
+    assert len(results) >= 1
+    return all([result_between(r, start, end) for r in results])
+
+
+def test_query_by_work_id(table_maker, archive_querier):
+    records = []
+    for i in range(2):
+        work_id = 'work{}'.format(i)
+        records += create_test_record(work_id=work_id, what='foo')
+    table = table_maker(records)
+    results = archive_querier.query_by_work_id('work0', 'foo')
+    assert all_results(results, work_id='work0')
+
+
+def test_query_work_id_with_where(table_maker, archive_querier):
+    records = []
+    for i in range(4):
+        work_id = 'work0'
+        where = 'worker{}'.format(i)
+        records += create_test_record(work_id=work_id, what='foo', where=where)
+    table = table_maker(records)
+    results = archive_querier.query_by_work_id('work0', 'foo', where='worker0')
+    assert all_results(results, work_id='work0', where='worker0')
+
+
+def test_query_by_time(table_maker, archive_querier):
+    records = []
+    for start in range(0, 100, 10):
+        end = start + 9
+        records += create_test_record(start=start, end=end, what='foo')
+    table = table_maker(records)
+    results = archive_querier.query_by_time(0, 9, 'foo')
+    assert len(results) == 1
+    assert all_results_between(results, 0, 9)
+
+
+def test_query_by_time_with_where(table_maker, archive_querier):
+    records = []
+    for i in range(4):
+        where = 'worker{}'.format(i)
+        records += create_test_record(start=0, end=10, what='foo', where=where)
+
+    table = table_maker(records)
+    results = archive_querier.query_by_time(0, 10, 'foo', where='worker2')
+    assert len(results) == 1
+    assert all_results(results, start=0, end=10, where='worker2')
+    assert all_results_between(results, 0, 10)
