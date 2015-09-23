@@ -2,7 +2,7 @@ import pytest
 from datalake_common import DatalakeRecord
 from datalake_common.tests import random_metadata
 
-from datalake_api.querier import ArchiveQuerier
+from datalake_api.querier import ArchiveQuerier, MAX_RESULTS
 
 
 @pytest.fixture
@@ -114,3 +114,52 @@ def test_deduplicating_work_id_records(table_maker, archive_querier):
     table = table_maker(records)
     results = archive_querier.query_by_work_id('job0', 'foo')
     assert len(results) == 1
+
+
+def test_paginate_work_id_records(table_maker, archive_querier):
+    records = []
+    for i in range(150):
+        records += create_test_records(what='foo', work_id='job0')
+    table = table_maker(records)
+
+    results = []
+    cursor = None
+    while True:
+        page = archive_querier.query_by_work_id('job0', 'foo', cursor=cursor)
+        page_len = len(page)
+        assert page_len <= MAX_RESULTS
+        if len(results) == 0:
+            assert page.cursor is not None
+        results += page
+        cursor = page.cursor
+        if cursor is None:
+            break
+    assert len(results) == 150
+
+
+def test_paginate_time_records(table_maker, archive_querier):
+    records = []
+    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    very_end = 150 * interval
+    for start in range(0, very_end, interval):
+        end = start + interval
+        records += create_test_records(start=start, end=end, what='foo')
+    table = table_maker(records)
+
+    results = []
+    cursor = None
+    while True:
+        page = archive_querier.query_by_time(0, very_end, 'foo', cursor=cursor)
+        page_len = len(page)
+        assert page_len <= MAX_RESULTS
+        if len(results) == 0:
+            assert page.cursor is not None
+        results += page
+        cursor = page.cursor
+        if cursor is None:
+            break
+    # we tolerate some duplication for time queries because there is no great
+    # way to deduplicate across pages.
+    assert len(results) >= 150
+    ids = set([r['metadata']['id'] for r in results])
+    assert len(ids) == 150

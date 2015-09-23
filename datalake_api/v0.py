@@ -78,9 +78,16 @@ def files_get():
 
     If you specify start you must also specify end.
 
-    Returns metadata for at most 100 files in the list. If more than 100 files
-    are available, the next property in the response will be a url that may be
-    used to retrieve the next batch of files.
+    Returns metadata for at most 100 files in the list. If more files are
+    available, the `next` property in the response will be a url that may be
+    used to retrieve the next page of files.
+
+    Note that no single page will contain duplicate files. However, under some
+    circumstances, requests specifying a start and end time (as opposed to a
+    work_id) may return duplicate records in subsequent pages. So applications
+    that expect to retrieve multiple pages of results should tolerate
+    duplicates. Alternatively, such applications could query for a narrower
+    time interval.
 
     ---
     tags:

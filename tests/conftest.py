@@ -96,8 +96,9 @@ def _create_table(dynamodb, table_name):
 
 
 def _populate_table(table, records):
-    for r in records:
-        table.put_item(Item=r)
+    with table.batch_writer() as batch:
+        for r in records:
+            batch.put_item(Item=r)
 
 
 @pytest.fixture
