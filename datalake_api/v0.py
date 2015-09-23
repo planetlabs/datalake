@@ -1,11 +1,34 @@
 import flask
-from flask import request, jsonify, Response
+from flask import request, jsonify, Response, url_for
 import simplejson as json
 import logging
-from copy import copy
+from flask import current_app as app
+import boto3
+from querier import ArchiveQuerier, Cursor
 
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
+
+
+dynamodb = None
+def get_dynamodb():
+    if not hasattr(app, 'dynamodb'):
+        kwargs = dict(
+            endpoint_url=app.config.get('DYNAMODB_ENDPOINT'),
+            region_name=app.config.get('AWS_REGION'),
+            aws_secret_access_key=app.config.get('AWS_SECRET_ACCESS_KEY'),
+            aws_access_key_id=app.config.get('AWS_ACCESS_KEY_ID')
+        )
+        app.dynamodb = boto3.resource('dynamodb', **kwargs)
+    return app.dynamodb
+
+
+def get_archive_querier():
+    if not hasattr(app, 'archive_querier'):
+        table_name = app.config.get('DYNAMODB_TABLE')
+        app.archive_querier = ArchiveQuerier(table_name,
+                                             dynamodb=get_dynamodb())
+    return app.archive_querier
 
 
 @v0.route('/archive/')
@@ -55,7 +78,7 @@ def _validate_files_params(params):
        ('end' in params and 'start' not in params):
         msg = 'start and end must always be provided together.'
         flask.abort(400, 'InvalidWorkInterval', msg)
-    validated = {k: v for k, v in params.iteritems()}
+    validated = _copy_immutable_dict(params)
     _convert_param_to_ms(validated, 'start')
     _convert_param_to_ms(validated, 'end')
     if 'start' in validated and 'end' in validated:
@@ -64,6 +87,8 @@ def _validate_files_params(params):
             flask.abort(400, 'InvalidWorkInterval', msg)
     return validated
 
+def _copy_immutable_dict(d):
+    return {k: v for k, v in d.iteritems()}
 
 @v0.route('/archive/files/')
 def files_get():
@@ -215,4 +240,46 @@ def files_get():
     '''
     params = flask.request.args
     params = _validate_files_params(params)
-    return Response(json.dumps({}), content_type='application/json')
+
+    aq = get_archive_querier()
+
+    response = {}
+    work_id = params.get('work_id')
+    if work_id is not None:
+        results = aq.query_by_work_id(work_id,
+                                      params.get('what'),
+                                      where=params.get('where'),
+                                      cursor=_get_cursor(params))
+    else:
+        # we are guaranteed by the validate routine that this is a start/end
+        # time-based query.
+        results = aq.query_by_time(params['start'],
+                                   params['end'],
+                                   params['what'],
+                                   where=params.get('where'),
+                                   cursor=_get_cursor(params))
+
+    response = {
+        'metadata': results,
+        'next': _get_next_url(flask.request, results),
+    }
+    return Response(json.dumps(response), content_type='application/json')
+
+
+def _get_cursor(params):
+    c = params.get('cursor')
+    if c is None:
+        return None
+    return Cursor.from_serialized(c)
+
+
+def _get_next_url(request, results):
+    if results.cursor is None:
+        return None
+    return _get_url_with_cursor(request, results.cursor)
+
+
+def _get_url_with_cursor(request, cursor):
+    args = _copy_immutable_dict(request.args)
+    args['cursor'] = cursor.serialized
+    return url_for(request.endpoint, _external=True, **args)

@@ -2,6 +2,7 @@ import pytest
 from datalake_common import DatalakeRecord
 from datalake_common.tests import random_metadata
 import simplejson as json
+from urlparse import urlparse
 
 from datalake_api.querier import ArchiveQuerier, MAX_RESULTS
 from conftest import client
@@ -14,10 +15,24 @@ class HttpResults(list):
 
     def __init__(self, result):
         assert result.status_code == 200
-        response = json.loads(result.get_data())
+        self.response = json.loads(result.get_data())
+        self._validate_response()
+        super(HttpResults, self).__init__(self.response['metadata'])
+
+    def _validate_response(self):
         for k in ['next', 'metadata']:
-            assert k in response
-        super(HttpResults, self).__init__(response['metadata'])
+            assert k in self.response
+        self._validate_next_url(self.response['next'])
+
+    def _validate_next_url(self, next):
+        if next is None:
+            return
+        parts = urlparse(next)
+        assert 'cursor=' in parts.query
+
+    @property
+    def cursor(self):
+        return self.response['next']
 
 
 class HttpQuerier(object):
@@ -30,10 +45,8 @@ class HttpQuerier(object):
             work_id=work_id,
             what=what,
             where=where,
-            cursor=cursor,
         )
-        result = self._do_query(params)
-        return HttpResults(result)
+        return self._query_or_next(params, cursor)
 
     def query_by_time(self, start, end, what, where=None, cursor=None):
         params = dict(
@@ -41,9 +54,14 @@ class HttpQuerier(object):
             end=end,
             what=what,
             where=where,
-            cursor=cursor,
         )
-        result = self._do_query(params)
+        return self._query_or_next(params, cursor)
+
+    def _query_or_next(self, params, cursor):
+        if cursor is None:
+            result = self._do_query(params)
+        else:
+            result = self._get_next(cursor)
         return HttpResults(result)
 
     def _do_query(self, params):
@@ -54,6 +72,14 @@ class HttpQuerier(object):
         if q:
             uri += '?' + q
         return self.client.get(uri)
+
+    def _get_next(self, cursor):
+        # the "cursor" is the next URL in this case
+
+        # Work around this issue with the flask test client:
+        # https://github.com/mitsuhiko/flask/issues/968
+        cursor = '/'.join([''] + cursor.split('/')[3:])
+        return self.client.get(cursor)
 
 
 @pytest.fixture(params=[ArchiveQuerier, HttpQuerier],
