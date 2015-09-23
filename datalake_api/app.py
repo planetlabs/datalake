@@ -1,6 +1,7 @@
 import logging
 from flask import Flask, jsonify, redirect
 from flask_swagger import swagger
+import os
 
 from datalake_api.v0 import v0
 from datalake_api import settings
@@ -11,6 +12,8 @@ LOGGER = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config.from_object(settings)
+if 'DATALAKE_API_CONFIG' in os.environ:
+    app.config.from_envvar('DATALAKE_API_CONFIG')
 app.register_blueprint(v0)
 
 

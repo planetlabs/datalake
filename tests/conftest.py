@@ -8,6 +8,7 @@ from datalake_common.tests import *
 @pytest.fixture
 def client():
     datalake_api.app.config['TESTING'] = True
+    datalake_api.app.config['DYNAMODB_ENDPOINT'] = 'http://localhost:8000'
     return datalake_api.app.test_client()
 
 
