@@ -1,4 +1,5 @@
 import simplejson as json
+import base64
 
 
 def get_bad_request(client, params):
@@ -86,6 +87,7 @@ def test_invalid_end(client):
     res = get_bad_request(client, params)
     assert res['code'] == 'InvalidTime'
 
+
 def test_start_after_end(client):
     params = {
         'what': 'syslog',
@@ -94,3 +96,37 @@ def test_start_after_end(client):
     }
     res = get_bad_request(client, params)
     assert res['code'] == 'InvalidWorkInterval'
+
+
+def test_invalid_cursor(client):
+    params = {
+        'what': 'syslog',
+        'start': 100,
+        'end': 200,
+        'cursor': 'foobar',
+    }
+    res = get_bad_request(client, params)
+    assert res['code'] == 'InvalidCursor'
+
+
+def test_bad_cursor_valid_json(client):
+    cursor = base64.b64encode('{"valid": "json", "invalid": "cursor"}')
+    params = {
+        'what': 'syslog',
+        'start': 100,
+        'end': 200,
+        'cursor': cursor,
+    }
+    res = get_bad_request(client, params)
+    assert res['code'] == 'InvalidCursor'
+
+def test_bad_cursor_valid_json(client):
+    cursor = base64.b64encode('{"valid": "json", "invalid": "cursor"}')
+    params = {
+        'what': 'syslog',
+        'start': 100,
+        'end': 200,
+        'cursor': cursor,
+    }
+    res = get_bad_request(client, params)
+    assert res['code'] == 'InvalidCursor'

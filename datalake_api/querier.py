@@ -57,13 +57,21 @@ class Cursor(dict):
 
         '''
         super(Cursor, self).__init__(**kwargs)
+        self._validate()
+
+    def _validate(self):
+        if 'last_evaluated' not in self and 'current_time_bucket' not in self:
+            raise InvalidCursor('cursor missing required fields')
 
     @classmethod
     def from_serialized(cls, serialized):
-        b64 = cls._apply_padding(serialized)
-        j = base64.b64decode(b64)
-        d = json.loads(j)
-        return cls(**d)
+        try:
+            b64 = cls._apply_padding(serialized)
+            j = base64.b64decode(b64)
+            d = json.loads(j)
+            return cls(**d)
+        except json.JSONDecodeError:
+            raise InvalidCursor('Failed to decode cursor ' + serialized)
 
     @staticmethod
     def _apply_padding(b64):

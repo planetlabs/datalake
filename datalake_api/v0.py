@@ -4,7 +4,7 @@ import simplejson as json
 import logging
 from flask import current_app as app
 import boto3
-from querier import ArchiveQuerier, Cursor
+from querier import ArchiveQuerier, Cursor, InvalidCursor
 
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
@@ -85,10 +85,27 @@ def _validate_files_params(params):
         if validated['start'] > validated['end']:
             msg = 'start must be before end'
             flask.abort(400, 'InvalidWorkInterval', msg)
+    _validate_cursor(validated)
     return validated
+
+
+def _validate_cursor(params):
+    try:
+        params['cursor'] = _get_cursor(params)
+    except InvalidCursor as e:
+        flask.abort(400, 'InvalidCursor', e.message)
+
+
+def _get_cursor(params):
+    c = params.get('cursor')
+    if c is None:
+        return None
+    return Cursor.from_serialized(c)
+
 
 def _copy_immutable_dict(d):
     return {k: v for k, v in d.iteritems()}
+
 
 @v0.route('/archive/files/')
 def files_get():
@@ -249,7 +266,7 @@ def files_get():
         results = aq.query_by_work_id(work_id,
                                       params.get('what'),
                                       where=params.get('where'),
-                                      cursor=_get_cursor(params))
+                                      cursor=params.get('cursor'))
     else:
         # we are guaranteed by the validate routine that this is a start/end
         # time-based query.
@@ -257,20 +274,13 @@ def files_get():
                                    params['end'],
                                    params['what'],
                                    where=params.get('where'),
-                                   cursor=_get_cursor(params))
+                                   cursor=params.get('cursor'))
 
     response = {
         'metadata': results,
         'next': _get_next_url(flask.request, results),
     }
     return Response(json.dumps(response), content_type='application/json')
-
-
-def _get_cursor(params):
-    c = params.get('cursor')
-    if c is None:
-        return None
-    return Cursor.from_serialized(c)
 
 
 def _get_next_url(request, results):
