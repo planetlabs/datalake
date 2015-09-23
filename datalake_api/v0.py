@@ -120,9 +120,9 @@ def files_get():
 
     If you specify start you must also specify end.
 
-    Returns metadata for at most 100 files in the list. If more files are
-    available, the `next` property in the response will be a url that may be
-    used to retrieve the next page of files.
+    Returns metadata for at most 100 files. If more files are available, the
+    `next` property in the response will be a url that may be used to retrieve
+    the next page of files.
 
     Note that no single page will contain duplicate files. However, under some
     circumstances, requests specifying a start and end time (as opposed to a
@@ -138,21 +138,18 @@ def files_get():
         - in: query
           name: what
           description:
-              Only return files from here. May be a comma-separated list of
-              many whats.
+              Only return files from here.
           type: string
           required: true
         - in: query
           name: where
           description:
-              Only return files from here. May be a comma-separated list of
-              many wheres.
+              Only return files from here.
           type: string
         - in: query
           name: work_id
           description:
-              Only return files with this work_id. May be a comma-separated
-              list of many work_ids.
+              Only return files with this work_id.
           type: string
         - in: query
           name: start
@@ -254,6 +251,7 @@ def files_get():
                   type: string
                   description: human-readable message indicating why the
                                request failed
+
     '''
     params = flask.request.args
     params = _validate_files_params(params)
