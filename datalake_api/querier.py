@@ -96,20 +96,24 @@ class Cursor(dict):
 class QueryResults(list):
 
     def __init__(self, results, cursor=None):
-        results = self._deduplicate(results)
+        results = self._deduplicate_and_unpack(results)
         super(QueryResults, self).__init__(results)
         self.cursor = cursor
 
-    def _deduplicate(self, records):
+    def _deduplicate_and_unpack(self, records):
         # http://stackoverflow.com/questions/480214/how-do-you-remove-duplicates-from-a-list-in-python-whilst-preserving-order
         seen = set()
         seen_add = seen.add
+        unpack = self._unpack
 
         def _already_seen(r):
             id = r['metadata']['id']
             return id in seen or seen_add(id)
 
-        return [r for r in records if not _already_seen(r)]
+        return [unpack(r) for r in records if not _already_seen(r)]
+
+    def _unpack(self, result):
+        return result['metadata']
 
 
 class ArchiveQuerier(object):
