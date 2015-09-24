@@ -1,10 +1,8 @@
 language: python
 python:
 - '2.7'
-
 before_install:
-  - sudo ./init.sh
-
+- sudo ./init.sh
 install:
 - pip install -e .[test]
 script:
@@ -13,7 +11,7 @@ deploy:
   provider: pypi
   user: planet
   password:
-    secure: U5B5mbTFUcGLSa9HLTM4MRQFHvbGItTpEvU+AXH3Z8o4q+ZQCe9JNibKYXV6uhtD1uuw1VwmoHLWh5A78heOGfAFrLXNJwxwK4Dco3OR+nALkTYlCBnqdtUpV67Lpf27q4toRSxXshK/XQ5y8UVfRO0jNxlJZKc2cHp0G5LSXO5bqZKLDLKz40kW7ynurH3Ax0hFjzutl4MuY2ZCx46MyG2X8sn6Lb/GPihJo6r0RGMSpXuBPcFV6JmKWSk7YWrTHl9oGLKWOz79XAcBCIs/d1cU4HtDUYMyVnhF04XTMGU4eIcPyT5kN2PjuQyR06FhtVs+MVq0bKK6sbnan6wxNoeOTvnvl+pmsZ54GpDFKxVvUMzpbooXmxIw4/58/2RkQnRa3AUwKLsksCgIvNaYB8xI9DLWdm2TX7ki/HS++UpUBOPluPyErn219VP01LnyBwlmQEJezkpHLaYRk8safxAw2+V85UJ3fIBtTztaAJG3VJK9xpqk9y4eE5X0+v6SaIsuuZllDnsEiFyag5VArtb4NIBb1taQ5hldXGbYJnszZIUU9ywibiljnmZBse3VdRG2AQ/dOAO1KC5zdclfBx1lxzjFPWQ9I+9CTxao5Bb/OHGzHC+azJEcFu+ndjbnkUlhpyYytYE19qU+vI989gC6gQcBjNcgTtSzLel+uew=
+    secure: moVRXcjStPtmCqW9N0057EY20JhhPAwIh7JbFN8wcx6eYCzN6M8NCErTlEL8fkl5Wx7QreRMHuZo91lf5nDPQfaNieDyRFxRfg/s5oQZePve6etRxxDphSwmlldtRI0Q6osB4muuXsnXx/A72G2PgtgV6f3FdSv3phXMZKEKZfXKU26TYcvjzygK3afXSsv8T4m8LjSnv/nONwYENZYwyZNiT6/gzSQ5TGYpIw0zU4bhMe1ZX54CbRPgzudbe3phV4NpEAbhVWPfZOH0d0iYCjNm/VKPG83Kf2jLT5sD0VzsULfxaxdtPycXjGlPHMzoGFQWH8x8FcnEnTgcD9irATRgQgQQQHDyYjkoAFxymDYglZolWZpswlPK6/D624GzZD19MxWBt2s6UvXDSKupDX/yxNxNwZa3VtXU1/ylfC5IHP9+OMhANKgtw0k4pUNnj1fI5TXQae1EDtLkOxqUfCSIeJr+AZmIFGvqUbQG05G5SGloGv9eGEjoamnUfgU9SM06n0fbVJvXJ5aHwYQ3DUOnfkMLXrKtuRn7qfzTT3hpRbPTQZxM53zMmLfgP7XwzhDT2UE+FaNSXVofFhPq4UP26OycVfYE5y2mt8hAAa/88qmmgrUzakmDJ7lVL/GQx43RynrlaoKAJa+zIChbJP8QWZKR3LFaJZPB9+doKXg=
   on:
     tags: true
-    repo: planetlabs/datalake
+    repo: planetlabs/datalake-api
