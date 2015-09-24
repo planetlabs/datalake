@@ -44,5 +44,7 @@ setup(name='datalake_api',
       extras_require={
           'test': [
               'pytest==2.7.2',
-          ]
-      })
+          ],
+      },
+      include_package_data=True
+)
