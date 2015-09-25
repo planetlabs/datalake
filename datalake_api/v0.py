@@ -16,9 +16,12 @@ def get_dynamodb():
         kwargs = dict(
             endpoint_url=app.config.get('DYNAMODB_ENDPOINT'),
             region_name=app.config.get('AWS_REGION'),
-            aws_secret_access_key=app.config.get('AWS_SECRET_ACCESS_KEY'),
-            aws_access_key_id=app.config.get('AWS_ACCESS_KEY_ID')
         )
+        for k in ['AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID']:
+            # these guys must be fully absent from the kwargs; None will not
+            # do.
+            if app.config.get(k) is not None:
+                kwargs[k.lower()] = app.config[k]
         app.dynamodb = boto3.resource('dynamodb', **kwargs)
     return app.dynamodb
 

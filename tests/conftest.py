@@ -9,6 +9,8 @@ from datalake_common.tests import *
 def client():
     datalake_api.app.config['TESTING'] = True
     datalake_api.app.config['DYNAMODB_ENDPOINT'] = 'http://localhost:8000'
+    datalake_api.app.config['AWS_ACCESS_KEY_ID'] = 'abc'
+    datalake_api.app.config['AWS_SECRET_ACCESS_KEY'] = '123'
     return datalake_api.app.test_client()
 
 
