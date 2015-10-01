@@ -40,3 +40,13 @@ def test_push_with_aws_vars(cli_tester, tmpfile):
     cmd = '-k abcd -s 1234 -r us-gov-west-1 '
     cmd += 'push --start=2015-09-14 --where=cron --what=report ' + tmpfile('')
     cli_tester(cmd)
+
+
+def test_push_with_config_file(cli_tester, tmpfile):
+    cfg_json = '''{"aws_key": "abcd",
+                   "aws_secret": "1234",
+                   "aws_region": "us-gov-west-1"}'''
+    cfg = tmpfile(cfg_json)
+    cmd = '-c ' + cfg
+    cmd += ' push --start=2015-09-14 --where=cron --what=report /dev/null'
+    cli_tester(cmd)

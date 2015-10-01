@@ -2,6 +2,7 @@ import click
 from datalake import Archive
 from datalake.conf import set_config
 import os
+import simplejson as json
 
 
 DEFAULT_CONFIG = '/etc/datalake.json'
@@ -42,6 +43,8 @@ def _read_config_file(config):
         else:
             return {}
     elif os.path.exists(config):
+        print config
+        print open(config).read()
         return json.load(open(config))
     else:
         raise click.UsageError('Config file {} not exist'.format(config))
