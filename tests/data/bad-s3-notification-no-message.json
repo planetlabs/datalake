@@ -8,7 +8,7 @@
   "expected_datalake_records": [],
   "expected_reports": [{
     "status": "error",
-	"records": []
+    "records": []
   }]
 }
 
