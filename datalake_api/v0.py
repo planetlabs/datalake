@@ -36,18 +36,28 @@ def get_archive_querier():
 
 @v0.route('/archive/')
 def archive_get():
-    """
-    Archive status
+    """Archive status
 
-    Get the archive status.
+    Get the archive details.
     ---
     tags:
       - archive
     responses:
       200:
         description: success
+        schema:
+          id: DatalakeMetadataList
+          required:
+              - storage_url
+          properties:
+              storage_url:
+                  type: string
+                  description: base url where clients should push files.
     """
-    return Response(json.dumps({}), content_type='application/json')
+    response = dict(
+        storage_url=app.config.get('DATALAKE_STORAGE_URL')
+    )
+    return jsonify(response)
 
 
 @v0.errorhandler(400)
