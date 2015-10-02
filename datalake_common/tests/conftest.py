@@ -24,7 +24,8 @@ def basic_metadata():
         'where': 'nebraska',
         'what': 'apache',
         'hash': '12345',
-        'work_id': None
+        'work_id': None,
+        'data_version': '0.1',
     }
 
 def random_word(length):
@@ -58,6 +59,7 @@ def random_metadata():
         'what': random_word(10),
         'id': random_hex(40),
         'hash': random_hex(40),
+        'data_version': random_word(3)
     }
 
 @pytest.fixture

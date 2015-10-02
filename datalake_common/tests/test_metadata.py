@@ -97,3 +97,8 @@ def test_end_before_start(basic_metadata):
     basic_metadata['start'] = end
     with pytest.raises(InvalidDatalakeMetadata):
         Metadata(basic_metadata)
+
+def test_random_metadata(random_metadata):
+    # Others rely on datalake-common's random_metadata to be valid. So make
+    # sure it doesn't throw any errors.
+    Metadata(random_metadata)

@@ -64,6 +64,7 @@ class Metadata(dict):
         self._validate_version()
         self._validate_slug_fields()
         self._validate_work_id()
+        self._validate_data_version()
 
     _REQUIRED_METADATA_FIELDS = ['version', 'start', 'where', 'what', 'id',
                                  'hash']
@@ -103,6 +104,13 @@ class Metadata(dict):
         if self['work_id'] == 'null':
             msg = '"work_id" cannot be the string "null"'
             raise InvalidDatalakeMetadata(msg)
+
+    def _validate_data_version(self):
+        if 'data_version' not in self:
+            msg = ('"data_version" is required. '
+                   'But it can be trivial (e.g., "0")')
+            raise InvalidDatalakeMetadata(msg)
+        self._validate_slug_field('data_version')
 
     def _validate_interval(self):
         if self.get('end') is None:
