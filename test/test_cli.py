@@ -27,18 +27,20 @@ def test_cli_with_version_succeeds(cli_tester):
 
 
 def test_push_with_metadata(cli_tester, tmpfile):
-    cmd = 'push --start=2015-05-15 --end=2015-05-16 --where box --what log '
+    cmd = ('push --start=2015-05-15 --end=2015-05-16 --where box --what log '
+           '--data-version 0 ')
     cli_tester(cmd + tmpfile(''))
 
 
 def test_push_without_end(cli_tester, tmpfile):
-    cmd = 'push --start=2015-05-15 --where=cron --what=report ' + tmpfile('')
+    cmd = ('push --data-version 0 --start=2015-05-15 --where=cron '
+           '--what=report ' + tmpfile(''))
     cli_tester(cmd)
 
 
 def test_push_with_aws_vars(cli_tester, tmpfile):
-    cmd = '-k abcd -s 1234 -r us-gov-west-1 '
-    cmd += 'push --start=2015-09-14 --where=cron --what=report ' + tmpfile('')
+    cmd = ('-k abcd -s 1234 -r us-gov-west-1 push --data-version 0 '
+           '--start=2015-09-14 --where=cron --what=report ' + tmpfile(''))
     cli_tester(cmd)
 
 
@@ -47,6 +49,6 @@ def test_push_with_config_file(cli_tester, tmpfile):
                    "aws_secret": "1234",
                    "aws_region": "us-gov-west-1"}'''
     cfg = tmpfile(cfg_json)
-    cmd = '-c ' + cfg
-    cmd += ' push --start=2015-09-14 --where=cron --what=report /dev/null'
+    cmd = ('-c ' + cfg + ' push --data-version 0 --start=2015-09-14 '
+           '--where=cron --what=report /dev/null')
     cli_tester(cmd)
