@@ -39,7 +39,6 @@ class Metadata(dict):
         super(Metadata, self).__init__(*args, **kwargs)
         self._ensure_id()
         self._ensure_version()
-        self._ensure_work_id()
         self._validate()
         self._normalize_dates()
         self._validate_interval() # must occur after normalizing
@@ -59,10 +58,6 @@ class Metadata(dict):
     def _ensure_version(self):
         if 'version' not in self:
             self['version'] = self._VERSION
-
-    def _ensure_work_id(self):
-        if 'work_id' not in self:
-            self['work_id'] = None
 
     def _validate(self):
         self._validate_required_fields()
@@ -98,6 +93,10 @@ class Metadata(dict):
             raise InvalidDatalakeMetadata(msg)
 
     def _validate_work_id(self):
+        if 'work_id' not in self:
+            msg = '"work_id" is required, but it can be None'
+            raise InvalidDatalakeMetadata(msg)
+
         if self['work_id'] is None:
             return
         self._validate_slug_field('work_id')

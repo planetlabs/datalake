@@ -23,7 +23,8 @@ def basic_metadata():
         'end': 1426895999999,
         'where': 'nebraska',
         'what': 'apache',
-        'hash': '12345'
+        'hash': '12345',
+        'work_id': None
     }
 
 def random_word(length):
