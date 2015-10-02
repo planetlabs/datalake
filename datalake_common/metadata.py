@@ -93,6 +93,13 @@ class Metadata(dict):
                    '_ and - are allowed.').format(self[f], f)
             raise InvalidDatalakeMetadata(msg)
 
+    def _validate_slug_field_with_dots(self, f):
+        if not re.match(r'^[\.a-z0-9_-]+$', self[f]):
+            msg = ('Invalid value "{}" for "{}". Only lower-case letters, '
+                   'underscores, dashes, and dots '
+                   'are allowed.').format(self[f], f)
+            raise InvalidDatalakeMetadata(msg)
+
     def _validate_work_id(self):
         if 'work_id' not in self:
             msg = '"work_id" is required, but it can be None'
@@ -110,7 +117,14 @@ class Metadata(dict):
             msg = ('"data_version" is required. '
                    'But it can be trivial (e.g., "0")')
             raise InvalidDatalakeMetadata(msg)
-        self._validate_slug_field('data_version')
+        if self['data_version'] is None:
+            msg = ('"data_version" cannont be None. '
+                   'But it can be trivial (e.g., "0")')
+            raise InvalidDatalakeMetadata(msg)
+        if not isinstance(self['data_version'], basestring):
+            msg = '"data_version" must be a string'
+            raise InvalidDatalakeMetadata(msg)
+        self._validate_slug_field_with_dots('data_version')
 
     def _validate_interval(self):
         if self.get('end') is None:

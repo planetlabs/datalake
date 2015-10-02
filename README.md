@@ -60,9 +60,10 @@ the chances that it conflicts with other whats in the datalake. So names like
 'rawfood-ingester' are good.
 
 data_version: This is the data version. It must only contain alpha-numeric
-characters, -, and _. But the format is otherwise up to the user. If the format
-of the contents of the file changes, this version should change so that
-consumers of the data can know to use a different parser. It is required.
+characters, dash (-), underscore(_), and dot(.). But the format is otherwise up
+to the user. If the format of the contents of the file changes, this version
+should change so that consumers of the data can know to use a different
+parser. It is required.
 
 id: An ID for the file assigned by the datalake. It is required.
 
