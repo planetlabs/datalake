@@ -9,10 +9,10 @@ from datalake_common.tests import tmpfile
 def cli_tester(s3_bucket):
 
     def tester(command, expected_exit=0):
-        os.environ['DL_STORAGE_URL'] = 's3://datalake-test'
+        os.environ['DATALAKE_STORAGE_URL'] = 's3://datalake-test'
         parts = command.split(' ')
         runner = CliRunner()
-        result = runner.invoke(cli, parts)
+        result = runner.invoke(cli, parts, catch_exceptions=False)
         assert result.exit_code == expected_exit
 
     return tester
