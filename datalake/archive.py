@@ -1,4 +1,4 @@
-from conf import get_config_var
+from os import environ
 import urlparse
 from memoized_property import memoized_property
 import simplejson as json
@@ -17,7 +17,7 @@ class UnsupportedStorageError(Exception):
 class Archive(object):
 
     def __init__(self, storage_url=None):
-        self.storage_url = storage_url or get_config_var('storage_url')
+        self.storage_url = storage_url or environ.get('DATALAKE_STORAGE_URL')
         self._validate_storage_url()
 
     def _validate_storage_url(self):
@@ -84,7 +84,7 @@ class Archive(object):
 
     @property
     def _s3_host(self):
-        r = get_config_var('aws_region')
+        r = environ.get('AWS_REGION')
         if r is not None:
             return 's3-' + r + '.amazonaws.com'
         else:
@@ -93,8 +93,8 @@ class Archive(object):
     @property
     def _s3_conn(self):
         if not hasattr(self, '_conn'):
-            k = get_config_var('aws_key')
-            s = get_config_var('aws_secret')
+            k = environ.get('AWS_ACCESS_KEY_ID')
+            s = environ.get('AWS_SECRET_ACCESS_KEY')
             self._conn = S3Connection(aws_access_key_id=k,
                                       aws_secret_access_key=s,
                                       host=self._s3_host)

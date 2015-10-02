@@ -1,11 +1,11 @@
 import click
 from datalake import Archive
-from datalake.conf import set_config
 import os
 import simplejson as json
+from dotenv import load_dotenv
 
 
-DEFAULT_CONFIG = '/etc/datalake.json'
+DEFAULT_CONFIG = '/etc/datalake.env'
 
 archive = None
 
@@ -18,32 +18,39 @@ archive = None
 @click.option('-u', '--storage-url',
               help=('The URL to the top-level storage resource where '
                     'datalake will archive all the files.'),
-              envvar='DL_STORAGE_URL')
-@click.option('-k', '--aws-key',
+              envvar='DATALAKE_STORAGE_URL')
+@click.option('-k', '--aws-access-key-id',
               help='The AWS access key used to read and write s3.',
               envvar='AWS_ACCESS_KEY_ID')
-@click.option('-s', '--aws-secret',
+@click.option('-s', '--aws-secret-access-key',
               help='The AWS secret key used to read and write s3.',
               envvar='AWS_SECRET_ACCESS_KEY')
 @click.option('-r', '--aws-region',
               help='The AWS region where files should be stored.',
               envvar='AWS_REGION')
 def cli(ctx, **kwargs):
-    conf = _read_config_file(kwargs.pop('config'))
-    conf.update({k: v for k, v in kwargs.iteritems() if v is not None})
-    set_config(conf)
+    _read_config_file(kwargs.pop('config'))
+    _update_environment(**kwargs)
     _subcommand_or_fail(ctx)
     _prepare_archive_or_fail(ctx, kwargs.pop('storage_url'))
+
+
+def _update_environment(**kwargs):
+    for k, v in kwargs.iteritems():
+        if v is None:
+            continue
+        if not k.startswith('aws'):
+            k = 'DATALAKE_' + k
+        k = k.upper()
+        os.environ[k] = v
 
 
 def _read_config_file(config):
     if config is None:
         if os.path.exists(DEFAULT_CONFIG):
-            return json.load(open(DEFAULT_CONFIG))
-        else:
-            return {}
+            load_dotenv(DEFAULT_CONFIG)
     elif os.path.exists(config):
-        return json.load(open(config))
+        load_dotenv(config)
     else:
         raise click.UsageError('Config file {} not exist'.format(config))
 
