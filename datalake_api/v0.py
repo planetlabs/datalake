@@ -180,69 +180,79 @@ def files_get():
       200:
         description: success
         schema:
-          id: DatalakeMetadataList
+          id: DatalakeRecordList
           required:
-              - metadata
+              - records
               - next
           properties:
-              metadata:
+              records:
                   type: array
                   description: the list of metadata records matching the query.
                                May be an empty list
                   items:
                       schema:
-                        id: DatalakeMetadata
+                        id: DatalakeRecord
                         required:
-                            - version
-                            - where
-                            - start
-                            - end
-                            - work_id
-                            - where
-                            - data-version
-                            - id
-                            - hash
+                          - url
+                          - metadata
                         properties:
-                            version:
-                                type: integer
-                                description: the version of the metadata record
-                            where:
-                                type: string
-                                description: where the file came from
-                            start:
-                                type: integer
-                                description: the start time of the file in ms
-                                             since the epoch
-                            end:
-                                type: integer
-                                description: the end time of the file in ms
-                                             since the epoch. This may be
-                                             null if the file is associated
-                                             with an instant
-                            work_id:
-                                type: string
-                                desription: the work_id associated with the
-                                            file. This may be null.
-                            where:
-                                type: string
-                                description: the location or server that
-                                             generated the file
-                            what:
-                                type: string
-                                description: the process or program that
-                                             generated the file
-                            data-version:
-                                type: string
-                                description: the version of the data format in
-                                             the file
-                            id:
-                                type: string
-                                description: the unique id of the file in the
-                                             datalake
-                            hash:
-                                type: string
-                                description: 16-byte blake2 hash of the file
-                                             content
+                          url:
+                            type: string
+                            description: url where the file may be retrieved
+                          metadata:
+                            schema:
+                              id: DatalakeMetadata
+                              required:
+                                - version
+                                - where
+                                - start
+                                - end
+                                - work_id
+                                - where
+                                - data-version
+                                - id
+                                - hash
+                              properties:
+                                version:
+                                  type: integer
+                                  description: the version of the metadata record
+                                where:
+                                  type: string
+                                  description: where the file came from
+                                start:
+                                  type: integer
+                                  description: the start time of the file in ms
+                                               since the epoch
+                                end:
+                                  type: integer
+                                  description: the end time of the file in ms
+                                               since the epoch. This may be
+                                               null if the file is associated
+                                               with an instant
+                                work_id:
+                                  type: string
+                                  description: the work_id associated with the
+                                               file. This may be null.
+                                where:
+                                  type: string
+                                  description: the location or server that
+                                               generated the file
+                                what:
+                                  type: string
+                                  description: the process or program that
+                                               generated the file
+                                data-version:
+                                  type: string
+                                  description: the version of the data format in
+                                               the file
+                                id:
+                                  type: string
+                                  description: the unique id of the file in the
+                                               datalake
+                                hash:
+                                  type: string
+                                  description: 16-byte blake2 hash of the file
+                                               content
 
               next:
                   type: string
@@ -288,7 +298,7 @@ def files_get():
                                    cursor=params.get('cursor'))
 
     response = {
-        'metadata': results,
+        'records': results,
         'next': _get_next_url(flask.request, results),
     }
     return Response(json.dumps(response), content_type='application/json')

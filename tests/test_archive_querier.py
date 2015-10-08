@@ -17,10 +17,10 @@ class HttpResults(list):
         assert result.status_code == 200
         self.response = json.loads(result.get_data())
         self._validate_response()
-        super(HttpResults, self).__init__(self.response['metadata'])
+        super(HttpResults, self).__init__(self.response['records'])
 
     def _validate_response(self):
-        for k in ['next', 'metadata']:
+        for k in ['next', 'records']:
             assert k in self.response
         self._validate_next_url(self.response['next'])
 
@@ -102,7 +102,8 @@ def in_url(result, part):
 
 
 def in_metadata(result, **kwargs):
-    return all([k in result and result[k] == kwargs[k] for k in kwargs.keys()])
+    m = result['metadata']
+    return all([k in m and m[k] == kwargs[k] for k in kwargs.keys()])
 
 
 def all_results(results, **kwargs):
@@ -112,10 +113,10 @@ def all_results(results, **kwargs):
 
 def result_between(result, start, end):
     assert start < end
-    assert result['start'] < result['end']
-    if result['end'] < start:
+    assert result['metadata']['start'] < result['metadata']['end']
+    if result['metadata']['end'] < start:
         return False
-    if result['start'] > end:
+    if result['metadata']['start'] > end:
         return False
     return True
 
@@ -238,5 +239,5 @@ def test_paginate_time_records(table_maker, querier):
     # we tolerate some duplication for time queries because there is no great
     # way to deduplicate across pages.
     assert len(results) >= 150
-    ids = set([r['id'] for r in results])
+    ids = set([r['metadata']['id'] for r in results])
     assert len(ids) == 150

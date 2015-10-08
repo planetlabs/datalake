@@ -121,7 +121,7 @@ class QueryResults(list):
         return [unpack(r) for r in records if not _already_seen(r)]
 
     def _unpack(self, result):
-        return result['metadata']
+        return dict(url=result['url'], metadata=result['metadata'])
 
 
 class ArchiveQuerier(object):
