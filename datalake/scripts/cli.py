@@ -24,20 +24,31 @@ def clean_up_datalake_errors(f):
 @click.version_option()
 @click.pass_context
 @click.option('-c', '--config',
-              help=('config file. The format is just a flat json with key '
-                    'names that you can guess'))
+              help=('config file. The format is just single lines with '
+                    'VAR=VALUE. If ' + DEFAULT_CONFIG + ' exists it will '
+                    'be read. Config file values can be overridden by '
+                    'environment variables, which can be overridded by '
+                    'command-line arguments.'))
 @click.option('-u', '--storage-url',
               help=('The URL to the top-level storage resource where '
-                    'datalake will archive all the files.'),
+                    'datalake will archive all the files (e.g., '
+                    's3://my-datalake). DATALAKE_STORAGE_URL is the '
+                    'config/environment variable'),
               envvar='DATALAKE_STORAGE_URL')
 @click.option('-k', '--aws-access-key-id',
-              help='The AWS access key used to read and write s3.',
+              help=('The AWS access key used to read and write s3. '
+                    'AWS_ACCESS_KEY_ID is the configuration/environment '
+                    'variable.'),
               envvar='AWS_ACCESS_KEY_ID')
 @click.option('-s', '--aws-secret-access-key',
-              help='The AWS secret key used to read and write s3.',
+              help=('The AWS secret key used to read and write s3.'
+                    'AWS_SECRET_ACCESS_KEY is the configuration/environment '
+                    'variable.'),
               envvar='AWS_SECRET_ACCESS_KEY')
 @click.option('-r', '--aws-region',
-              help='The AWS region where files should be stored.',
+              help=('The AWS region where files should be stored. '
+                    'AWS_REGION is the configuration/environment '
+                    'variable.'),
               envvar='AWS_REGION')
 def cli(ctx, **kwargs):
     _read_config_file(kwargs.pop('config'))
