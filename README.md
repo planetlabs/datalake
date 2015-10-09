@@ -26,6 +26,11 @@ things are archived somewhere.
 Isn't this a solved problem? Kinda. s3cmd + logrotate can get you pretty
 close. The thing that datalake adds is a query capability.
 
+Installation
+============
+
+        pip install datalake
+
 Configuration
 =============
 
