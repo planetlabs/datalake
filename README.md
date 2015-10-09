@@ -7,12 +7,20 @@ NOTE: Much of this README is an aspirational.
 
 A datalake is an archive that contains files and
 [metadata](https://github.com/planetlabs/datalake-common) records about those
-files. This datalake project is a python library and command-line tool for
-managing a datalake. You can use it to push files to the datalake, list the
-files available in the datalake, and retrieve files from the datalake.
+files. The datalake project consists of a number of pieces:
 
-Where do the files get archived? In an s3 bucket that you configure. And
-perhaps eventually in other kinds of storage.
+- The [datalake-ingester][ingester] that listens for new files pushed to the
+  datalake and ingests their metadata so it can be searched.
+
+- The [datalake-api][api] to query over the files in the datalake.
+
+- This project, which is a python and command-line client for interacting with
+  the datalake. You can use it to push files to the datalake, list the files
+  available in the datalake, and retrieve files from the datalake.
+
+To use this client, you (or somebody on your behalf) must be operating an
+instance of the datalake-ingester and the datalake-api. You will need some
+configuration information from them.
 
 Why would I use this? Because you just want to get all of the files into one
 place with nice uniform metadata so you can know what is what. Then you can
@@ -37,7 +45,7 @@ Configuration
 datalake needs a bit of configuration. Every configuration variable can either
 be set in /etc/datalake.conf, set as an environment variable, or passed in as
 an argument. For documentation on the configuration variables, invoke `datalake
--h`.
+--help`.
 
 Usage
 =====
@@ -84,3 +92,6 @@ Developer Setup
 
 Please note that you must periodically re-run the pip install to ensure that
 the command-line client is installed properly or some tests may not pass.
+
+[ingester]: https://github.com/planetlabs/datalake-ingester
+[api]: https://github.com/planetlabs/datalake-api
