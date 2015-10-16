@@ -40,6 +40,7 @@ setup(name='datalake_api',
           'Flask>=0.10.1',
           'flask-swagger==0.2.8',
           'boto3==1.1.3',
+          'raven>=5.6.0',
       ],
       extras_require={
           'test': [
