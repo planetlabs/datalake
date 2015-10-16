@@ -17,12 +17,12 @@ if 'DATALAKE_API_CONFIG' in os.environ:
 app.register_blueprint(v0)
 
 
-level = os.environ.get('DATALAKE_API_LOG_LEVEL')
+level = app.config.get('DATALAKE_API_LOG_LEVEL')
 if level is not None and not app.debug:
     logging.basicConfig(level=level)
 
 
-sentry_dsn = os.environ.get('SENTRY_DSN')
+sentry_dsn = app.config.get('SENTRY_DSN')
 if sentry_dsn is not None:
     from raven.handlers.logging import SentryHandler
     handler = SentryHandler(sentry_dsn)
