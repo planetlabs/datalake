@@ -13,7 +13,7 @@ def cli_tester(s3_bucket):
         parts = command.split(' ')
         runner = CliRunner()
         result = runner.invoke(cli, parts, catch_exceptions=False)
-        assert result.exit_code == expected_exit
+        assert result.exit_code == expected_exit, result.output
 
     return tester
 
@@ -51,4 +51,13 @@ def test_push_with_config_file(cli_tester, tmpfile):
     cfg = tmpfile(cfg_json)
     cmd = ('-c ' + cfg + ' push --data-version 0 --start=2015-09-14 '
            '--where=cron --what=report /dev/null')
+    cli_tester(cmd)
+
+def test_translate_with_bad_expression_fails(cli_tester):
+    cli_tester('translate foo bar', expected_exit=2)
+
+def test_translate_with_good_args_succceeds(cli_tester):
+    cmd = ("translate .*job-(?P<job_id>[0-9]+).log$~job{job_id} "
+           "/var/log/job-456.log")
+    print cmd
     cli_tester(cmd)

@@ -1,5 +1,5 @@
 import click
-from datalake import Archive
+from datalake import Archive, Translator, TranslatorError
 import os
 import simplejson as json
 from dotenv import load_dotenv
@@ -15,7 +15,7 @@ def clean_up_datalake_errors(f):
     def wrapped(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except InvalidDatalakeMetadata as e:
+        except (InvalidDatalakeMetadata, TranslatorError) as e:
             raise click.UsageError(e.message)
     return wrapped
 
@@ -54,7 +54,6 @@ def cli(ctx, **kwargs):
     _read_config_file(kwargs.pop('config'))
     _update_environment(**kwargs)
     _subcommand_or_fail(ctx)
-    _prepare_archive_or_fail(ctx, kwargs.pop('storage_url'))
 
 
 def _update_environment(**kwargs):
@@ -82,9 +81,9 @@ def _subcommand_or_fail(ctx):
         ctx.fail('Please specify a command.')
 
 
-def _prepare_archive_or_fail(ctx, storage_url):
+def _prepare_archive_or_fail():
     global archive
-    archive = Archive(storage_url=storage_url)
+    archive = Archive()
 
 
 # So, I fully appreciate the dissonance of "required options." But we have lots
@@ -99,10 +98,24 @@ def _prepare_archive_or_fail(ctx, storage_url):
 @click.option('--work-id')
 @click.argument('file')
 def push(**kwargs):
+    _prepare_archive_or_fail()
     _push(**kwargs)
+
 
 @clean_up_datalake_errors
 def _push(**kwargs):
     filename = kwargs.pop('file')
     url = archive.prepare_metadata_and_push(filename, **kwargs)
     click.echo('Pushed {} to {}'.format(filename, url))
+
+
+@cli.command()
+@click.argument('translation-expression')
+@click.argument('file')
+def translate(**kwargs):
+    _translate(**kwargs)
+
+@clean_up_datalake_errors
+def _translate(**kwargs):
+    t = Translator(kwargs['translation_expression'])
+    click.echo(t.translate(kwargs['file']))
