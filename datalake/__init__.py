@@ -6,3 +6,4 @@ __all__ = ['File', 'Archive', 'Uploader', 'Enqueuer']
 from dlfile import File
 from archive import Archive
 from queue import Uploader, Enqueuer
+from translator import Translator, TranslatorError

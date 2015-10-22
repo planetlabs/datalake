@@ -34,7 +34,7 @@ class Archive(object):
         return urlparse.urlparse(self.storage_url)
 
     def prepare_metadata_and_push(self, path, **metadata_fields):
-        '''push a file f to the archive with the specified metadata
+        '''push a file to the archive with the specified metadata
 
         Args:
             path: path of the file to push
