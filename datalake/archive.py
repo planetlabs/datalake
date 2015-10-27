@@ -67,7 +67,10 @@ class Archive(object):
 
     @memoized_property
     def _s3_bucket(self):
-        return self._s3_conn.get_bucket(self._s3_bucket_name)
+        # Note: we pass validate=False because we may just have push
+        # permissions. If validate is not False, boto tries to list the
+        # bucket. And this will 403.
+        return self._s3_conn.get_bucket(self._s3_bucket_name, validate=False)
 
     _KEY_FORMAT = '{prefix}-{where}/{what}/{start}/{id}-{name}'
 
