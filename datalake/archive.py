@@ -57,12 +57,15 @@ class Archive(object):
         returns the url to which the file was pushed.
         '''
         self._upload_file(f)
-        return self._get_s3_url(f)
+        return self.url_from_file(f)
 
     def _upload_file(self, f):
         key = self._s3_key_from_metadata(f)
         key.set_metadata('datalake', json.dumps(f.metadata))
         key.set_contents_from_string(f.read())
+
+    def url_from_file(self, f):
+        return self._get_s3_url(f)
 
     _URL_FORMAT = 's3://{bucket}/{key}'
 
@@ -82,17 +85,15 @@ class Archive(object):
         # bucket. And this will 403.
         return self._s3_conn.get_bucket(self._s3_bucket_name, validate=False)
 
-    _KEY_FORMAT = '{prefix}-{where}/{what}/{start}/{id}-{name}'
+    _KEY_FORMAT = '{prefix}-{where}/{what}/{start}/{id}'
 
     def _s3_key_from_metadata(self, f):
         # For performance reasons, s3 keys should start with a short random
         # sequence:
         # https://aws.amazon.com/blogs/aws/amazon-s3-performance-tips-tricks-seattle-hiring-event/
         # http://docs.aws.amazon.com/AmazonS3/latest/dev/request-rate-perf-considerations.html
-        name = f._basename
         prefix = f.metadata['hash'][0]
-        key_name = self._KEY_FORMAT.format(name=name,
-                                           prefix=prefix,
+        key_name = self._KEY_FORMAT.format(prefix=prefix,
                                            **f.metadata)
         return Key(self._s3_bucket, name=key_name)
 
