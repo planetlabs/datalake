@@ -22,7 +22,6 @@ class File(object):
         '''
         self._fd = open(path, 'r')
         self._path = os.path.abspath(path)
-        self._basename = os.path.basename(path)
         self._initialize_methods_from_fd()
         if 'hash' not in metadata_fields:
             # do not recalculate the hash if it is already known
