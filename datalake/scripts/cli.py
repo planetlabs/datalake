@@ -104,5 +104,5 @@ def push(**kwargs):
 @clean_up_datalake_errors
 def _push(**kwargs):
     filename = kwargs.pop('file')
-    url = archive.push(filename, **kwargs)
+    url = archive.prepare_metadata_and_push(filename, **kwargs)
     click.echo('Pushed {} to {}'.format(filename, url))

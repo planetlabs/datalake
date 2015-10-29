@@ -26,7 +26,7 @@ def s3_key(s3_conn):
 def test_push_file(archive, random_metadata, tmpfile, s3_key):
     expected_content = 'mwahaha'
     f = tmpfile(expected_content)
-    url = archive.push(f, **random_metadata)
+    url = archive.prepare_metadata_and_push(f, **random_metadata)
     from_s3 = s3_key(url)
     assert from_s3.get_contents_as_string() == expected_content
     metadata = from_s3.get_metadata('datalake')
