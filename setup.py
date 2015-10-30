@@ -40,6 +40,8 @@ setup(name='datalake',
           'click>=4.1',
           'datalake-common>=0.4',
           'python-dotenv>=0.1.3',
+          'pyinotify>=0.9.4',
+          'xattr>=0.7.8',
       ],
       extras_require={
           'test': [
