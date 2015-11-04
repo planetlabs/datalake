@@ -36,3 +36,9 @@ def test_hash_not_overwritten(tmpdir, random_metadata):
     random_metadata['hash'] = '1234'
     f = random_file(tmpdir, metadata=random_metadata)
     assert f.metadata['hash'] == random_metadata['hash']
+
+def test_default_where(monkeypatch, tmpdir, random_metadata):
+    monkeypatch.setenv('DATALAKE_DEFAULT_WHERE', 'here')
+    del(random_metadata['where'])
+    f = random_file(tmpdir, metadata=random_metadata)
+    assert f.metadata['where'] == 'here'
