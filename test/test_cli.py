@@ -3,6 +3,7 @@ from click.testing import CliRunner
 from datalake.scripts.cli import cli
 import os
 from datalake_common.tests import tmpfile
+from test_crtime import crtime_setuid
 
 
 @pytest.fixture
@@ -60,4 +61,12 @@ def test_translate_with_good_args_succceeds(cli_tester):
     cmd = ("translate .*job-(?P<job_id>[0-9]+).log$~job{job_id} "
            "/var/log/job-456.log")
     print cmd
+    cli_tester(cmd)
+
+
+@pytest.mark.skipif(not crtime_setuid, reason='crtime required')
+def test_crtime_and_now(cli_tester, tmpfile):
+    f = tmpfile('contents')
+    cmd = 'push --start=crtime --where=server123 '
+    cmd += '--what=test --data-version 0 --end=now ' + f
     cli_tester(cmd)

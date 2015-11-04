@@ -1,10 +1,11 @@
 import click
-from datalake import Archive, Translator, TranslatorError
+from datalake import Archive, Translator, TranslatorError, get_crtime, \
+    CreationTimeError
 import os
 import simplejson as json
 from dotenv import load_dotenv
-
 from datalake_common.metadata import InvalidDatalakeMetadata
+import time
 
 
 DEFAULT_CONFIG = '/etc/datalake.env'
@@ -15,12 +16,22 @@ def clean_up_datalake_errors(f):
     def wrapped(*args, **kwargs):
         try:
             return f(*args, **kwargs)
-        except (InvalidDatalakeMetadata, TranslatorError) as e:
+        except (InvalidDatalakeMetadata,
+                TranslatorError,
+                CreationTimeError) as e:
             raise click.UsageError(e.message)
     return wrapped
 
 
-@click.group(invoke_without_command=True)
+epilog = '''
+Other influential environment variables include:
+
+CRTIME: Path to the crtime utility used to get the creation time of a file on
+Linux. See https://github.com/planetlabs/crtime/.
+
+'''
+
+@click.group(invoke_without_command=True, epilog=epilog)
 @click.version_option()
 @click.pass_context
 @click.option('-c', '--config',
@@ -105,8 +116,24 @@ def push(**kwargs):
 @clean_up_datalake_errors
 def _push(**kwargs):
     filename = kwargs.pop('file')
+    kwargs = _evaluate_arguments(filename, **kwargs)
     url = archive.prepare_metadata_and_push(filename, **kwargs)
     click.echo('Pushed {} to {}'.format(filename, url))
+
+
+def _evaluate_arguments(filename, **kwargs):
+    for t in ['start', 'end']:
+        if t in kwargs:
+            kwargs[t] = _evaluate_time(filename, kwargs[t])
+    return kwargs
+
+
+def _evaluate_time(filename, t):
+    if t == 'crtime':
+        return int(get_crtime(filename) * 1000)
+    if t == 'now':
+        return int(time.time() * 1000)
+    return t
 
 
 @cli.command()
