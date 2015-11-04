@@ -24,11 +24,16 @@ def clean_up_datalake_errors(f):
 
 
 epilog = '''
-Other influential environment variables include:
+Other influential configuration variables include:
 
 CRTIME: Path to the crtime utility used to get the creation time of a file on
 Linux. See https://github.com/planetlabs/crtime/.
 
+DATALAKE_DEFAULT_WHERE: Some operations require a --where argument so that they
+can form complete metadata for a file. If --where is not provided,
+DATALAKE_DEFAULT_WHERE will be used if it is set. For example, it may make
+sense in some contexts to set DATALAKE_DEFAULT_WHERE to the hostname of the
+machine running the client.
 '''
 
 @click.group(invoke_without_command=True, epilog=epilog)

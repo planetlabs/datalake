@@ -70,3 +70,10 @@ def test_crtime_and_now(cli_tester, tmpfile):
     cmd = 'push --start=crtime --where=server123 '
     cmd += '--what=test --data-version 0 --end=now ' + f
     cli_tester(cmd)
+
+
+def test_push_with_default_where(monkeypatch, cli_tester, tmpfile):
+    monkeypatch.setenv('DATALAKE_DEFAULT_WHERE', 'hostname')
+    cmd = ('push --start=2015-05-15 --end=2015-05-16 --what log '
+           '--data-version 0 ')
+    cli_tester(cmd + tmpfile(''))
