@@ -1,6 +1,7 @@
 import os
 from memoized_property import memoized_property
 from pyblake2 import blake2b
+from translator import Translator
 
 from datalake_common import Metadata
 
@@ -23,22 +24,36 @@ class File(object):
         self._fd = open(path, 'r')
         self._path = os.path.abspath(path)
         self._initialize_methods_from_fd()
-        self._infer_missing_metadata_fields(metadata_fields)
+        self._infer_metadata_fields(metadata_fields)
         self.metadata = Metadata(metadata_fields)
 
     def _initialize_methods_from_fd(self):
         for m in ['read', 'readlines', 'seek', 'tell', 'close']:
             setattr(self, m, getattr(self._fd, m))
 
-    def _infer_missing_metadata_fields(self, metadata_fields):
+    def _infer_metadata_fields(self, metadata_fields):
+        self._infer_hash(metadata_fields)
+        self._infer_where(metadata_fields)
+        self._apply_translations(metadata_fields)
+
+    def _infer_hash(self, metadata_fields):
         if 'hash' not in metadata_fields:
             # do not recalculate the hash if it is already known
             metadata_fields['hash'] = self._calculate_hash()
 
+    def _infer_where(self, metadata_fields):
         default_where = os.environ.get('DATALAKE_DEFAULT_WHERE')
         where = metadata_fields.get('where')
         if where is None and default_where is not None:
             metadata_fields['where'] = default_where
+
+    def _apply_translations(self, metadata_fields):
+        for f in ['where', 'what', 'work_id']:
+            value = metadata_fields.get(f)
+            if value is None or '~' not in value:
+                continue
+            t = Translator(value)
+            metadata_fields[f] = t.translate(self._path)
 
     _HASH_BUF_SIZE = 65536
 
