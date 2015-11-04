@@ -77,3 +77,12 @@ def test_push_with_default_where(monkeypatch, cli_tester, tmpfile):
     cmd = ('push --start=2015-05-15 --end=2015-05-16 --what log '
            '--data-version 0 ')
     cli_tester(cmd + tmpfile(''))
+
+
+def test_push_with_translation_expression(cli_tester, tmpdir):
+    f = tmpdir.join('job-1234.log')
+    f.write('blaaaa')
+    cmd = 'push --work-id=.*job-(?P<job_id>[0-9]+).log$~job{job_id} '
+    cmd += '--what=job --start=now --end=now --where=hostname '
+    cmd += '--data-version 0 ' + str(f)
+    cli_tester(cmd)
