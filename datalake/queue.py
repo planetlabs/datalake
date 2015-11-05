@@ -19,7 +19,6 @@ import pyinotify
 from logging import getLogger
 import os
 import time
-import shutil
 
 from datalake_common import Metadata
 from datalake import File
@@ -33,7 +32,7 @@ DATALAKE_METADATA_XATTR = 'user.datalake-metadata'
 
 class DatalakeQueueBase(object):
 
-    def __init__(self, queue_dir=None):        
+    def __init__(self, queue_dir=None):
         self.queue_dir = queue_dir or environ.get('DATALAKE_QUEUE_DIR')
         self._validate_queue_dir()
 
@@ -54,7 +53,7 @@ class Enqueuer(DatalakeQueueBase):
         f = File(path, **metadata_fields)
         setxattr(path, DATALAKE_METADATA_XATTR, f.metadata.json)
         dest = os.path.join(self.queue_dir, f.metadata['id'])
-        os.symlink(path, dest)        
+        os.symlink(path, dest)
         return f
 
 
@@ -86,7 +85,7 @@ class Uploader(DatalakeQueueBase):
         metadata = Metadata.from_json(getxattr(path, DATALAKE_METADATA_XATTR))
         f = File(path, **metadata)
         url = self._archive.push(f)
-        log.info('Pushed ' +  path + ' to ' + url)
+        log.info('Pushed ' + path + ' to ' + url)
         os.unlink(path)
 
     def listen(self, timeout=None):

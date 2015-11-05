@@ -1,12 +1,9 @@
 import pytest
-import random
-import string
-from datetime import datetime, timedelta
 from moto import mock_s3
 import boto
 from urlparse import urlparse
 
-from datalake import File, Archive
+from datalake import Archive
 
 
 @pytest.fixture
@@ -45,4 +42,3 @@ def s3_key(s3_conn):
         return bucket.get_key(url.path)
 
     return get_s3_key
-

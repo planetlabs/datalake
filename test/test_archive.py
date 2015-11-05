@@ -1,5 +1,3 @@
-import pytest
-from tempfile import NamedTemporaryFile
 import simplejson as json
 from datalake_common.tests import random_metadata, tmpfile
 

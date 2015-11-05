@@ -1,7 +1,6 @@
 import click
 from datalake import Archive
 import os
-import simplejson as json
 from dotenv import load_dotenv
 
 from datalake_common.metadata import InvalidDatalakeMetadata
@@ -10,6 +9,7 @@ from datalake_common.metadata import InvalidDatalakeMetadata
 DEFAULT_CONFIG = '/etc/datalake.env'
 
 archive = None
+
 
 def clean_up_datalake_errors(f):
     def wrapped(*args, **kwargs):
@@ -100,6 +100,7 @@ def _prepare_archive_or_fail(ctx, storage_url):
 @click.argument('file')
 def push(**kwargs):
     _push(**kwargs)
+
 
 @clean_up_datalake_errors
 def _push(**kwargs):
