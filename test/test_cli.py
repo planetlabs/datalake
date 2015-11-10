@@ -16,7 +16,6 @@ import pytest
 from click.testing import CliRunner
 from datalake.scripts.cli import cli
 import os
-from datalake_common.tests import tmpfile
 from test_crtime import crtime_setuid
 
 
@@ -68,8 +67,10 @@ def test_push_with_config_file(cli_tester, tmpfile):
            '--where=cron --what=report /dev/null')
     cli_tester(cmd)
 
+
 def test_translate_with_bad_expression_fails(cli_tester):
     cli_tester('translate foo bar', expected_exit=2)
+
 
 def test_translate_with_good_args_succceeds(cli_tester):
     cmd = ("translate .*job-(?P<job_id>[0-9]+).log$~job{job_id} "

@@ -12,10 +12,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-import pytest
-from tempfile import NamedTemporaryFile
 import simplejson as json
-from datalake_common.tests import random_metadata, tmpfile
 
 
 def test_push_file(archive, random_metadata, tmpfile, s3_key):

@@ -15,7 +15,6 @@
 import pytest
 import os
 import stat
-from datalake_common.tests import tmpfile
 import time
 
 from datalake.crtime import get_crtime, CreationTimeError

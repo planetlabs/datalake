@@ -16,7 +16,6 @@ import click
 from datalake import Archive, Translator, TranslatorError, get_crtime, \
     CreationTimeError
 import os
-import simplejson as json
 from dotenv import load_dotenv
 from datalake_common.metadata import InvalidDatalakeMetadata
 import time
@@ -25,6 +24,7 @@ import time
 DEFAULT_CONFIG = '/etc/datalake.env'
 
 archive = None
+
 
 def clean_up_datalake_errors(f):
     def wrapped(*args, **kwargs):
@@ -49,6 +49,7 @@ DATALAKE_DEFAULT_WHERE will be used if it is set. For example, it may make
 sense in some contexts to set DATALAKE_DEFAULT_WHERE to the hostname of the
 machine running the client.
 '''
+
 
 @click.group(invoke_without_command=True, epilog=epilog)
 @click.version_option()
@@ -160,6 +161,7 @@ def _evaluate_time(filename, t):
 @click.argument('file')
 def translate(**kwargs):
     _translate(**kwargs)
+
 
 @clean_up_datalake_errors
 def _translate(**kwargs):

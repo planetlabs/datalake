@@ -40,14 +40,14 @@ def _crtime_linux(f):
     except CalledProcessError as e:
         if e.returncode == 13:
             m = '"' + cmd + '" failed. Permission denied. '
-            m += 'Perhaps you need to setuid root on crtime?' 
+            m += 'Perhaps you need to setuid root on crtime?'
         else:
             m = '"' + cmd + '" failed with code ' + str(e.returncode) + ': '
             m += e.output
         raise CreationTimeError(m)
 
 
-DEFAULT_CRTIME_FACILITY=_crtime_linux
+DEFAULT_CRTIME_FACILITY = _crtime_linux
 
 
 def get_crtime(f, crtime_facility=DEFAULT_CRTIME_FACILITY):

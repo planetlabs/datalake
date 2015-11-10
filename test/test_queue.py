@@ -13,12 +13,12 @@
 # the License.
 
 import pytest
-from datalake_common.tests import random_word, random_metadata, tmpfile
 import json
 from threading import Timer
 import os
+from datalake_common.tests import random_word
 
-from datalake import Archive, Enqueuer, Uploader
+from datalake import Enqueuer, Uploader
 
 
 @pytest.fixture
@@ -31,6 +31,7 @@ def queue_dir(tmpdir):
 @pytest.fixture
 def enqueuer(queue_dir):
     return Enqueuer(queue_dir)
+
 
 @pytest.fixture
 def uploader(archive, queue_dir):
@@ -69,6 +70,7 @@ def test_upload_incoming(enqueuer, uploader, random_file, random_metadata,
                          uploaded_file_validator):
 
     enqueued_files = []
+
     def enqueue():
         f = enqueuer.enqueue(random_file, **random_metadata)
         enqueued_files.append(f)
