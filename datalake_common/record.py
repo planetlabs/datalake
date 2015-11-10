@@ -52,8 +52,7 @@ class DatalakeRecord(dict):
             'range_key': self._get_range_key(),
             'metadata': metadata,
         }
-        super(DatalakeRecord, self).__init__(parts)        
-
+        super(DatalakeRecord, self).__init__(parts)
 
     @classmethod
     @requires_s3

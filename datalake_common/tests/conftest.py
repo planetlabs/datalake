@@ -15,7 +15,7 @@
 import pytest
 import random
 import string
-from datetime import datetime, timedelta
+
 
 try:
     from moto import mock_s3
@@ -27,6 +27,7 @@ except ImportError:
     # if developers use s3-test features without having installed s3 stuff,
     # things will fail. So it goes.
     pass
+
 
 @pytest.fixture
 def basic_metadata():
@@ -42,11 +43,14 @@ def basic_metadata():
         'data_version': '0.1',
     }
 
+
 def random_word(length):
     return ''.join(random.choice(string.lowercase) for i in xrange(length))
 
+
 def random_hex(length):
     return ('%0' + str(length) + 'x') % random.randrange(16**length)
+
 
 def random_interval():
     year_2010 = 1262304000000
@@ -56,10 +60,12 @@ def random_interval():
     end = start + random.randint(0, three_days)
     return start, end
 
+
 def random_work_id():
     if random.randint(0, 1):
         return None
-    return '{}-{}'.format(random_word(5), random.randint(0,2**15))
+    return '{}-{}'.format(random_word(5), random.randint(0, 2**15))
+
 
 @pytest.fixture
 def random_metadata():
@@ -76,9 +82,11 @@ def random_metadata():
         'data_version': random_word(3)
     }
 
+
 @pytest.fixture
 def tmpfile(tmpdir):
     name = random_word(10)
+
     def get_tmpfile(content):
         f = tmpdir.join(name)
         f.write(content)

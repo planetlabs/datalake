@@ -12,4 +12,4 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-from conftest import *
+from conftest import *  # noqa

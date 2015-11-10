@@ -30,6 +30,7 @@ class UnsupportedDatalakeMetadataVersion(Exception):
 
 _EPOCH = datetime.fromtimestamp(0, utc)
 
+
 class Metadata(dict):
 
     _VERSION = 0
@@ -55,7 +56,7 @@ class Metadata(dict):
         self._ensure_version()
         self._validate()
         self._normalize_dates()
-        self._validate_interval() # must occur after normalizing
+        self._validate_interval()  # must occur after normalizing
 
     @classmethod
     def from_json(cls, j):

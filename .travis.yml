@@ -10,6 +10,9 @@ env:
 install:
 - pip install -e .${EXTRAS}
 
+before_script:
+  - flake8 .
+
 script:
 - py.test
 
