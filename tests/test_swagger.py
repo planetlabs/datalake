@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+
 def test_swagger_spec(client):
     res = client.get('/spec/')
     assert res.status_code == 200

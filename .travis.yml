@@ -5,6 +5,8 @@ before_install:
 - sudo ./init.sh
 install:
 - pip install -e .[test]
+before_script:
+  - flake8 .
 script:
 - py.test
 deploy:

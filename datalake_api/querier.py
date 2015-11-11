@@ -165,7 +165,8 @@ class ArchiveQuerier(object):
 
     def _add_range_key_condition(self, kwargs, where):
         condition = kwargs['KeyConditionExpression']
-        new_condition = And(condition, Key('range_key').begins_with(where + ':'))
+        where_condition = Key('range_key').begins_with(where + ':')
+        new_condition = And(condition, where_condition)
         kwargs['KeyConditionExpression'] = new_condition
 
     def _cursor_for_work_id_query(self, response):
@@ -178,7 +179,8 @@ class ArchiveQuerier(object):
         last_evaluated = cursor.get('last_evaluated')
         if last_evaluated is not None:
             kwargs['ExclusiveStartKey'] = last_evaluated
-        kwargs['FilterExpression'] = Not(Attr('range_key').eq(cursor.last_range_key))
+        known_duplicate = Attr('range_key').eq(cursor.last_range_key)
+        kwargs['FilterExpression'] = Not(known_duplicate)
 
     def query_by_time(self, start, end, what, where=None, cursor=None):
         results = []

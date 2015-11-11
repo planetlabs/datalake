@@ -12,9 +12,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-import simplejson as json
-import base64
-
 
 def test_health(client):
     uri = '/health/'

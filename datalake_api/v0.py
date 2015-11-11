@@ -13,9 +13,8 @@
 # the License.
 
 import flask
-from flask import request, jsonify, Response, url_for
+from flask import jsonify, Response, url_for
 import simplejson as json
-import logging
 from flask import current_app as app
 import boto3
 from querier import ArchiveQuerier, Cursor, InvalidCursor
@@ -25,6 +24,8 @@ v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
 
 
 dynamodb = None
+
+
 def get_dynamodb():
     if not hasattr(app, 'dynamodb'):
         kwargs = dict(
@@ -229,7 +230,8 @@ def files_get():
                               properties:
                                 version:
                                   type: integer
-                                  description: the version of the metadata record
+                                  description: the version of the metadata
+                                               record
                                 where:
                                   type: string
                                   description: where the file came from
@@ -257,8 +259,8 @@ def files_get():
                                                generated the file
                                 data-version:
                                   type: string
-                                  description: the version of the data format in
-                                               the file
+                                  description: the version of the data format
+                                               in the file
                                 id:
                                   type: string
                                   description: the unique id of the file in the

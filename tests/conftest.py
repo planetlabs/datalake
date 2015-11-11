@@ -17,7 +17,8 @@ import boto3
 from botocore.exceptions import ClientError as BotoClientError
 
 from datalake_api import app as datalake_api
-from datalake_common.tests import *
+from datalake_common.tests import *  # noqa
+
 
 @pytest.fixture
 def client():

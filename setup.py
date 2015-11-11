@@ -17,9 +17,11 @@ from setuptools import distutils
 import os
 import sys
 
+
 def get_version_from_pkg_info():
     metadata = distutils.dist.DistributionMetadata("PKG-INFO")
     return metadata.version
+
 
 def get_version_from_pyver():
     try:
@@ -33,11 +35,13 @@ def get_version_from_pyver():
                                               public=True)
     return version
 
+
 def get_version():
     if os.path.exists("PKG-INFO"):
         return get_version_from_pkg_info()
     else:
         return get_version_from_pyver()
+
 
 setup(name='datalake_api',
       url='https://github.com/planetlabs/datalake-api',
@@ -59,7 +63,7 @@ setup(name='datalake_api',
       extras_require={
           'test': [
               'pytest==2.7.2',
+              'flake8==2.5.0',
           ],
       },
-      include_package_data=True
-)
+      include_package_data=True)

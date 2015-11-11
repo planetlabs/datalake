@@ -25,6 +25,7 @@ from conftest import client
 # HTTP API. To achieve the latter, we wrap up the flask test client in an
 # object that looks like an ArchiveQuerier and returns HttpResults.
 
+
 class HttpResults(list):
 
     def __init__(self, result):
@@ -145,7 +146,7 @@ def test_query_by_work_id(table_maker, querier):
     for i in range(2):
         work_id = 'work{}'.format(i)
         records += create_test_records(work_id=work_id, what='foo')
-    table = table_maker(records)
+    table_maker(records)
     results = querier.query_by_work_id('work0', 'foo')
     assert len(results) == 1
     assert all_results(results, work_id='work0')
@@ -156,8 +157,9 @@ def test_query_work_id_with_where(table_maker, querier):
     for i in range(4):
         work_id = 'work0'
         where = 'worker{}'.format(i)
-        records += create_test_records(work_id=work_id, what='foo', where=where)
-    table = table_maker(records)
+        records += create_test_records(work_id=work_id, what='foo',
+                                       where=where)
+    table_maker(records)
     results = querier.query_by_work_id('work0', 'foo', where='worker0')
     assert len(results) == 1
     assert all_results(results, work_id='work0', where='worker0')
@@ -168,7 +170,7 @@ def test_query_by_time(table_maker, querier):
     for start in range(0, 100, 10):
         end = start + 9
         records += create_test_records(start=start, end=end, what='foo')
-    table = table_maker(records)
+    table_maker(records)
     results = querier.query_by_time(0, 9, 'foo')
     assert len(results) == 1
     assert all_results_between(results, 0, 9)
@@ -178,9 +180,10 @@ def test_query_by_time_with_where(table_maker, querier):
     records = []
     for i in range(4):
         where = 'worker{}'.format(i)
-        records += create_test_records(start=0, end=10, what='foo', where=where)
+        records += create_test_records(start=0, end=10, what='foo',
+                                       where=where)
 
-    table = table_maker(records)
+    table_maker(records)
     results = querier.query_by_time(0, 10, 'foo', where='worker2')
     assert len(results) == 1
     assert all_results(results, start=0, end=10, where='worker2')
@@ -193,7 +196,7 @@ def test_deduplicating_time_records(table_maker, querier):
     start = 0
     end = 2 * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     records = create_test_records(start=start, end=end, what='foo')
-    table = table_maker(records)
+    table_maker(records)
     results = querier.query_by_time(start, 2*end, 'foo')
     assert len(results) == 1
 
@@ -203,7 +206,7 @@ def test_deduplicating_work_id_records(table_maker, querier):
     end = 2 * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     records = create_test_records(start=start, end=end, what='foo',
                                   work_id='job0')
-    table = table_maker(records)
+    table_maker(records)
     results = querier.query_by_work_id('job0', 'foo')
     assert len(results) == 1
 
@@ -212,7 +215,7 @@ def test_paginate_work_id_records(table_maker, querier):
     records = []
     for i in range(150):
         records += create_test_records(what='foo', work_id='job0')
-    table = table_maker(records)
+    table_maker(records)
 
     results = []
     cursor = None
@@ -236,7 +239,7 @@ def test_paginate_time_records(table_maker, querier):
     for start in range(0, very_end, interval):
         end = start + interval
         records += create_test_records(start=start, end=end, what='foo')
-    table = table_maker(records)
+    table_maker(records)
 
     results = []
     cursor = None

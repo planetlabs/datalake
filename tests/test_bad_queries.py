@@ -133,14 +133,3 @@ def test_bad_cursor_valid_json(client):
     }
     res = get_bad_request(client, params)
     assert res['code'] == 'InvalidCursor'
-
-def test_bad_cursor_valid_json(client):
-    cursor = base64.b64encode('{"valid": "json", "invalid": "cursor"}')
-    params = {
-        'what': 'syslog',
-        'start': 100,
-        'end': 200,
-        'cursor': cursor,
-    }
-    res = get_bad_request(client, params)
-    assert res['code'] == 'InvalidCursor'
