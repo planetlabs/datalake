@@ -16,7 +16,6 @@
 
 Just a basic test to validate the dev environment.
 '''
-import pytest
 
 
 def test_list_table(dynamodb_users_table, dynamodb_connection):

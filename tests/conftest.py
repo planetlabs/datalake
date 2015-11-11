@@ -11,7 +11,7 @@ from boto.dynamodb2.fields import HashKey, RangeKey
 import boto.sns
 import boto.sqs
 
-from datalake_common.tests import *
+from datalake_common.tests import *  # noqa
 
 from datalake_ingester import SQSQueue
 
@@ -23,7 +23,7 @@ def dynamodb_connection(request):
                               host='localhost',
                               port=8000,
                               is_secure=False)
-    
+
     # Fail fast if the local dynamodb server is down. This is a bit of a monkey
     # patch because this magic variable seems to override all configurables
     # (e.g., num_retries).
@@ -144,6 +144,7 @@ all_s3_notification_specs = glob(_s3_notification_path)
 _bad_s3_notification_path = os.path.join(test_data_path,
                                          'bad-s3-notification-*.json')
 all_bad_s3_notification_specs = glob(_bad_s3_notification_path)
+
 
 @pytest.fixture
 def spec_maker(s3_file_from_metadata):

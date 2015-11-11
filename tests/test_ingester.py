@@ -1,7 +1,5 @@
 import pytest
-from datalake_common.tests import random_metadata
 import time
-import os
 
 from datalake_ingester import DynamoDBStorage, Ingester, \
     InvalidS3Error, SQSQueue, SNSReporter
@@ -136,6 +134,7 @@ def bad_notification_ingester(request, ingester_with_queue, sqs_sender,
         sqs_sender(spec['s3_notification'])
         return ingester_with_queue
     return ingester
+
 
 def test_bad_reports_raise(bad_notification_ingester):
     with pytest.raises(InvalidS3Error):

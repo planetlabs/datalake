@@ -17,9 +17,11 @@ from setuptools import distutils
 import os
 import sys
 
+
 def get_version_from_pkg_info():
     metadata = distutils.dist.DistributionMetadata("PKG-INFO")
     return metadata.version
+
 
 def get_version_from_pyver():
     try:
@@ -33,11 +35,13 @@ def get_version_from_pyver():
                                               public=True)
     return version
 
+
 def get_version():
     if os.path.exists("PKG-INFO"):
         return get_version_from_pkg_info()
     else:
         return get_version_from_pyver()
+
 
 setup(name='datalake_ingester',
       url='https://github.com/planetlabs/datalake-ingester',
@@ -62,6 +66,7 @@ setup(name='datalake_ingester',
               'pip==7.1.0',
               'wheel==0.24.0',
               'moto==0.4.12',
+              'flake8==2.5.0',
           ]
       },
       entry_points="""

@@ -1,5 +1,3 @@
-import pytest
-
 from datalake_ingester import DynamoDBStorage
 
 

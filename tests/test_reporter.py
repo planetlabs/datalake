@@ -12,7 +12,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-import pytest
 import simplejson as json
 
 from datalake_ingester import SNSReporter

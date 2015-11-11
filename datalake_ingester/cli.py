@@ -7,6 +7,7 @@ from ingester import Ingester
 
 DEFAULT_CONFIG = '/etc/datalake-ingester.json'
 
+
 @click.group(invoke_without_command=True)
 @click.version_option()
 @click.option('-c', '--config',

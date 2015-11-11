@@ -6,9 +6,6 @@ from datalake_ingester import S3ToDatalakeTranslator
 from datalake_ingester.errors import InvalidS3Notification, InvalidS3Event
 from datalake_common import InvalidDatalakeMetadata
 
-from datalake_common.tests import s3_file_from_metadata
-
-
 from conftest import test_data_path, all_s3_notification_specs
 
 
