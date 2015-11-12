@@ -152,3 +152,15 @@ def test_random_metadata(random_metadata):
     # Others rely on datalake-common's random_metadata to be valid. So make
     # sure it doesn't throw any errors.
     Metadata(random_metadata)
+
+
+def test_normalize_float_date(basic_metadata):
+    basic_metadata['start'] = '1426809600.123'
+    m = Metadata(basic_metadata)
+    assert m['start'] == 1426809600123
+
+
+def test_normalize_int_date(basic_metadata):
+    basic_metadata['end'] = '1426809600'
+    m = Metadata(basic_metadata)
+    assert m['end'] == 1426809600000

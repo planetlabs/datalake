@@ -169,6 +169,26 @@ class Metadata(dict):
 
     @staticmethod
     def _normalize_date_from_string(date):
+        return Metadata._from_float_string(date) or \
+            Metadata._from_int_string(date) or \
+            Metadata._from_date_string(date)
+
+    @staticmethod
+    def _from_float_string(date):
+        try:
+            return int(float(date) * 1000.0)
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _from_int_string(date):
+        try:
+            return int(date) * 1000
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _from_date_string(date):
         try:
             d = dateparse(date)
             if not d.tzinfo:
