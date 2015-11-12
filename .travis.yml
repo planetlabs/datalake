@@ -1,8 +1,11 @@
 language: python
 python:
 - '2.7'
+env:
+  - EXTRAS='[test]'
+  - EXTRAS='[test,queuable]'
 install:
-- pip install -e .[test]
+  - pip install -e .${EXTRAS}
 before_script:
   - flake8 .
 script:

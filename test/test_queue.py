@@ -17,8 +17,10 @@ import json
 from threading import Timer
 import os
 from datalake_common.tests import random_word
+from datalake_common.errors import InsufficientConfiguration
 
 from datalake import Enqueuer, Uploader
+from datalake.queue import has_queue
 
 
 @pytest.fixture
@@ -59,6 +61,7 @@ def random_file(tmpfile, random_metadata):
     return tmpfile(expected_content)
 
 
+@pytest.mark.skipif(not has_queue, reason='requires queuable features')
 def test_upload_existing(enqueuer, uploader, random_file, random_metadata,
                          uploaded_file_validator):
     f = enqueuer.enqueue(random_file, **random_metadata)
@@ -66,6 +69,7 @@ def test_upload_existing(enqueuer, uploader, random_file, random_metadata,
     uploaded_file_validator(f)
 
 
+@pytest.mark.skipif(not has_queue, reason='requires queuable features')
 def test_upload_incoming(enqueuer, uploader, random_file, random_metadata,
                          uploaded_file_validator):
 
@@ -81,3 +85,15 @@ def test_upload_incoming(enqueuer, uploader, random_file, random_metadata,
 
     for f in enqueued_files:
         uploaded_file_validator(f)
+
+
+@pytest.mark.skipif(has_queue, reason='requires queuable to be not installed')
+def test_uploader_queable_not_installed(archive, queue_dir):
+    with pytest.raises(InsufficientConfiguration):
+        Uploader(archive, queue_dir)
+
+
+@pytest.mark.skipif(has_queue, reason='requires queuable to be not installed')
+def test_enqueuer_queable_not_installed(queue_dir):
+    with pytest.raises(InsufficientConfiguration):
+        Enqueuer(queue_dir)

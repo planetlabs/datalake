@@ -44,8 +44,6 @@ setup(name='datalake',
           'click>=4.1',
           'datalake-common>=0.4',
           'python-dotenv>=0.1.3',
-          'pyinotify>=0.9.4',
-          'xattr>=0.7.8',
       ],
       extras_require={
           'test': [
@@ -55,6 +53,12 @@ setup(name='datalake',
               'pip==7.1.0',
               'wheel==0.24.0',
               'flake8==2.5.0',
+          ],
+          # the queuable feature allows users to offload their datalake pushes
+          # to a separate uploader process.
+          'queuable': [
+              'pyinotify>=0.9.4',
+              'xattr>=0.7.8',
           ]
       },
       entry_points="""
