@@ -14,10 +14,11 @@
 
 import click
 from datalake import Archive, Translator, TranslatorError, get_crtime, \
-    CreationTimeError
+    CreationTimeError, Uploader, Enqueuer
 import os
 from dotenv import load_dotenv
 from datalake_common.metadata import InvalidDatalakeMetadata
+from datalake_common.errors import InsufficientConfiguration
 import time
 
 
@@ -32,7 +33,8 @@ def clean_up_datalake_errors(f):
             return f(*args, **kwargs)
         except (InvalidDatalakeMetadata,
                 TranslatorError,
-                CreationTimeError) as e:
+                CreationTimeError,
+                InsufficientConfiguration) as e:
             raise click.UsageError(e.message)
     return wrapped
 
@@ -48,6 +50,9 @@ can form complete metadata for a file. If --where is not provided,
 DATALAKE_DEFAULT_WHERE will be used if it is set. For example, it may make
 sense in some contexts to set DATALAKE_DEFAULT_WHERE to the hostname of the
 machine running the client.
+
+DATALAKE_QUEUE_DIR: The directory where enqueue will place files for uploader
+to eventually upload.
 '''
 
 
@@ -167,3 +172,37 @@ def translate(**kwargs):
 def _translate(**kwargs):
     t = Translator(kwargs['translation_expression'])
     click.echo(t.translate(kwargs['file']))
+
+
+@cli.command()
+@click.option('--start')
+@click.option('--end')
+@click.option('--where')
+@click.option('--what')
+@click.option('--data-version')
+@click.option('--work-id')
+@click.argument('file')
+def enqueue(file, **kwargs):
+    _enqueue(file, **kwargs)
+
+
+@clean_up_datalake_errors
+def _enqueue(file, **kwargs):
+    _prepare_archive_or_fail()
+    e = Enqueuer()
+    f = e.enqueue(file, **kwargs)
+    url = archive.url_from_file(f)
+    click.echo('Enqueued {} to {}'.format(file, url))
+
+
+@cli.command()
+@click.option('--timeout', type=float)
+def uploader(**kwargs):
+    _uploader(**kwargs)
+
+
+@clean_up_datalake_errors
+def _uploader(**kwargs):
+    _prepare_archive_or_fail()
+    u = Uploader(archive, os.environ.get('DATALAKE_QUEUE_DIR'))
+    u.listen(**kwargs)

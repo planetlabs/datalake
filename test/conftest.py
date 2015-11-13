@@ -17,7 +17,10 @@ from moto import mock_s3
 import boto
 from urlparse import urlparse
 from datalake_common.tests import random_metadata, tmpfile  # noqa
+import os
+from click.testing import CliRunner
 
+from datalake.scripts.cli import cli
 from datalake import Archive
 
 
@@ -57,3 +60,17 @@ def s3_key(s3_conn):
         return bucket.get_key(url.path)
 
     return get_s3_key
+
+
+@pytest.fixture
+def cli_tester(s3_bucket):
+
+    def tester(command, expected_exit=0):
+        os.environ['DATALAKE_STORAGE_URL'] = 's3://' + s3_bucket.name
+        parts = command.split(' ')
+        runner = CliRunner()
+        result = runner.invoke(cli, parts, catch_exceptions=False)
+        assert result.exit_code == expected_exit, result.output
+        return result.output
+
+    return tester
