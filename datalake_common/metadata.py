@@ -169,8 +169,8 @@ class Metadata(dict):
 
     @staticmethod
     def _normalize_date_from_string(date):
-        return Metadata._from_float_string(date) or \
-            Metadata._from_int_string(date) or \
+        return Metadata._from_int_string(date) or \
+            Metadata._from_float_string(date) or \
             Metadata._from_date_string(date)
 
     @staticmethod
@@ -183,7 +183,7 @@ class Metadata(dict):
     @staticmethod
     def _from_int_string(date):
         try:
-            return int(date) * 1000
+            return int(date)
         except ValueError:
             return None
 

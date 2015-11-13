@@ -161,6 +161,6 @@ def test_normalize_float_date(basic_metadata):
 
 
 def test_normalize_int_date(basic_metadata):
-    basic_metadata['end'] = '1426809600'
+    basic_metadata['end'] = '1426809600123'
     m = Metadata(basic_metadata)
-    assert m['end'] == 1426809600000
+    assert m['end'] == 1426809600123
