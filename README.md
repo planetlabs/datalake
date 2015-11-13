@@ -39,6 +39,12 @@ Installation
 
         pip install datalake
 
+If you plan to use the queuing feature, you must install some extra
+dependencies:
+
+        apt-get install libffi-dev # or equivalent
+        pip install datalake[queuable]
+
 Configuration
 =============
 
@@ -86,8 +92,9 @@ blappo-14321359:
 Developer Setup
 ===============
 
+        apt-get install libffi-dev # to enable queuable feature
         mkvirtualenv datalake # Or however you like to manage virtualenvs
-        pip install -e .[test]
+        pip install -e .[queuable, test]
         flake8 .
         py.test
 

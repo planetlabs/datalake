@@ -28,14 +28,42 @@ symlink deleted.
 '''
 from os import environ
 from datalake_common.errors import InsufficientConfiguration
-from xattr import setxattr, getxattr
-import pyinotify
 from logging import getLogger
 import os
 import time
 
 from datalake_common import Metadata
 from datalake import File
+
+
+'''whether or not queue feature is available
+
+Users may wish to check if s3 features are available before invoking them. If
+they are unavailable, the affected functions will raise
+InsufficientConfiguration.'''
+has_queue = True
+try:
+    from xattr import setxattr, getxattr
+    import pyinotify
+except ImportError:
+    has_queue = False
+
+    class FakePyinotify(object):
+
+        class ProcessEvent(object):
+            pass
+
+    pyinotify = FakePyinotify
+
+
+def requires_queue(f):
+    def wrapped(*args, **kwargs):
+        if not has_queue:
+            msg = 'This feature requires the queuable deps.  '
+            msg += '`pip install datalake[queuable]` to turn this feature on.'
+            raise InsufficientConfiguration(msg)
+        return f(*args, **kwargs)
+    return wrapped
 
 
 log = getLogger('datalake-queue')
@@ -46,6 +74,7 @@ DATALAKE_METADATA_XATTR = 'user.datalake-metadata'
 
 class DatalakeQueueBase(object):
 
+    @requires_queue
     def __init__(self, queue_dir=None):
         self.queue_dir = queue_dir or environ.get('DATALAKE_QUEUE_DIR')
         self._validate_queue_dir()
