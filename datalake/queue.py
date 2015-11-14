@@ -81,7 +81,7 @@ class DatalakeQueueBase(object):
 
     def _validate_queue_dir(self):
         if self.queue_dir is None:
-            raise InsufficientConfiguration('Please specify a queue directory')
+            raise InsufficientConfiguration('Please set DATALAKE_QUEUE_DIR')
         self.queue_dir = os.path.abspath(self.queue_dir)
 
 

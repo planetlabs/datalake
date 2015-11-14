@@ -13,23 +13,7 @@
 # the License.
 
 import pytest
-from click.testing import CliRunner
-from datalake.scripts.cli import cli
-import os
 from test_crtime import crtime_setuid
-
-
-@pytest.fixture
-def cli_tester(s3_bucket):
-
-    def tester(command, expected_exit=0):
-        os.environ['DATALAKE_STORAGE_URL'] = 's3://datalake-test'
-        parts = command.split(' ')
-        runner = CliRunner()
-        result = runner.invoke(cli, parts, catch_exceptions=False)
-        assert result.exit_code == expected_exit, result.output
-
-    return tester
 
 
 def test_cli_without_command_fails(cli_tester):

@@ -24,9 +24,10 @@ from datalake.queue import has_queue
 
 
 @pytest.fixture
-def queue_dir(tmpdir):
+def queue_dir(monkeypatch, tmpdir):
     d = os.path.join(str(tmpdir), 'queue')
     os.mkdir(d)
+    monkeypatch.setenv('DATALAKE_QUEUE_DIR', d)
     return d
 
 
@@ -41,16 +42,26 @@ def uploader(archive, queue_dir):
 
 
 @pytest.fixture
-def uploaded_file_validator(archive, s3_key):
+def uploaded_content_validator(s3_key):
+
+    def validator(url, expected_content, expected_metadata=None):
+        from_s3 = s3_key(url)
+        assert from_s3 is not None
+        assert from_s3.get_contents_as_string() == expected_content
+        if expected_metadata is not None:
+            metadata = json.loads(from_s3.get_metadata('datalake'))
+            assert metadata == expected_metadata
+
+    return validator
+
+
+@pytest.fixture
+def uploaded_file_validator(archive, uploaded_content_validator):
 
     def validator(f):
         expected_content = f.read()
         url = archive.url_from_file(f)
-        from_s3 = s3_key(url)
-        assert from_s3 is not None
-        assert from_s3.get_contents_as_string() == expected_content
-        metadata = json.loads(from_s3.get_metadata('datalake'))
-        assert metadata == f.metadata
+        uploaded_content_validator(url, expected_content, f.metadata)
 
     return validator
 
@@ -85,6 +96,24 @@ def test_upload_incoming(enqueuer, uploader, random_file, random_metadata,
 
     for f in enqueued_files:
         uploaded_file_validator(f)
+
+
+@pytest.mark.skipif(not has_queue, reason='requires queuable features')
+def test_upload_existing_cli(cli_tester, random_file, random_metadata,
+                             uploaded_content_validator, queue_dir):
+    cmd = 'enqueue --start={start} --end={end} --where {where} '
+    cmd += '--what {what} --data-version {data_version} '
+    if random_metadata.get('work_id'):
+        cmd += '--work-id {work_id} '
+    cmd = cmd.format(**random_metadata)
+    output = cli_tester(cmd + random_file)
+    url = output.rstrip('\n').split()[-1]
+
+    cmd = 'uploader --timeout=0.1'
+    cli_tester(cmd)
+
+    expected_content = open(random_file).read()
+    uploaded_content_validator(url, expected_content)
 
 
 @pytest.mark.skipif(has_queue, reason='requires queuable to be not installed')
