@@ -59,6 +59,9 @@ setup(name='datalake',
           'queuable': [
               'pyinotify>=0.9.4',
               'xattr>=0.7.8',
+          ],
+          'sentry': [
+              'raven>=5.0.0',
           ]
       },
       entry_points="""

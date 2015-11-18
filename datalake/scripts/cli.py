@@ -204,6 +204,8 @@ def uploader(**kwargs):
 
 @clean_up_datalake_errors
 def _uploader(**kwargs):
+    from datalake.logging_helpers import prepare_logging
+    prepare_logging()
     _prepare_archive_or_fail()
     u = Uploader(archive, os.environ.get('DATALAKE_QUEUE_DIR'))
     u.listen(**kwargs)
