@@ -21,6 +21,7 @@ from datalake_common.errors import InsufficientConfiguration
 
 from datalake import Enqueuer, Uploader
 from datalake.queue import has_queue
+from conftest import crtime_setuid
 
 
 @pytest.fixture
@@ -114,6 +115,15 @@ def test_upload_existing_cli(cli_tester, random_file, random_metadata,
 
     expected_content = open(random_file).read()
     uploaded_content_validator(url, expected_content)
+
+
+@pytest.mark.skipif(not has_queue or not crtime_setuid,
+                    reason='requires queuable features and crtime')
+def test_enqueue_with_crtime_and_now(cli_tester, random_file, random_metadata,
+                                     uploaded_content_validator, queue_dir):
+    cmd = 'enqueue --start=crtime --end=now --where server37 '
+    cmd += '--what randomefile --data-version 0 '
+    cli_tester(cmd + random_file)
 
 
 @pytest.mark.skipif(has_queue, reason='requires queuable to be not installed')
