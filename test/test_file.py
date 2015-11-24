@@ -26,7 +26,7 @@ def random_file(tmpdir, metadata=None):
     f.write(content)
     if metadata is None:
         metadata = random_metadata()
-    return File(f.strpath, **metadata)
+    return File.from_filename(f.strpath, **metadata)
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ def test_file_hash_different(random_files):
 
 def test_non_existent_file():
     with pytest.raises(IOError):
-        File('surelythisfiledoesnotexist.txt')
+        File.from_filename('surelythisfiledoesnotexist.txt')
 
 
 def test_not_enough_metadata(tmpdir):

@@ -87,16 +87,16 @@ class DatalakeQueueBase(object):
 
 class Enqueuer(DatalakeQueueBase):
 
-    def enqueue(self, path, **metadata_fields):
+    def enqueue(self, filename, **metadata_fields):
         '''enqueue a file with the specified metadata o be pushed
 
         Returns the File with complete metadata that will be pushed.
         '''
-        log.info('Enqueing ' + path)
-        f = File(path, **metadata_fields)
-        setxattr(path, DATALAKE_METADATA_XATTR, f.metadata.json)
+        log.info('Enqueing ' + filename)
+        f = File.from_filename(filename, **metadata_fields)
+        setxattr(filename, DATALAKE_METADATA_XATTR, f.metadata.json)
         dest = os.path.join(self.queue_dir, f.metadata['id'])
-        os.symlink(path, dest)
+        os.symlink(filename, dest)
         return f
 
 
@@ -124,12 +124,13 @@ class Uploader(DatalakeQueueBase):
                                             timeout=timeout)
         self._wm.add_watch(self.queue_dir, pyinotify.IN_CREATE)
 
-    def _push(self, path):
-        metadata = Metadata.from_json(getxattr(path, DATALAKE_METADATA_XATTR))
-        f = File(path, **metadata)
+    def _push(self, filename):
+        x = getxattr(filename, DATALAKE_METADATA_XATTR)
+        metadata = Metadata.from_json(x)
+        f = File.from_filename(filename, **metadata)
         url = self._archive.push(f)
-        log.info('Pushed {} to {}'.format(path, url))
-        os.unlink(path)
+        log.info('Pushed {} to {}'.format(filename, url))
+        os.unlink(filename)
 
     def listen(self, timeout=None):
         '''listen for files in the queue directory and push them'''
