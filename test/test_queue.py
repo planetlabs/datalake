@@ -107,7 +107,7 @@ def test_upload_existing_cli(cli_tester, random_file, random_metadata,
     if random_metadata.get('work_id'):
         cmd += '--work-id {work_id} '
     cmd = cmd.format(**random_metadata)
-    output = cli_tester(cmd + random_file)
+    cli_tester(cmd + random_file)
     cmd = 'uploader --timeout=0.1'
     cli_tester(cmd)
 

@@ -188,7 +188,7 @@ def enqueue(file, **kwargs):
 def _enqueue(file, **kwargs):
     kwargs = _evaluate_arguments(file, **kwargs)
     e = Enqueuer()
-    f = e.enqueue(file, **kwargs)
+    e.enqueue(file, **kwargs)
     click.echo('Enqueued {}'.format(file))
 
 
