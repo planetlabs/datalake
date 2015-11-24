@@ -112,7 +112,8 @@ def test_work_id_with_unallowed_characters(basic_metadata):
 
 basic_json = ('{"start": 1426809600000, "what": "apache", "version": 0, '
               '"end": 1426895999999, "hash": "12345", "where": "nebraska", '
-              '"id": "9f8f8b618f48424c8d69a7ed76c88f05", "work_id": null}')
+              '"id": "9f8f8b618f48424c8d69a7ed76c88f05", "work_id": null, '
+              '"path": "/var/log/apache/access.log.1"}')
 
 
 def test_from_to_json(basic_metadata):

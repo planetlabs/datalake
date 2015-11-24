@@ -15,6 +15,7 @@
 import pytest
 import random
 import string
+import os
 
 
 try:
@@ -36,6 +37,7 @@ def basic_metadata():
         'version': 0,
         'start': 1426809600000,
         'end': 1426895999999,
+        'path': '/var/log/apache/access.log',
         'where': 'nebraska',
         'what': 'apache',
         'hash': '12345',
@@ -66,16 +68,25 @@ def random_work_id():
     return '{}-{}'.format(random_word(5), random.randint(0, 2**15))
 
 
+def random_abs_dir():
+    num_dirs = random.randrange(1, 4)
+    lengths = [random.randint(2, 10) for i in range(num_dirs)]
+    dirs = [random_word(i) for i in lengths]
+    return '/' + '/'.join(dirs)
+
+
 @pytest.fixture
 def random_metadata():
     start, end = random_interval()
+    what = random_word(10)
     return {
         'version': 0,
         'start': start,
         'end': end,
+        'path': os.path.join(random_abs_dir(), what),
         'work_id': random_work_id(),
         'where': random_word(10),
-        'what': random_word(10),
+        'what': what,
         'id': random_hex(40),
         'hash': random_hex(40),
     }

@@ -19,6 +19,7 @@ from pytz import utc
 from uuid import uuid4
 import re
 import simplejson as json
+import os
 
 
 class InvalidDatalakeMetadata(Exception):
@@ -79,9 +80,10 @@ class Metadata(dict):
         self._validate_version()
         self._validate_slug_fields()
         self._validate_work_id()
+        self._validate_path()
 
     _REQUIRED_METADATA_FIELDS = ['version', 'start', 'where', 'what', 'id',
-                                 'hash']
+                                 'hash', 'path']
 
     def _validate_required_fields(self):
         for f in self._REQUIRED_METADATA_FIELDS:
@@ -124,6 +126,11 @@ class Metadata(dict):
         self._validate_slug_field('work_id')
         if self['work_id'] == 'null':
             msg = '"work_id" cannot be the string "null"'
+            raise InvalidDatalakeMetadata(msg)
+
+    def _validate_path(self):
+        if not os.path.isabs(self['path']):
+            msg = '{} is not an absolute path.'.format(self['path'])
             raise InvalidDatalakeMetadata(msg)
 
     def _validate_interval(self):

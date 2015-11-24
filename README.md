@@ -29,6 +29,7 @@ document. Here it is:
             "version": 0,
             "start": 1426809920345,
             "end": 1426895999114,
+            "path": "/var/log/syslog.1"
             "work_id": null,
             "where": "webserver02",
             "what": "syslog",
@@ -45,6 +46,8 @@ the only relevant time. It is required.
 end: This is the time of the last event in the file in milliseconds since the
 epoch. If it is not present, the file represents a snapshot of something like a
 weekly report.
+
+path: The absolute path to the file in the originating filesystem.
 
 where: This is the location or server that generated the file. It is required
 and must only contain lowercase alpha-numeric characters, - and _. It should be
