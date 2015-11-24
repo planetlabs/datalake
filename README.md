@@ -32,7 +32,6 @@ document. Here it is:
             "work_id": null,
             "where": "webserver02",
             "what": "syslog",
-            "data_version": "0",
             "id": "6309e115c2914d0f8622973422626954",
             "hash": "a3e75ee4f45f676422e038f2c116d000"
         }
@@ -58,12 +57,6 @@ have trailing file extension (e.g., .log). The name should be concise to limit
 the chances that it conflicts with other whats in the datalake. So names like
 'job' or 'task' are bad. Names like 'balyhoo-source-audit' or
 'rawfood-ingester' are good.
-
-data_version: This is the data version. It must only contain alpha-numeric
-characters, dash (-), underscore(_), and dot(.). But the format is otherwise up
-to the user. If the format of the contents of the file changes, this version
-should change so that consumers of the data can know to use a different
-parser. It is required.
 
 id: An ID for the file assigned by the datalake. It is required.
 
