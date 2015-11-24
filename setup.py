@@ -42,7 +42,7 @@ setup(name='datalake',
           'simplejson>=3.7',
           'pyblake2>=0.9.3',
           'click>=4.1',
-          'datalake-common>=0.12',
+          'datalake-common>=0.13',
           'python-dotenv>=0.1.3',
       ],
       extras_require={

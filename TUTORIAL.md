@@ -46,8 +46,7 @@ files that have a start and end time associated with them.
 Push the file to the datalake:
 
         datalake push --start=2015-10-01 --end=2015-10-02 \
-                 --where server123 --what ${USER} --data-version 0 \
-                 ${USER}.log
+                 --where server123 --what ${USER} ${USER}.log
 
 
 Now you can query for the file:

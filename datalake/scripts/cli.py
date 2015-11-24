@@ -130,7 +130,6 @@ def _prepare_archive_or_fail():
 @click.option('--end')
 @click.option('--where')
 @click.option('--what')
-@click.option('--data-version')
 @click.option('--work-id')
 @click.argument('file')
 def push(**kwargs):
@@ -179,7 +178,6 @@ def _translate(**kwargs):
 @click.option('--end')
 @click.option('--where')
 @click.option('--what')
-@click.option('--data-version')
 @click.option('--work-id')
 @click.argument('file')
 def enqueue(file, **kwargs):

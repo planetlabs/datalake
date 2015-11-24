@@ -63,14 +63,13 @@ Push a log file:
 
         datalake push --start 2015-03-20T00:05:32.345Z
             --end 2015-03-20T23:59.114Z \
-            --where webserver01 --what nginx /path/to/nginx.log \
-            --data-version 0
+            --where webserver01 --what nginx /path/to/nginx.log
 
 Push a log file with a specific work-id:
 
         datalake push --start 2015-03-20T00:00:05:32.345Z \
             --end 2015-03-20T00:00:34.114Z \
-            --what blappo-etl --where backend01 --data-version 0 \
+            --what blappo-etl --where backend01 \
             --work-id blappo-14321359
 
 The work-id is convenient for tracking processing jobs or other entities that

@@ -25,19 +25,17 @@ def test_cli_with_version_succeeds(cli_tester):
 
 
 def test_push_with_metadata(cli_tester, tmpfile):
-    cmd = ('push --start=2015-05-15 --end=2015-05-16 --where box --what log '
-           '--data-version 0 ')
+    cmd = 'push --start=2015-05-15 --end=2015-05-16 --where box --what log '
     cli_tester(cmd + tmpfile(''))
 
 
 def test_push_without_end(cli_tester, tmpfile):
-    cmd = ('push --data-version 0 --start=2015-05-15 --where=cron '
-           '--what=report ' + tmpfile(''))
+    cmd = ('push --start=2015-05-15 --where=cron --what=report ' + tmpfile(''))
     cli_tester(cmd)
 
 
 def test_push_with_aws_vars(cli_tester, tmpfile):
-    cmd = ('-k abcd -s 1234 -r us-gov-west-1 push --data-version 0 '
+    cmd = ('-k abcd -s 1234 -r us-gov-west-1 push '
            '--start=2015-09-14 --where=cron --what=report ' + tmpfile(''))
     cli_tester(cmd)
 
@@ -47,7 +45,7 @@ def test_push_with_config_file(cli_tester, tmpfile):
                    "aws_secret": "1234",
                    "aws_region": "us-gov-west-1"}'''
     cfg = tmpfile(cfg_json)
-    cmd = ('-c ' + cfg + ' push --data-version 0 --start=2015-09-14 '
+    cmd = ('-c ' + cfg + ' push --start=2015-09-14 '
            '--where=cron --what=report /dev/null')
     cli_tester(cmd)
 
@@ -67,14 +65,13 @@ def test_translate_with_good_args_succceeds(cli_tester):
 def test_crtime_and_now(cli_tester, tmpfile):
     f = tmpfile('contents')
     cmd = 'push --start=crtime --where=server123 '
-    cmd += '--what=test --data-version 0 --end=now ' + f
+    cmd += '--what=test --end=now ' + f
     cli_tester(cmd)
 
 
 def test_push_with_default_where(monkeypatch, cli_tester, tmpfile):
     monkeypatch.setenv('DATALAKE_DEFAULT_WHERE', 'hostname')
-    cmd = ('push --start=2015-05-15 --end=2015-05-16 --what log '
-           '--data-version 0 ')
+    cmd = 'push --start=2015-05-15 --end=2015-05-16 --what log '
     cli_tester(cmd + tmpfile(''))
 
 
@@ -83,5 +80,5 @@ def test_push_with_translation_expression(cli_tester, tmpdir):
     f.write('blaaaa')
     cmd = 'push --work-id=.*job-(?P<job_id>[0-9]+).log$~job{job_id} '
     cmd += '--what=job --start=now --end=now --where=hostname '
-    cmd += '--data-version 0 ' + str(f)
+    cmd += str(f)
     cli_tester(cmd)

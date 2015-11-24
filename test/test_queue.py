@@ -103,7 +103,7 @@ def test_upload_incoming(enqueuer, uploader, random_file, random_metadata,
 def test_upload_existing_cli(cli_tester, random_file, random_metadata,
                              uploaded_content_validator, queue_dir):
     cmd = 'enqueue --start={start} --end={end} --where {where} '
-    cmd += '--what {what} --data-version {data_version} '
+    cmd += '--what {what} '
     if random_metadata.get('work_id'):
         cmd += '--work-id {work_id} '
     cmd = cmd.format(**random_metadata)
@@ -122,7 +122,7 @@ def test_upload_existing_cli(cli_tester, random_file, random_metadata,
 def test_enqueue_with_crtime_and_now(cli_tester, random_file, random_metadata,
                                      uploaded_content_validator, queue_dir):
     cmd = 'enqueue --start=crtime --end=now --where server37 '
-    cmd += '--what randomefile --data-version 0 '
+    cmd += '--what randomefile '
     cli_tester(cmd + random_file)
 
 
