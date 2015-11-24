@@ -224,7 +224,6 @@ def files_get():
                                 - end
                                 - work_id
                                 - where
-                                - data-version
                                 - id
                                 - hash
                               properties:
@@ -257,10 +256,6 @@ def files_get():
                                   type: string
                                   description: the process or program that
                                                generated the file
-                                data-version:
-                                  type: string
-                                  description: the version of the data format
-                                               in the file
                                 id:
                                   type: string
                                   description: the unique id of the file in the
