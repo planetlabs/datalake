@@ -186,12 +186,10 @@ def enqueue(file, **kwargs):
 
 @clean_up_datalake_errors
 def _enqueue(file, **kwargs):
-    _prepare_archive_or_fail()
     kwargs = _evaluate_arguments(file, **kwargs)
     e = Enqueuer()
     f = e.enqueue(file, **kwargs)
-    url = archive.url_from_file(f)
-    click.echo('Enqueued {} to {}'.format(file, url))
+    click.echo('Enqueued {}'.format(file))
 
 
 @cli.command()

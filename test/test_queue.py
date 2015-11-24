@@ -45,8 +45,9 @@ def uploader(archive, queue_dir):
 @pytest.fixture
 def uploaded_content_validator(s3_key):
 
-    def validator(url, expected_content, expected_metadata=None):
-        from_s3 = s3_key(url)
+    def validator(expected_content, expected_metadata=None):
+
+        from_s3 = s3_key()
         assert from_s3 is not None
         assert from_s3.get_contents_as_string() == expected_content
         if expected_metadata is not None:
@@ -61,8 +62,7 @@ def uploaded_file_validator(archive, uploaded_content_validator):
 
     def validator(f):
         expected_content = f.read()
-        url = archive.url_from_file(f)
-        uploaded_content_validator(url, expected_content, f.metadata)
+        uploaded_content_validator(expected_content, f.metadata)
 
     return validator
 
@@ -108,13 +108,11 @@ def test_upload_existing_cli(cli_tester, random_file, random_metadata,
         cmd += '--work-id {work_id} '
     cmd = cmd.format(**random_metadata)
     output = cli_tester(cmd + random_file)
-    url = output.rstrip('\n').split()[-1]
-
     cmd = 'uploader --timeout=0.1'
     cli_tester(cmd)
 
     expected_content = open(random_file).read()
-    uploaded_content_validator(url, expected_content)
+    uploaded_content_validator(expected_content)
 
 
 @pytest.mark.skipif(not has_queue or not crtime_setuid,

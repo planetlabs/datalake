@@ -52,13 +52,21 @@ def archive(s3_bucket):
 
 
 @pytest.fixture
-def s3_key(s3_conn):
+def s3_key(s3_conn, s3_bucket):
 
-    def get_s3_key(url):
-        url = urlparse(url)
-        assert url.scheme == 's3'
-        bucket = s3_conn.get_bucket(url.netloc)
-        return bucket.get_key(url.path)
+    def get_s3_key(url=None):
+        if url is None:
+            # if no url is specified, assume there is just one key in the
+            # bucket. This is the common case for tests that only push one
+            # item.
+            keys = [k for k in s3_bucket.list()]
+            assert len(keys) == 1
+            return keys[0]
+        else:
+            url = urlparse(url)
+            assert url.scheme == 's3'
+            bucket = s3_conn.get_bucket(url.netloc)
+            return bucket.get_key(url.path)
 
     return get_s3_key
 
