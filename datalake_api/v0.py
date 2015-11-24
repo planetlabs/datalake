@@ -222,6 +222,7 @@ def files_get():
                                 - where
                                 - start
                                 - end
+                                - path
                                 - work_id
                                 - where
                                 - id
@@ -244,6 +245,9 @@ def files_get():
                                                since the epoch. This may be
                                                null if the file is associated
                                                with an instant
+                                path:
+                                  type: string
+                                  description: the path of the original file.
                                 work_id:
                                   type: string
                                   description: the work_id associated with the
