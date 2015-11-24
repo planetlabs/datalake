@@ -46,11 +46,11 @@ class Archive(object):
     def _parsed_storage_url(self):
         return urlparse.urlparse(self.storage_url)
 
-    def prepare_metadata_and_push(self, path, **metadata_fields):
+    def prepare_metadata_and_push(self, filename, **metadata_fields):
         '''push a file to the archive with the specified metadata
 
         Args:
-            path: path of the file to push
+            filename: path of the file to push
 
             metadata_fields: metadata fields for file. Missing fields will be
             added if they can be determined. Othwerise, InvalidDatalakeMetadata
@@ -58,7 +58,7 @@ class Archive(object):
 
         returns the url to which the file was pushed.
         '''
-        f = File(path, **metadata_fields)
+        f = File.from_filename(filename, **metadata_fields)
         return self.push(f)
 
     def push(self, f):

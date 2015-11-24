@@ -130,7 +130,6 @@ def _prepare_archive_or_fail():
 @click.option('--end')
 @click.option('--where')
 @click.option('--what')
-@click.option('--data-version')
 @click.option('--work-id')
 @click.argument('file')
 def push(**kwargs):
@@ -179,7 +178,6 @@ def _translate(**kwargs):
 @click.option('--end')
 @click.option('--where')
 @click.option('--what')
-@click.option('--data-version')
 @click.option('--work-id')
 @click.argument('file')
 def enqueue(file, **kwargs):
@@ -188,12 +186,10 @@ def enqueue(file, **kwargs):
 
 @clean_up_datalake_errors
 def _enqueue(file, **kwargs):
-    _prepare_archive_or_fail()
     kwargs = _evaluate_arguments(file, **kwargs)
     e = Enqueuer()
-    f = e.enqueue(file, **kwargs)
-    url = archive.url_from_file(f)
-    click.echo('Enqueued {} to {}'.format(file, url))
+    e.enqueue(file, **kwargs)
+    click.echo('Enqueued {}'.format(file))
 
 
 @cli.command()
