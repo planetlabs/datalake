@@ -25,8 +25,7 @@
       "where": "0a16",
       "start": 1430092800000,
       "end": null,
-      "hash": "12345",
-      "data_version": "0"
+      "hash": "12345"
     }
   }],
   "expected_reports": [{
@@ -45,8 +44,7 @@
           "where": "0a16",
           "start": 1430092800000,
           "end": null,
-          "hash": "12345",
-          "data_version": "0"
+          "hash": "12345"
         }
       }
     ]
