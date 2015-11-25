@@ -15,8 +15,15 @@
 import os
 from pyblake2 import blake2b
 from translator import Translator
+from cStringIO import StringIO
+import tarfile
+import simplejson as json
 
 from datalake_common import Metadata
+
+
+class InvalidDatalakeBundle(Exception):
+    pass
 
 
 class File(object):
@@ -96,3 +103,98 @@ class File(object):
             b2.update(data)
         self.seek(current)
         return b2.hexdigest()
+
+    # bundle file version 0 is very simple. It is a tar file with three
+    # members:
+    #
+    # version: a single file with the single character '0'
+    # content: the contents of the file to be archived
+    # datalake-metadata.json: the datalake metadata as a json
+    DATALAKE_BUNDLE_VERSION = '0'
+
+    @classmethod
+    def from_bundle(cls, bundle_filename):
+        '''Create a File from a bundle
+
+        What's a bundle? It's the file and the metadata together in a single
+        file. This is used for passing around a file after it's metadata has
+        been prepared, but before it has been uploaded to the datalake.
+
+        '''
+        cls._validate_bundle(bundle_filename)
+        b = tarfile.open(bundle_filename, 'r:')
+        cls._validate_bundle_version(b)
+        m = cls._get_metadata_from_bundle(b)
+        c = cls._get_fd_from_bundle(b, 'content')
+        f = cls(c, **m)
+
+        return f
+
+    @staticmethod
+    def _validate_bundle(bundle_filename):
+        if not tarfile.is_tarfile(bundle_filename):
+            msg = '{} is not a valid bundle file (not a tar)'
+            raise InvalidDatalakeBundle(msg.format(bundle_filename))
+
+    @staticmethod
+    def _validate_bundle_version(bundle):
+        v = File._get_content_from_bundle(bundle, 'version')
+        if v != File.DATALAKE_BUNDLE_VERSION:
+            msg = '{} has unsupported bundle version {}.'
+            msg = msg.format(bundle.name, v)
+            raise InvalidDatalakeBundle(msg)
+
+    @staticmethod
+    def _get_metadata_from_bundle(b):
+        try:
+            m = File._get_fd_from_bundle(b, 'datalake-metadata.json')
+            return json.load(m)
+        except json.JSONDecodeError:
+            msg = "{}'s datalake-metadata.json is not a valid json"
+            msg = msg.format(b.name)
+            raise InvalidDatalakeBundle(msg)
+
+    @staticmethod
+    def _get_content_from_bundle(t, arcname):
+        fd = File._get_fd_from_bundle(t, arcname)
+        return fd.read()
+
+    @staticmethod
+    def _get_fd_from_bundle(t, arcname):
+        try:
+            fd = t.extractfile(arcname)
+            if fd is None:
+                raise KeyError()
+            return fd
+        except KeyError:
+            msg = '{} has no {}.'.format(t.name, arcname)
+            raise InvalidDatalakeBundle(msg)
+
+    def to_bundle(self, bundle_filename):
+        '''write file bundled with its metadata
+
+        Args:
+        bundle_filename: output file
+        '''
+        t = tarfile.open(bundle_filename, 'w')
+        self._add_fd_to_tar(t, 'content', self._fd)
+        self._add_string_to_tar(t, 'version', self.DATALAKE_BUNDLE_VERSION)
+        self._add_string_to_tar(t, 'datalake-metadata.json',
+                                self.metadata.json)
+        t.close()
+
+        # reset the file pointer in case somebody else wants to read us.
+        self.seek(0, 0)
+
+    def _add_string_to_tar(self, tfile, arcname, data):
+        s = StringIO(data)
+        info = tarfile.TarInfo(name=arcname)
+        s.seek(0, os.SEEK_END)
+        info.size = s.tell()
+        s.seek(0, 0)
+        tfile.addfile(tarinfo=info, fileobj=s)
+
+    def _add_fd_to_tar(self, tfile, arcname, fd):
+        info = tarfile.TarInfo(name=arcname)
+        info.size = os.fstat(fd.fileno()).st_size
+        tfile.addfile(tarinfo=info, fileobj=fd)

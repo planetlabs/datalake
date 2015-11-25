@@ -15,8 +15,12 @@
 import pytest
 from datalake_common.tests import random_word, random_metadata
 from datalake_common import InvalidDatalakeMetadata
+import os
+import json
+import tarfile
+from cStringIO import StringIO
 
-from datalake import File
+from datalake import File, InvalidDatalakeBundle
 
 
 def random_file(tmpdir, metadata=None):
@@ -62,3 +66,82 @@ def test_default_where(monkeypatch, tmpdir, random_metadata):
     del(random_metadata['where'])
     f = random_file(tmpdir, metadata=random_metadata)
     assert f.metadata['where'] == 'here'
+
+
+def test_valid_bundle(tmpdir, random_metadata):
+    p = os.path.join(str(tmpdir), 'foo.tar')
+    f1 = random_file(tmpdir, metadata=random_metadata)
+    f1.to_bundle(p)
+    f2 = File.from_bundle(p)
+    assert f1.metadata == f2.metadata
+    content1 = f1.read()
+    content2 = f2.read()
+    assert content1
+    assert content1 == content2
+
+
+def test_bundle_not_tar(tmpfile):
+    f = tmpfile('foobar')
+    with pytest.raises(InvalidDatalakeBundle):
+        File.from_bundle(f)
+
+
+def add_string_to_tar(tfile, arcname, data):
+    if data is None:
+        return
+    s = StringIO(data)
+    info = tarfile.TarInfo(name=arcname)
+    s.seek(0, os.SEEK_END)
+    info.size = s.tell()
+    s.seek(0, 0)
+    tfile.addfile(tarinfo=info, fileobj=s)
+
+
+@pytest.fixture
+def bundle_maker(tmpdir):
+
+    def maker(content=None, metadata=None, version=None):
+        f = random_word(10) + '.tar'
+        f = os.path.join(str(tmpdir), f)
+        t = tarfile.open(f, 'w')
+        add_string_to_tar(t, 'content', content)
+        add_string_to_tar(t, 'version', version)
+        add_string_to_tar(t, 'datalake-metadata.json', metadata)
+        t.close()
+        return f
+
+    return maker
+
+
+def test_bundle_without_version(bundle_maker, random_metadata):
+    m = json.dumps(random_metadata)
+    b = bundle_maker(content='1234', metadata=m)
+    with pytest.raises(InvalidDatalakeBundle):
+        File.from_bundle(b)
+
+
+def test_bundle_without_metadata(bundle_maker):
+    b = bundle_maker(content='1234', version='0')
+    with pytest.raises(InvalidDatalakeBundle):
+        File.from_bundle(b)
+
+
+def test_bundle_without_content(bundle_maker, random_metadata):
+    m = json.dumps(random_metadata)
+    b = bundle_maker(metadata=m, version='0')
+    with pytest.raises(InvalidDatalakeBundle):
+        File.from_bundle(b)
+
+
+def test_bundle_with_non_json_metadata(bundle_maker):
+    b = bundle_maker(content='1234', metadata='not:a%json#', version='0')
+    with pytest.raises(InvalidDatalakeBundle):
+        File.from_bundle(b)
+
+
+def test_bundle_with_invalid_metadata(bundle_maker, random_metadata):
+    del(random_metadata['what'])
+    m = json.dumps(random_metadata)
+    b = bundle_maker(content='1234', metadata=m, version='0')
+    with pytest.raises(InvalidDatalakeMetadata):
+        File.from_bundle(b)

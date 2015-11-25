@@ -18,13 +18,12 @@ This allows users to enqueue files to be uploaded to the datalake. An uploader
 process runs that actually does the uploader work.
 
 Under the hood, the queue is a directory which the Uploader watches. The
-Enqueuer enqueues files by setting an extended filesystem attribute with the
-fully-formed metadata for the file to be uploaded, and symlinking it to the
-queue directory. This ensures that the enqueuer fails in the user's face
-instead of silently behind the user's back. The uploader uses inotify to
-monitor the queue directory. When a file arrives, it gets uploaded and the
-symlink deleted.
-
+Enqueuer enqueues files by tarring them up with their metadata and writing them
+to the queue directory. This ensures that the enqueuer fails in the user's face
+instead of silently behind the user's back if the metadata is not right. The
+uploader uses inotify to monitor the queue directory. When a file arrives, it
+gets uploaded. On success, it gets deleted. If the upload fails for some
+reason, the file remains in the queue.
 '''
 from os import environ
 from datalake_common.errors import InsufficientConfiguration
@@ -32,7 +31,6 @@ from logging import getLogger
 import os
 import time
 
-from datalake_common import Metadata
 from datalake import File
 
 
@@ -43,7 +41,6 @@ they are unavailable, the affected functions will raise
 InsufficientConfiguration.'''
 has_queue = True
 try:
-    from xattr import setxattr, getxattr
     import pyinotify
 except ImportError:
     has_queue = False
@@ -69,9 +66,6 @@ def requires_queue(f):
 log = getLogger('datalake-queue')
 
 
-DATALAKE_METADATA_XATTR = 'user.datalake-metadata'
-
-
 class DatalakeQueueBase(object):
 
     @requires_queue
@@ -94,9 +88,9 @@ class Enqueuer(DatalakeQueueBase):
         '''
         log.info('Enqueing ' + filename)
         f = File.from_filename(filename, **metadata_fields)
-        setxattr(filename, DATALAKE_METADATA_XATTR, f.metadata.json)
-        dest = os.path.join(self.queue_dir, f.metadata['id'])
-        os.symlink(filename, dest)
+        fname = f.metadata['id'] + '.tar'
+        dest = os.path.join(self.queue_dir, fname)
+        f.to_bundle(dest)
         return f
 
 
@@ -112,7 +106,10 @@ class Uploader(DatalakeQueueBase):
             super(Uploader.EventHandler, self).__init__()
             self.callback = callback
 
-        def process_IN_CREATE(self, event):
+        def process_IN_CLOSE_WRITE(self, event):
+            self.callback(event.pathname)
+
+        def process_IN_MOVED_TO(self, event):
             self.callback(event.pathname)
 
     def _setup_watch_manager(self, timeout):
@@ -122,14 +119,14 @@ class Uploader(DatalakeQueueBase):
         self._handler = Uploader.EventHandler(self._push)
         self._notifier = pyinotify.Notifier(self._wm, self._handler,
                                             timeout=timeout)
-        self._wm.add_watch(self.queue_dir, pyinotify.IN_CREATE)
+        self._wm.add_watch(self.queue_dir,
+                           pyinotify.IN_CLOSE_WRITE | pyinotify.IN_MOVED_TO)
 
     def _push(self, filename):
-        x = getxattr(filename, DATALAKE_METADATA_XATTR)
-        metadata = Metadata.from_json(x)
-        f = File.from_filename(filename, **metadata)
+        f = File.from_bundle(filename)
         url = self._archive.push(f)
-        log.info('Pushed {} to {}'.format(filename, url))
+        msg = 'Pushed {}({}) to {}'.format(filename, f.metadata['path'], url)
+        log.info(msg)
         os.unlink(filename)
 
     def listen(self, timeout=None):
