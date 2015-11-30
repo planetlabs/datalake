@@ -58,7 +58,6 @@ setup(name='datalake',
           # to a separate uploader process.
           'queuable': [
               'pyinotify>=0.9.4',
-              'xattr>=0.7.8',
           ],
           'sentry': [
               'raven>=5.0.0',
