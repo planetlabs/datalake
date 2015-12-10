@@ -14,15 +14,12 @@
 
 import click
 from datalake import Archive, Translator, TranslatorError, get_crtime, \
-    CreationTimeError, Uploader, Enqueuer
+    CreationTimeError, Uploader, Enqueuer, load_config, DEFAULT_CONFIG
 import os
-from dotenv import load_dotenv
 from datalake_common.metadata import InvalidDatalakeMetadata
 from datalake_common.errors import InsufficientConfiguration
 import time
 
-
-DEFAULT_CONFIG = '/etc/datalake.env'
 
 archive = None
 
@@ -63,8 +60,9 @@ to eventually upload.
               help=('config file. The format is just single lines with '
                     'VAR=VALUE. If ' + DEFAULT_CONFIG + ' exists it will '
                     'be read. Config file values can be overridden by '
-                    'environment variables, which can be overridded by '
-                    'command-line arguments.'))
+                    'environment variables, which can be overridden by '
+                    'command-line arguments.'),
+              envvar='DATALAKE_CONFIG')
 @click.option('-u', '--storage-url',
               help=('The URL to the top-level storage resource where '
                     'datalake will archive all the files (e.g., '
@@ -87,7 +85,7 @@ to eventually upload.
                     'variable.'),
               envvar='AWS_REGION')
 def cli(ctx, **kwargs):
-    _read_config_file(kwargs.pop('config'))
+    load_config(kwargs.pop('config'))
     _update_environment(**kwargs)
     _subcommand_or_fail(ctx)
 
@@ -100,16 +98,6 @@ def _update_environment(**kwargs):
             k = 'DATALAKE_' + k
         k = k.upper()
         os.environ[k] = v
-
-
-def _read_config_file(config):
-    if config is None:
-        if os.path.exists(DEFAULT_CONFIG):
-            load_dotenv(DEFAULT_CONFIG)
-    elif os.path.exists(config):
-        load_dotenv(config)
-    else:
-        raise click.UsageError('Config file {} not exist'.format(config))
 
 
 def _subcommand_or_fail(ctx):
