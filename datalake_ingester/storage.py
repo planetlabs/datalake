@@ -15,6 +15,7 @@
 from memoized_property import memoized_property
 import boto.dynamodb2
 from boto.dynamodb2.table import Table
+from boto.dynamodb2.exceptions import ConditionalCheckFailedException
 
 from datalake_common.conf import get_config_var
 from datalake_common.errors import InsufficientConfiguration
@@ -49,4 +50,8 @@ class DynamoDBStorage(object):
         return Table(self.table_name, connection=self._connection)
 
     def store(self, record):
-        self._table.put_item(data=record)
+        try:
+            self._table.put_item(data=record)
+        except ConditionalCheckFailedException:
+            # Tolerate duplicate stores
+            pass
