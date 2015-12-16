@@ -2,7 +2,7 @@ import pytest
 import time
 
 from datalake_ingester import DynamoDBStorage, Ingester, \
-    InvalidS3Error, SQSQueue, SNSReporter
+    SQSQueue, SNSReporter
 from datalake_common.errors import InsufficientConfiguration
 
 from conftest import all_s3_notification_specs, all_bad_s3_notification_specs
@@ -127,34 +127,12 @@ def test_listener_reports(listener_report_tester):
 
 
 @pytest.fixture(params=all_bad_s3_notification_specs)
-def bad_notification_ingester(request, ingester_with_queue, sqs_sender,
-                              spec_maker):
-    def ingester():
-        spec = spec_maker(request.param)
-        sqs_sender(spec['s3_notification'])
-        return ingester_with_queue
-    return ingester
-
-
-def test_bad_reports_raise(bad_notification_ingester):
-    with pytest.raises(InvalidS3Error):
-        bad_notification_ingester().listen(timeout=1)
-
-
-@pytest.fixture
-def full_catchy_ingester(storage, sqs_queue, sns_topic_arn):
-    reporter = SNSReporter(sns_topic_arn)
-    return Ingester(storage, queue=sqs_queue, reporter=reporter,
-                    catch_exceptions=True)
-
-
-@pytest.fixture(params=all_bad_s3_notification_specs)
-def bad_ingestion_reporter(request, full_catchy_ingester, report_listener,
+def bad_ingestion_reporter(request, full_ingester, report_listener,
                            sqs_sender, spec_maker):
     def reporter():
         spec = spec_maker(request.param)
         sqs_sender(spec['s3_notification'])
-        full_catchy_ingester.listen(timeout=1)
+        full_ingester.listen(timeout=1)
         report_listener.drain()
         return report_listener.messages, spec['expected_reports']
 

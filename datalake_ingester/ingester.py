@@ -4,13 +4,21 @@ from datalake_common.errors import InsufficientConfiguration
 from translator import S3ToDatalakeTranslator
 import time
 import logging
-from datalake_common.conf import get_config_var
 from storage import DynamoDBStorage
 from queue import SQSQueue
 from reporter import SNSReporter
+from errors import InvalidS3Notification, InvalidS3Event
 
 
 logger = logging.getLogger('ingester')
+
+
+# This is a list of exceptions that we may encounter that do not compromise our
+# ability to ingest. These we simply wish to log, report, and move on.
+SAFE_EXCEPTIONS = [
+    InvalidS3Notification,
+    InvalidS3Event,
+]
 
 
 class IngesterReport(dict):
@@ -54,21 +62,17 @@ class IngesterReport(dict):
 
 class Ingester(object):
 
-    def __init__(self, storage, queue=None, reporter=None,
-                 catch_exceptions=False):
+    def __init__(self, storage, queue=None, reporter=None):
         self.storage = storage
         self.queue = queue
         self.reporter = reporter
-        self.catch_exceptions = catch_exceptions
 
     @classmethod
     def from_config(cls):
         storage = DynamoDBStorage.from_config()
         queue = SQSQueue.from_config()
         reporter = SNSReporter.from_config()
-        catch_exceptions = get_config_var('catch_exceptions') or False
-        return cls(storage, queue=queue, reporter=reporter,
-                   catch_exceptions=catch_exceptions)
+        return cls(storage, queue=queue, reporter=reporter)
 
     def ingest(self, url):
         '''ingest the metadata associated with the given url'''
@@ -88,8 +92,8 @@ class Ingester(object):
         except Exception as e:
             logger.exception(e)
             ir.error(e.message)
-            if not self.catch_exceptions:
-                raise e
+            if type(e) not in SAFE_EXCEPTIONS:
+                raise
         finally:
             self._report(ir)
 
