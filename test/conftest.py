@@ -48,7 +48,8 @@ def s3_bucket(s3_conn):
 @pytest.fixture
 def archive(s3_bucket):
     bucket_url = 's3://' + s3_bucket.name + '/'
-    return Archive(bucket_url)
+    http_url = 'http://datalake.example.com'
+    return Archive(storage_url=bucket_url, http_url=http_url)
 
 
 @pytest.fixture

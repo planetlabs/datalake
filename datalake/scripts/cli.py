@@ -69,6 +69,11 @@ to eventually upload.
                     's3://my-datalake). DATALAKE_STORAGE_URL is the '
                     'config/environment variable'),
               envvar='DATALAKE_STORAGE_URL')
+@click.option('-u', '--http-url',
+              help=('The URL to the datalake API server (e.g., '
+                    'https://datalake.example.com/). DATALAKE_HTTP_URL is the '
+                    'config/environment variable'),
+              envvar='DATALAKE_HTTP_URL')
 @click.option('-k', '--aws-access-key-id',
               help=('The AWS access key used to read and write s3. '
                     'AWS_ACCESS_KEY_ID is the configuration/environment '

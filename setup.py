@@ -42,8 +42,9 @@ setup(name='datalake',
           'simplejson>=3.7',
           'pyblake2>=0.9.3',
           'click>=4.1',
-          'datalake-common>=0.14',
+          'datalake-common>=0.15',
           'python-dotenv>=0.1.3',
+          'requests>=2.5'
       ],
       extras_require={
           'test': [
@@ -53,6 +54,8 @@ setup(name='datalake',
               'pip==7.1.0',
               'wheel==0.24.0',
               'flake8==2.5.0',
+              'responses==0.5.0',
+              'pytz>=2015.4',
           ],
           # the queuable feature allows users to offload their datalake pushes
           # to a separate uploader process.
