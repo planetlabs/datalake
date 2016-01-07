@@ -13,6 +13,7 @@
 # the License.
 
 import pytest
+from dateutil.parser import parse as dateparse
 
 from datalake_common import Metadata, InvalidDatalakeMetadata, \
     UnsupportedDatalakeMetadataVersion
@@ -146,3 +147,14 @@ def test_normalize_int_date(basic_metadata):
     basic_metadata['end'] = '1426809600123'
     m = Metadata(basic_metadata)
     assert m['end'] == 1426809600123
+
+
+def test_normalize_date_with_datetime(basic_metadata):
+    date = dateparse('2015-03-20T00:00:00Z')
+    ms = Metadata.normalize_date(date)
+    assert ms == 1426809600000
+
+
+def test_normalize_garbage(basic_metadata):
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata.normalize_date('bleeblaaablooo')

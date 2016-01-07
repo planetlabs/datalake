@@ -141,21 +141,32 @@ class Metadata(dict):
             raise InvalidDatalakeMetadata(msg)
 
     def _normalize_dates(self):
-        self['start'] = self._normalize_date(self['start'])
+        self['start'] = self.normalize_date(self['start'])
         self._normalize_end()
 
     def _normalize_end(self):
         if 'end' not in self:
             return
         if self['end'] is not None:
-            self['end'] = self._normalize_date(self['end'])
+            self['end'] = self.normalize_date(self['end'])
 
     @staticmethod
-    def _normalize_date(date):
+    def normalize_date(date):
+        '''normalize the specified date to milliseconds since the epoch
+
+        If the specified date is an integer or a string that looks like an
+        integer, it is assumed to be milliseconds since the epoch. If it is a
+        float, it is assumed to be seconds since the epoch. If it is a string,
+        it is assumed to be some sort of datetime such as "2015-12-27" or
+        "2015-12-27T11:01:20.954". If date is a naive datetime, it is assumed
+        to be UTC.
+        '''
         if type(date) is int:
             return date
         elif type(date) is float:
             return int(date * 1000.0)
+        elif type(date) is datetime:
+            return Metadata._from_datetime(date)
         else:
             return Metadata._normalize_date_from_string(date)
 
@@ -183,12 +194,16 @@ class Metadata(dict):
     def _from_date_string(date):
         try:
             d = dateparse(date)
-            if not d.tzinfo:
-                d = d.replace(tzinfo=utc)
-            return Metadata._datetime_to_milliseconds(d)
+            return Metadata._from_datetime(d)
         except ValueError:
             msg = 'could not parse a date from {}'.format(date)
             raise InvalidDatalakeMetadata(msg)
+
+    @staticmethod
+    def _from_datetime(date):
+        if not date.tzinfo:
+            date = date.replace(tzinfo=utc)
+        return Metadata._datetime_to_milliseconds(date)
 
     @staticmethod
     def _datetime_to_milliseconds(d):
