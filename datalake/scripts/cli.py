@@ -13,7 +13,7 @@
 # the License.
 
 import click
-from datalake import *
+from datalake import *  # noqa
 import os
 from datalake_common.metadata import InvalidDatalakeMetadata
 from datalake_common.errors import InsufficientConfiguration
@@ -212,6 +212,7 @@ _list_result_formatters = {
 
 
 _list_result_formats = _list_result_formatters.keys()
+
 
 @cli.command()
 @click.option('--start')

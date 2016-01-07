@@ -89,7 +89,7 @@ def test_bad_request(archive):
     with pytest.raises(DatalakeHttpError):
         list(archive.list('syslog'))
 
-        
+
 @responses.activate
 def test_internal_server_error(archive):
 
@@ -116,7 +116,8 @@ def date_tester(archive, random_metadata):
             'next': None,
         }
 
-        _prepare_response(r, what=random_metadata['what'], start=random_metadata['start'],
+        _prepare_response(r, what=random_metadata['what'],
+                          start=random_metadata['start'],
                           end=random_metadata['end'])
         l = list(archive.list(random_metadata['what'], start=start, end=end))
         assert len(l) == 1
