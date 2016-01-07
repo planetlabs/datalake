@@ -13,12 +13,12 @@
 # the License.
 
 import click
-from datalake import Archive, Translator, TranslatorError, get_crtime, \
-    CreationTimeError, Uploader, Enqueuer, load_config, DEFAULT_CONFIG
+from datalake import *
 import os
 from datalake_common.metadata import InvalidDatalakeMetadata
 from datalake_common.errors import InsufficientConfiguration
 import time
+import simplejson as json
 
 
 archive = None
@@ -31,7 +31,8 @@ def clean_up_datalake_errors(f):
         except (InvalidDatalakeMetadata,
                 TranslatorError,
                 CreationTimeError,
-                InsufficientConfiguration) as e:
+                InsufficientConfiguration,
+                DatalakeHttpError) as e:
             raise click.UsageError(e.message)
     return wrapped
 
@@ -198,3 +199,42 @@ def _uploader(**kwargs):
     _prepare_archive_or_fail()
     u = Uploader(archive, os.environ.get('DATALAKE_QUEUE_DIR'))
     u.listen(**kwargs)
+
+
+_list_result_formatters = {
+    'url': lambda result: result['url'],
+    'json': lambda result: json.dumps(result),
+    'json-pretty': lambda result: json.dumps(result,
+                                             sort_keys=True,
+                                             indent=4,
+                                             separators=(',', ': ')),
+}
+
+
+_list_result_formats = _list_result_formatters.keys()
+
+@cli.command()
+@click.option('--start')
+@click.option('--end')
+@click.option('--where')
+@click.option('--work-id')
+@click.option('--format', type=click.Choice(_list_result_formats),
+              default=_list_result_formats[0])
+@click.argument('what')
+def list(**kwargs):
+    _prepare_archive_or_fail()
+    _list(**kwargs)
+
+
+@clean_up_datalake_errors
+def _list(**kwargs):
+    format = kwargs.pop('format')
+    what = kwargs.pop('what')
+    results = archive.list(what, **kwargs)
+    _print_list_results(results, format)
+
+
+def _print_list_results(results, format):
+    for r in results:
+        s = _list_result_formatters[format](r)
+        click.echo(s)

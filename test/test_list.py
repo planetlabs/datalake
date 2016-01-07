@@ -5,6 +5,7 @@ from copy import copy
 from datalake_common import Metadata
 from datetime import datetime, timedelta
 from pytz import utc
+import simplejson as json
 
 
 def _prepare_response(response, status=200, url=None, **query_params):
@@ -183,3 +184,58 @@ def test_with_work_id(archive, random_metadata):
     assert len(l) == 1
     assert l[0]['url'] == 's3://bucket/file'
     assert l[0]['metadata'] == random_metadata
+
+
+@responses.activate
+def test_list_cli_url_format(cli_tester, random_metadata):
+    r = {
+        'records': [
+            {
+                'url': 's3://thisistheurl',
+                'metadata': random_metadata,
+            },
+            {
+                'url': 's3://thisistheotherurl',
+                'metadata': random_metadata,
+            }
+        ],
+        'next': None,
+    }
+    _prepare_response(r, what=random_metadata['what'],
+                      start=random_metadata['start'],
+                      end=random_metadata['end'])
+    cmd = 'list {what} --start={start} --end={end}'
+    cmd = cmd.format(**random_metadata)
+    output = cli_tester(cmd)
+    assert output == 's3://thisistheurl\ns3://thisistheotherurl\n'
+
+
+@responses.activate
+def test_list_cli_json_format(cli_tester, random_metadata):
+    m1 = copy(random_metadata)
+    m1['id'] = '1'
+    m1['work_id'] = 'foo1234'
+    m2 = copy(random_metadata)
+    m2['id'] = '2'
+    m2['work_id'] = 'foo1234'
+    r = {
+        'records': [
+            {
+                'url': 's3://url1',
+                'metadata': m1,
+            },
+            {
+                'url': 's3://url2',
+                'metadata': m2,
+            }
+        ],
+        'next': None,
+    }
+    _prepare_response(r, what=m1['what'], work_id=m1['work_id'])
+    cmd = 'list {what} --work-id={work_id} --format=json'
+    cmd = cmd.format(**m1)
+    output_lines = cli_tester(cmd).rstrip('\n').split('\n')
+    assert len(output_lines) == 2
+    output_jsons = [json.loads(l) for l in output_lines]
+    for record in r['records']:
+        assert record in output_jsons

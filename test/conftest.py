@@ -77,6 +77,7 @@ def cli_tester(s3_bucket):
 
     def tester(command, expected_exit=0):
         os.environ['DATALAKE_STORAGE_URL'] = 's3://' + s3_bucket.name
+        os.environ['DATALAKE_HTTP_URL'] = 'http://datalake.example.com'
         parts = command.split(' ')
         runner = CliRunner()
         result = runner.invoke(cli, parts, catch_exceptions=False)
