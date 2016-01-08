@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+import os
 from os import environ
 import urlparse
 from memoized_property import memoized_property
@@ -20,10 +21,16 @@ from datalake import File
 from datalake_common.errors import InsufficientConfiguration
 from datalake_common import Metadata
 import requests
+from cStringIO import StringIO
+import errno
 
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from boto.s3.connection import NoHostProvided
+
+
+# The name in s3 of the datalake metadata document
+METADATA_NAME = 'datalake'
 
 
 class UnsupportedStorageError(Exception):
@@ -31,6 +38,10 @@ class UnsupportedStorageError(Exception):
 
 
 class DatalakeHttpError(Exception):
+    pass
+
+
+class InvalidDatalakePath(Exception):
     pass
 
 
@@ -49,6 +60,8 @@ class Archive(object):
             msg = 'Unsupported storage scheme ' + \
                 self._parsed_storage_url.scheme
             raise UnsupportedStorageError(msg)
+
+        self.storage_url = self.storage_url.rstrip('/')
 
     @property
     def _parsed_storage_url(self):
@@ -144,13 +157,99 @@ class Archive(object):
 
     def _upload_file(self, f):
         key = self._s3_key_from_metadata(f)
-        key.set_metadata('datalake', json.dumps(f.metadata))
+        key.set_metadata(METADATA_NAME, json.dumps(f.metadata))
         key.set_contents_from_string(f.read())
 
     def url_from_file(self, f):
         return self._get_s3_url(f)
 
     _URL_FORMAT = 's3://{bucket}/{key}'
+
+    def fetch(self, url):
+        '''fetch the specified url and return it as a datalake.File
+
+        Args:
+
+        url: the url to fetch.
+        '''
+        k = self._get_key_from_url(url)
+        m = self._get_metadata_from_key(k)
+        fd = StringIO()
+        k.get_contents_to_file(fd)
+        fd.seek(0)
+        return File(fd, **m)
+
+    def fetch_to_filename(self, url, filename_template=None):
+        '''fetch the specified url and write it to a file
+
+        Args:
+
+        url: the url to fetch
+
+        filename_template: a template describing where to store files. For
+        example, to store a file based on `what` it is, you could pass
+        something like {what}.log. Or if you gathering many `what`'s that
+        originate from many `where`'s you might want to use something like
+        {where}/{what}-{start}.log. If filename_template is None (the default),
+        files are stored in the current directory and the filenames are the ids
+        from the metadata.
+
+        '''
+        k = self._get_key_from_url(url)
+        m = self._get_metadata_from_key(k)
+        fname = self._get_filename_from_template(filename_template, m)
+        dname = os.path.dirname(fname)
+        self._mkdirs(dname)
+        k.get_contents_to_filename(fname)
+
+    def _mkdirs(self, path):
+        if path == '':
+            return
+        try:
+            os.makedirs(path)
+        except OSError as e:
+            if e.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else:
+                raise
+
+    def _get_key_from_url(self, url):
+        self._validate_fetch_url(url)
+        key_name = self._get_key_name_from_url(url)
+        k = self._s3_bucket.get_key(key_name)
+        if k is None:
+            msg = 'Failed to find {} in the datalake.'.format(url)
+            raise InvalidDatalakePath(msg)
+        return k
+
+    def _get_metadata_from_key(self, key):
+        m = key.get_metadata(METADATA_NAME)
+        return Metadata.from_json(m)
+
+    def _get_filename_from_template(self, template, metadata):
+        if template is None:
+            template = '{id}'
+        try:
+            return template.format(**metadata)
+        except KeyError as e:
+            m = '"{}" does not appear in the datalake metadata'
+            m = m.format(e.message)
+            raise InvalidDatalakePath(m)
+        except ValueError as e:
+            raise InvalidDatalakePath(e.message)
+
+    def _get_key_name_from_url(self, url):
+        parts = urlparse.urlparse(url)
+        if not parts.path:
+            msg = '{} is not a valid datalake url'.format(url)
+            raise InvalidDatalakePath(msg)
+        return parts.path
+
+    def _validate_fetch_url(self, url):
+        if not url.startswith(self.storage_url):
+            msg = 'url {} does not start with the configured storage url {}.'
+            msg = msg.format(url, self.storage_url)
+            raise InvalidDatalakePath(msg)
 
     def _get_s3_url(self, f):
         key = self._s3_key_from_metadata(f)
