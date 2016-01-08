@@ -72,3 +72,18 @@ def test_bad_template(archive, datalake_url_maker):
     url = datalake_url_maker()
     with pytest.raises(InvalidDatalakePath):
         archive.fetch_to_filename(url, filename_template='{bad')
+
+
+def test_cli_fetch_to_file(monkeypatch, cli_tester, datalake_url_maker,
+                           random_metadata, tmpdir):
+    monkeypatch.chdir(str(tmpdir))
+    url = datalake_url_maker(metadata=random_metadata,
+                             content='look ma, CLI')
+
+    cmd = 'fetch ' + url
+    output = cli_tester(cmd)
+
+    assert output == random_metadata['id'] + '\n'
+    assert os.path.exists(random_metadata['id'])
+    contents = open(random_metadata['id']).read()
+    assert contents == 'look ma, CLI'

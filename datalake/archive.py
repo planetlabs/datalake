@@ -194,6 +194,7 @@ class Archive(object):
         files are stored in the current directory and the filenames are the ids
         from the metadata.
 
+        Returns the filename written.
         '''
         k = self._get_key_from_url(url)
         m = self._get_metadata_from_key(k)
@@ -201,6 +202,7 @@ class Archive(object):
         dname = os.path.dirname(fname)
         self._mkdirs(dname)
         k.get_contents_to_filename(fname)
+        return fname
 
     def _mkdirs(self, path):
         if path == '':
