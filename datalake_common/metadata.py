@@ -19,6 +19,7 @@ from pytz import utc
 from uuid import uuid4
 import re
 import simplejson as json
+from simplejson.scanner import JSONDecodeError
 import os
 
 
@@ -61,7 +62,13 @@ class Metadata(dict):
 
     @classmethod
     def from_json(cls, j):
-        return cls(json.loads(j))
+        if j is None:
+            raise InvalidDatalakeMetadata('None is not a valid JSON')
+        try:
+            return cls(json.loads(j))
+        except JSONDecodeError:
+            msg = '{} is not valid json'.format(repr(j))
+            raise InvalidDatalakeMetadata(msg)
 
     @property
     def json(self):

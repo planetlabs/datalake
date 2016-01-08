@@ -123,6 +123,16 @@ def test_from_to_json(basic_metadata):
     assert sorted(m2) == sorted(basic_json)
 
 
+def test_from_invalid_json():
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata.from_json('{flee floo')
+
+
+def test_from_none_json():
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata.from_json(None)
+
+
 def test_end_before_start(basic_metadata):
     end = basic_metadata['end']
     basic_metadata['end'] = basic_metadata['start']
