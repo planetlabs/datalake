@@ -17,6 +17,9 @@ import urlparse
 from memoized_property import memoized_property
 import simplejson as json
 from datalake import File
+from datalake_common.errors import InsufficientConfiguration
+from datalake_common import Metadata
+import requests
 
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
@@ -27,11 +30,16 @@ class UnsupportedStorageError(Exception):
     pass
 
 
+class DatalakeHttpError(Exception):
+    pass
+
+
 class Archive(object):
 
-    def __init__(self, storage_url=None):
+    def __init__(self, storage_url=None, http_url=None):
         self.storage_url = storage_url or environ.get('DATALAKE_STORAGE_URL')
         self._validate_storage_url()
+        self._http_url = http_url
 
     def _validate_storage_url(self):
         if not self.storage_url:
@@ -45,6 +53,68 @@ class Archive(object):
     @property
     def _parsed_storage_url(self):
         return urlparse.urlparse(self.storage_url)
+
+    def list(self, what, start=None, end=None, where=None, work_id=None):
+        '''list metadata records for specified files
+
+        Args:
+          what: what kind of file to list (e.g., syslog, nginx)
+
+          start: List only files after this time. This argument is
+          polymorphic. datetimes are accepted. Strings will be converted to
+          datetimes, so inputs like `2015-12-21` and `2015-12-21T09:11:14.08Z`
+          are acceptable. Floats will be interpreted as UTC seconds since the
+          epoch. Integers will be interpreted as milliseconds since the epoch.
+
+          end: List only files before this time. Same semantics as start.
+
+          where: List only files from this host.
+
+          work_id: Show only files with this work id.
+
+        returns a generator that lists records of the form:
+            {
+                'url': <url>,
+                'metadata': <metadata>,
+            }
+        '''
+        url = self.http_url + '/v0/archive/files/'
+        params = dict(
+            what=what,
+            start=None if start is None else Metadata.normalize_date(start),
+            end=None if end is None else Metadata.normalize_date(end),
+            where=where,
+            work_id=work_id,
+        )
+        response = requests.get(url, params=params)
+
+        while True:
+            self._check_http_response(response)
+            response = response.json()
+            for record in response['records']:
+                yield record
+            if response['next']:
+                response = requests.get(response['next'])
+            else:
+                break
+
+    @property
+    def http_url(self):
+        self._http_url = self._http_url or environ.get('DATALAKE_HTTP_URL')
+        if self._http_url is None:
+            raise InsufficientConfiguration('Please specify DATALAKE_HTTP_URL')
+        return self._http_url.rstrip('/')
+
+    def _check_http_response(self, response):
+        if response.status_code == 400:
+            err = response.json()
+            msg = '{} ({})'.format(err['message'], err['code'])
+            raise DatalakeHttpError(msg)
+
+        elif response.status_code != 200:
+            msg = 'Datalake HTTP API failed: {} ({})'
+            msg = msg.format(response.content, response.status_code)
+            raise DatalakeHttpError(msg)
 
     def prepare_metadata_and_push(self, filename, **metadata_fields):
         '''push a file to the archive with the specified metadata
