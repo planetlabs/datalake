@@ -87,6 +87,16 @@ def cli_tester(s3_bucket):
     return tester
 
 
+@pytest.fixture  # noqa
+def datalake_url_maker(archive, tmpfile, random_metadata):
+
+    def maker(metadata=random_metadata, content=''):
+        f = tmpfile(content)
+        return archive.prepare_metadata_and_push(f, **metadata)
+
+    return maker
+
+
 crtime = os.environ.get('CRTIME', '/usr/local/bin/crtime')
 crtime_available = os.path.isfile(crtime) and os.access(crtime, os.X_OK)
 crtime_setuid = False

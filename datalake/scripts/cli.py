@@ -32,7 +32,8 @@ def clean_up_datalake_errors(f):
                 TranslatorError,
                 CreationTimeError,
                 InsufficientConfiguration,
-                DatalakeHttpError) as e:
+                DatalakeHttpError,
+                UnsupportedStorageError) as e:
             raise click.UsageError(e.message)
     return wrapped
 
@@ -239,3 +240,20 @@ def _print_list_results(results, format):
     for r in results:
         s = _list_result_formatters[format](r)
         click.echo(s)
+
+
+@cli.command()
+@click.option('--filename-template')
+@click.argument('url', nargs=-1)
+def fetch(**kwargs):
+    _fetch(**kwargs)
+
+
+@clean_up_datalake_errors
+def _fetch(url, filename_template):
+    _prepare_archive_or_fail()
+    urls = url or click.get_text_stream('stdin')
+    for url in urls:
+        url = url.rstrip('\n')
+        f = archive.fetch_to_filename(url, filename_template=filename_template)
+        click.echo(f)
