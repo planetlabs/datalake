@@ -17,7 +17,10 @@ def get_version_from_pyver():
             raise ImportError('You must install pyver to create a package')
         else:
             return 'noversion'
-    version, version_info = pyver.get_version(pkg="datalake", public=True)
+    try:
+        version, version_info = pyver.get_version(pkg="datalake", public=True)
+    except IndexError:
+        return 'noversion'
     return version
 
 
