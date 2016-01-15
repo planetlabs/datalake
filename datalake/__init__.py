@@ -14,12 +14,12 @@
 
 import pyver
 
-__version__, __version_info__ = pyver.get_version(pkg='datalake')
+__version__, __version_info__ = pyver.get_version(pkg='datalake')  # noqa
 __all__ = ['File', 'Archive', 'Uploader', 'Enqueuer', 'get_crtime',
            'CreationTimeError', 'Translator', 'TranslatorError',
            'InvalidDatalakeBundle', 'load_config', 'DEFAULT_CONFIG',
            'DatalakeHttpError', 'InvalidDatalakePath',
-           'UnsupportedStorageError']
+           'UnsupportedStorageError']  # noqa
 
 
 from dlfile import File, InvalidDatalakeBundle

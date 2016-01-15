@@ -122,7 +122,11 @@ class File(object):
 
         '''
         cls._validate_bundle(bundle_filename)
-        b = tarfile.open(bundle_filename, 'r:')
+        try:
+            b = tarfile.open(bundle_filename, 'r:gz')
+        except tarfile.ReadError:
+            # Backwards compatible with uncompressed tarfiles
+            b = tarfile.open(bundle_filename, 'r')
         cls._validate_bundle_version(b)
         m = cls._get_metadata_from_bundle(b)
         c = cls._get_fd_from_bundle(b, 'content')
@@ -170,13 +174,14 @@ class File(object):
             msg = '{} has no {}.'.format(t.name, arcname)
             raise InvalidDatalakeBundle(msg)
 
-    def to_bundle(self, bundle_filename):
+    def to_bundle(self, bundle_filename, gzip=True):
         '''write file bundled with its metadata
 
         Args:
         bundle_filename: output file
         '''
-        t = tarfile.open(bundle_filename, 'w')
+        mode = 'w:gz' if gzip else 'w'
+        t = tarfile.open(bundle_filename, mode)
         self._add_fd_to_tar(t, 'content', self._fd)
         self._add_string_to_tar(t, 'version', self.DATALAKE_BUNDLE_VERSION)
         self._add_string_to_tar(t, 'datalake-metadata.json',

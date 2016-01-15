@@ -80,6 +80,18 @@ def test_valid_bundle(tmpdir, random_metadata):
     assert content1 == content2
 
 
+def test_uncompressed_bundle(tmpdir, random_metadata):
+    p = os.path.join(str(tmpdir), 'foo.tar')
+    f1 = random_file(tmpdir, metadata=random_metadata)
+    f1.to_bundle(p, gzip=False)
+    f2 = File.from_bundle(p)
+    assert f1.metadata == f2.metadata
+    content1 = f1.read()
+    content2 = f2.read()
+    assert content1
+    assert content1 == content2
+
+
 def test_bundle_not_tar(tmpfile):
     f = tmpfile('foobar')
     with pytest.raises(InvalidDatalakeBundle):
@@ -103,7 +115,7 @@ def bundle_maker(tmpdir):
     def maker(content=None, metadata=None, version=None):
         f = random_word(10) + '.tar'
         f = os.path.join(str(tmpdir), f)
-        t = tarfile.open(f, 'w')
+        t = tarfile.open(f, 'w:gz')
         add_string_to_tar(t, 'content', content)
         add_string_to_tar(t, 'version', version)
         add_string_to_tar(t, 'datalake-metadata.json', metadata)
