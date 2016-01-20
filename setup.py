@@ -22,14 +22,15 @@ setup(name='datalake',
       packages=find_packages(exclude=['test']),
       install_requires=[
           'boto>=2.38.0',
-          'memoized_property>=1.0.1',
+          'memoized_property>=1.0.2',
           'simplejson>=3.3.1',
           'pyblake2>=0.9.3',
           'click>=4.1',
           'datalake-common>=0.15',
           'python-dotenv>=0.1.3',
-          'requests>=2.5',
+          'requests[security]>=2.18.4,<3.0.0',
           'six>=1.10.0',
+          'urllib3>=1.22',
       ],
       extras_require={
           'test': [
