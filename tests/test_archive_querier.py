@@ -229,6 +229,7 @@ def test_paginate_work_id_records(table_maker, querier):
         cursor = page.cursor
         if cursor is None:
             break
+
     assert len(results) == 150
 
 

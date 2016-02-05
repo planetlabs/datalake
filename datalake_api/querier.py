@@ -63,11 +63,9 @@ class Cursor(dict):
         current_time_bucket: The time bucket being queried when the result
         limit was hit (not expected for work_id-based queries).
 
-        last_range_key: The range key of the last returned record. If
-        last_evaluated is provided, the range key is taken from there. This is
-        only expected for time-based queries that terminate a page at a bucket
-        boundary and therefore do not have a LastEvaluated key from
-        dynamodb. It is only used to prevent a small amount of duplication.
+        last_id: The id of the last returned record. This is used to prevent
+        duplication when the first record in the next page is the same as the
+        last record in the previous page.
 
         '''
         super(Cursor, self).__init__(**kwargs)
@@ -105,10 +103,13 @@ class Cursor(dict):
         return json.dumps(self)
 
     @property
-    def last_range_key(self):
-        if self.last_evaluated:
-            return self.last_evaluated['range_key']
-        return self.get('last_range_key')
+    def last_id(self):
+        if 'last_id' in self:
+            return self['last_id']
+        elif self.last_evaluated:
+            return self.last_evaluated['range_key'].split(':')[1]
+        else:
+            return None
 
     @property
     def last_evaluated(self):
@@ -179,8 +180,9 @@ class ArchiveQuerier(object):
         last_evaluated = cursor.get('last_evaluated')
         if last_evaluated is not None:
             kwargs['ExclusiveStartKey'] = last_evaluated
-        known_duplicate = Attr('range_key').eq(cursor.last_range_key)
-        kwargs['FilterExpression'] = Not(known_duplicate)
+        if cursor.last_id is not None:
+            known_duplicate = Attr('metadata.id').eq(cursor.last_id)
+            kwargs['FilterExpression'] = Not(known_duplicate)
 
     def query_by_time(self, start, end, what, where=None, cursor=None):
         results = []
@@ -227,14 +229,15 @@ class ArchiveQuerier(object):
 
     def _cursor_for_time_query(self, response, results, current_bucket):
         last_evaluated = response.get('LastEvaluated')
+
         if last_evaluated is None:
             if len(results) <= MAX_RESULTS/2:
                 # there's enough headroom for another bucket.
                 return None
             else:
-                last_range_key = results[-1]['range_key']
+                last_id = results[-1]['metadata']['id']
                 return Cursor(current_time_bucket=current_bucket,
-                              last_range_key=last_range_key)
+                              last_id=last_id)
         else:
             # Results from this time bucket did not fit in the page. Prepare
             # the cursor
