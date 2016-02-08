@@ -15,3 +15,7 @@
 
 class InsufficientConfiguration(Exception):
     pass
+
+
+class UnsupportedTimeRange(Exception):
+    pass

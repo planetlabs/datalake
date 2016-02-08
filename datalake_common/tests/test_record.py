@@ -15,7 +15,8 @@
 import pytest
 
 from datalake_common import has_s3, DatalakeRecord
-from datalake_common.errors import InsufficientConfiguration
+from datalake_common.errors import InsufficientConfiguration, \
+    UnsupportedTimeRange
 
 
 @pytest.mark.skipif(not has_s3, reason='requires s3 features')
@@ -40,3 +41,12 @@ def test_list_from_metadata(random_metadata):
     assert len(records) >= 1
     for r in records:
         assert r['metadata'] == random_metadata
+
+
+def test_timespan_too_big(random_metadata):
+    url = 's3://foo/blapp'
+    random_metadata['start'] = 0
+    random_metadata['end'] = (DatalakeRecord.MAXIMUM_BUCKET_SPAN + 1) * \
+        DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    with pytest.raises(UnsupportedTimeRange):
+        DatalakeRecord.list_from_metadata(url, random_metadata)

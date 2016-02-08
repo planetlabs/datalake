@@ -15,8 +15,9 @@
 from datalake_common import Metadata, InvalidDatalakeMetadata
 from urlparse import urlparse
 from conf import get_config_var
+import simplejson as json
 
-from errors import InsufficientConfiguration
+from errors import InsufficientConfiguration, UnsupportedTimeRange
 
 '''whether or not s3 features are available
 
@@ -115,12 +116,27 @@ class DatalakeRecord(dict):
     '''
     TIME_BUCKET_SIZE_IN_MS = _ONE_DAY_IN_MS
 
+    '''The maximum number of buckets that a record is allowed to span
+
+    A major weakness of our time-based indexing scheme is that it duplicates
+    records into each relevant time bucket. In practice, we do not expect files
+    that span more than a few buckets. So if a file spans many many buckets,
+    let's assume something went wrong.
+    '''
+    MAXIMUM_BUCKET_SPAN = 30
+
     @staticmethod
     def get_time_buckets_from_metadata(metadata):
         '''return a list of time buckets in which the metadata falls'''
         start = metadata['start']
         end = metadata['end'] or start
-        return DatalakeRecord.get_time_buckets(start, end)
+        buckets = DatalakeRecord.get_time_buckets(start, end)
+        if len(buckets) > DatalakeRecord.MAXIMUM_BUCKET_SPAN:
+            msg = 'metadata spans too many time buckets: {}'
+            j = json.dumps(metadata)
+            msg = msg.format(j)
+            raise UnsupportedTimeRange(msg)
+        return buckets
 
     @staticmethod
     def get_time_buckets(start, end):

@@ -13,12 +13,10 @@
 # the License.
 
 import pyver
+from metadata import Metadata, InvalidDatalakeMetadata, \
+    UnsupportedDatalakeMetadataVersion
+from record import DatalakeRecord, has_s3
 
 __version__, __version_info__ = pyver.get_version(pkg='datalake-common')
 __all__ = ['Metadata', 'InvalidDatalakeMetadata',
            'UnsupportedDatalakeMetadataVersion', 'DatalakeRecord', 'has_s3']
-
-
-from metadata import Metadata, InvalidDatalakeMetadata, \
-    UnsupportedDatalakeMetadataVersion
-from record import DatalakeRecord, has_s3
