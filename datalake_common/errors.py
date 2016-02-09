@@ -19,3 +19,7 @@ class InsufficientConfiguration(Exception):
 
 class UnsupportedTimeRange(Exception):
     pass
+
+
+class NoSuchDatalakeFile(Exception):
+    pass

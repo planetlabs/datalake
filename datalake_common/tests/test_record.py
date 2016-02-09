@@ -16,7 +16,7 @@ import pytest
 
 from datalake_common import has_s3, DatalakeRecord
 from datalake_common.errors import InsufficientConfiguration, \
-    UnsupportedTimeRange
+    UnsupportedTimeRange, NoSuchDatalakeFile
 
 
 @pytest.mark.skipif(not has_s3, reason='requires s3 features')
@@ -50,3 +50,18 @@ def test_timespan_too_big(random_metadata):
         DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     with pytest.raises(UnsupportedTimeRange):
         DatalakeRecord.list_from_metadata(url, random_metadata)
+
+
+@pytest.mark.skipif(not has_s3, reason='requires s3 features')
+def test_no_such_datalake_file_in_bucket(s3_bucket_maker):
+    s3_bucket_maker('test-bucket')
+    url = 's3://test-bucket/such/file'
+    with pytest.raises(NoSuchDatalakeFile):
+        DatalakeRecord.list_from_url(url)
+
+
+@pytest.mark.skipif(not has_s3, reason='requires s3 features')
+def test_no_such_bucket(s3_connection):
+    url = 's3://no/such/file'
+    with pytest.raises(NoSuchDatalakeFile):
+        DatalakeRecord.list_from_url(url)
