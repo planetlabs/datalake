@@ -16,8 +16,7 @@ from memoized_property import memoized_property
 import boto.sqs
 import simplejson as json
 import logging
-
-from datalake_common.conf import get_config_var
+import os
 from datalake_common.errors import InsufficientConfiguration
 
 
@@ -31,7 +30,7 @@ class SQSQueue(object):
 
     @classmethod
     def from_config(cls):
-        queue_name = get_config_var('queue')
+        queue_name = os.environ.get('DATALAKE_INGESTION_QUEUE')
         if queue_name is None:
             raise InsufficientConfiguration('Please configure a queue')
         return cls(queue_name)
@@ -45,7 +44,7 @@ class SQSQueue(object):
 
     @memoized_property
     def _connection(self):
-        region = get_config_var('aws_region')
+        region = os.environ.get('AWS_REGION')
         if region:
             return boto.sqs.connect_to_region(region)
         else:
