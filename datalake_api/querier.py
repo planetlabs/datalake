@@ -228,7 +228,7 @@ class ArchiveQuerier(object):
         )
 
     def _cursor_for_time_query(self, response, results, current_bucket):
-        last_evaluated = response.get('LastEvaluated')
+        last_evaluated = response.get('LastEvaluatedKey')
 
         if last_evaluated is None:
             if len(results) <= MAX_RESULTS/2:

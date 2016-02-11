@@ -211,16 +211,12 @@ def test_deduplicating_work_id_records(table_maker, querier):
     assert len(results) == 1
 
 
-def test_paginate_work_id_records(table_maker, querier):
-    records = []
-    for i in range(150):
-        records += create_test_records(what='foo', work_id='job0')
-    table_maker(records)
+def get_multiple_pages(query_function, query_args):
 
     results = []
     cursor = None
     while True:
-        page = querier.query_by_work_id('job0', 'foo', cursor=cursor)
+        page = query_function(*query_args, cursor=cursor)
         page_len = len(page)
         assert page_len <= MAX_RESULTS
         if len(results) == 0:
@@ -229,8 +225,24 @@ def test_paginate_work_id_records(table_maker, querier):
         cursor = page.cursor
         if cursor is None:
             break
+    return results
 
+
+def test_paginate_work_id_records(table_maker, querier):
+    records = []
+    for i in range(150):
+        records += create_test_records(what='foo', work_id='job0')
+    table_maker(records)
+    results = get_multiple_pages(querier.query_by_work_id, ['job0', 'foo'])
     assert len(results) == 150
+
+
+def evaluate_time_based_results(results, num_expected):
+    # we tolerate some duplication for time queries because there is no great
+    # way to deduplicate across pages.
+    assert len(results) >= num_expected
+    ids = set([r['metadata']['id'] for r in results])
+    assert len(ids) == num_expected
 
 
 def test_paginate_time_records(table_maker, querier):
@@ -241,21 +253,17 @@ def test_paginate_time_records(table_maker, querier):
         end = start + interval
         records += create_test_records(start=start, end=end, what='foo')
     table_maker(records)
+    results = get_multiple_pages(querier.query_by_time, [0, very_end, 'foo'])
+    evaluate_time_based_results(results, 150)
 
-    results = []
-    cursor = None
-    while True:
-        page = querier.query_by_time(0, very_end, 'foo', cursor=cursor)
-        page_len = len(page)
-        assert page_len <= MAX_RESULTS
-        if len(results) == 0:
-            assert page.cursor is not None
-        results += page
-        cursor = page.cursor
-        if cursor is None:
-            break
-    # we tolerate some duplication for time queries because there is no great
-    # way to deduplicate across pages.
-    assert len(results) >= 150
-    ids = set([r['metadata']['id'] for r in results])
-    assert len(ids) == 150
+
+def test_paginate_many_records_single_time_bucket(table_maker, querier):
+    records = []
+    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150
+    very_end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    for start in range(0, very_end, interval):
+        end = start + interval
+        records += create_test_records(start=start, end=end, what='foo')
+    table_maker(records)
+    results = get_multiple_pages(querier.query_by_time, [0, very_end, 'foo'])
+    evaluate_time_based_results(results, 150)
