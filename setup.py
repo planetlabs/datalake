@@ -55,6 +55,7 @@ setup(name='datalake-common',
           'pytz>=2015.4',
           'pyver>=1.0.18',
           'simplejson>=3.3.1',
+          'python-dotenv>=0.1.3',
       ],
       extras_require={
           'test': [

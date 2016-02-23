@@ -14,10 +14,12 @@
 
 from datalake_common import Metadata, InvalidDatalakeMetadata
 from urlparse import urlparse
-from conf import get_config_var
 import simplejson as json
+import os
 
-from errors import InsufficientConfiguration, UnsupportedTimeRange
+
+from errors import InsufficientConfiguration, UnsupportedTimeRange, \
+    NoSuchDatalakeFile
 
 '''whether or not s3 features are available
 
@@ -27,6 +29,7 @@ InsufficientConfiguration.'''
 has_s3 = True
 try:
     import boto.s3
+    from boto.exception import S3ResponseError
 except ImportError:
     has_s3 = False
 
@@ -75,6 +78,10 @@ class DatalakeRecord(dict):
         parsed_url = urlparse(url)
         bucket = cls._get_bucket(parsed_url.netloc)
         key = bucket.get_key(parsed_url.path)
+        if key is None:
+            msg = '{} does not appear to be in the datalake'
+            msg = msg.format(url)
+            raise NoSuchDatalakeFile(msg)
         metadata = key.get_metadata('datalake')
         if not metadata:
             raise InvalidDatalakeMetadata('No datalake metadata for ' + url)
@@ -85,9 +92,19 @@ class DatalakeRecord(dict):
     @classmethod
     def _get_bucket(cls, bucket_name):
         if bucket_name not in cls._BUCKETS:
-            bucket = cls._connection().get_bucket(bucket_name)
+            bucket = cls._get_bucket_from_s3(bucket_name)
             DatalakeRecord._BUCKETS[bucket_name] = bucket
         return cls._BUCKETS[bucket_name]
+
+    @classmethod
+    def _get_bucket_from_s3(cls, bucket_name):
+        try:
+            return cls._connection().get_bucket(bucket_name)
+        except S3ResponseError as e:
+            if e.error_code == 'NoSuchBucket':
+                msg = 'Cannot find datalake file (s3 bucket {} does not exist)'
+                msg = msg.format(bucket_name)
+                raise NoSuchDatalakeFile(msg)
 
     _CONNECTION = None
 
@@ -100,7 +117,7 @@ class DatalakeRecord(dict):
     @classmethod
     def _prepare_connection(cls):
         kwargs = {}
-        s3_host = get_config_var('s3_host')
+        s3_host = os.environ.get('AWS_S3_HOST')
         if s3_host:
             kwargs['host'] = s3_host
         return boto.connect_s3(**kwargs)
