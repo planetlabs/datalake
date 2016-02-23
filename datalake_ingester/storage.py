@@ -16,8 +16,7 @@ from memoized_property import memoized_property
 import boto.dynamodb2
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.exceptions import ConditionalCheckFailedException
-
-from datalake_common.conf import get_config_var
+import os
 from datalake_common.errors import InsufficientConfiguration
 
 
@@ -30,13 +29,13 @@ class DynamoDBStorage(object):
 
     @classmethod
     def from_config(cls):
-        table_name = get_config_var('dynamodb_table')
+        table_name = os.environ.get('DATALAKE_DYNAMODB_TABLE')
         if table_name is None:
             raise InsufficientConfiguration('Please specify a dynamodb table')
         return cls(table_name)
 
     def _prepare_connection(self, connection):
-        region = get_config_var('aws_region')
+        region = os.environ.get('AWS_REGION')
         if connection:
             self._connection = connection
         elif region:

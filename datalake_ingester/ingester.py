@@ -1,7 +1,7 @@
 from memoized_property import memoized_property
 from datalake_common import DatalakeRecord
 from datalake_common.errors import InsufficientConfiguration, \
-    UnsupportedTimeRange
+    UnsupportedTimeRange, NoSuchDatalakeFile
 from translator import S3ToDatalakeTranslator
 import time
 import logging
@@ -20,6 +20,7 @@ SAFE_EXCEPTIONS = [
     InvalidS3Notification,
     InvalidS3Event,
     UnsupportedTimeRange,
+    NoSuchDatalakeFile,
 ]
 
 
