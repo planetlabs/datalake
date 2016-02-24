@@ -65,7 +65,7 @@ setup(name='datalake_ingester',
               'pytest==2.7.2',
               'pip==7.1.0',
               'wheel==0.24.0',
-              'moto==0.4.12',
+              'moto==0.4.22',
               'flake8==2.5.0',
           ]
       },

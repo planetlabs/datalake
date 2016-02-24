@@ -1,10 +1,9 @@
 import pytest
-from moto import mock_sns, mock_sqs
+from moto import mock_sns, mock_sqs, mock_dynamodb2
 import os
 import simplejson as json
 from glob import glob
 
-from boto.dynamodb2.layer1 import DynamoDBConnection
 from boto.dynamodb2.table import Table
 from boto.exception import JSONResponseError
 from boto.dynamodb2.fields import HashKey, RangeKey
@@ -17,23 +16,9 @@ from datalake_ingester import SQSQueue
 
 
 @pytest.fixture
-def dynamodb_connection(request):
-    conn = DynamoDBConnection(aws_access_key_id='foo',
-                              aws_secret_access_key='bar',
-                              host='localhost',
-                              port=8000,
-                              is_secure=False)
-
-    # Fail fast if the local dynamodb server is down. This is a bit of a monkey
-    # patch because this magic variable seems to override all configurables
-    # (e.g., num_retries).
-    conn.NumberRetries = 1
-
-    def tear_down():
-        conn.close()
-    request.addfinalizer(tear_down)
-
-    return conn
+def dynamodb_connection(aws_connector):
+    return aws_connector(mock_dynamodb2,
+                         lambda: boto.dynamodb2.connect_to_region('us-west-1'))
 
 
 def _delete_table_if_exists(conn, name):
