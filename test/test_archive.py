@@ -13,6 +13,7 @@
 # the License.
 
 import simplejson as json
+import re
 
 
 def test_push_file(archive, random_metadata, tmpfile, s3_key):
@@ -26,3 +27,10 @@ def test_push_file(archive, random_metadata, tmpfile, s3_key):
     metadata = json.loads(metadata)
     common_keys = set(metadata.keys()).intersection(random_metadata.keys())
     assert common_keys == set(random_metadata.keys())
+
+
+def test_file_url(archive, random_metadata, tmpfile):
+    expected_content = 'mwahaha'
+    f = tmpfile(expected_content)
+    url = archive.prepare_metadata_and_push(f, **random_metadata)
+    assert bool(re.match(r'^s3://datalake-test/[a-z0-9]{40}/data$', url))

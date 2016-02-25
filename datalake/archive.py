@@ -269,16 +269,14 @@ class Archive(object):
         # bucket. And this will 403.
         return self._s3_conn.get_bucket(self._s3_bucket_name, validate=False)
 
-    _KEY_FORMAT = '{prefix}-{where}/{what}/{start}/{id}'
+    _KEY_FORMAT = '{id}/data'
 
     def _s3_key_from_metadata(self, f):
         # For performance reasons, s3 keys should start with a short random
         # sequence:
         # https://aws.amazon.com/blogs/aws/amazon-s3-performance-tips-tricks-seattle-hiring-event/
         # http://docs.aws.amazon.com/AmazonS3/latest/dev/request-rate-perf-considerations.html
-        prefix = f.metadata['hash'][0]
-        key_name = self._KEY_FORMAT.format(prefix=prefix,
-                                           **f.metadata)
+        key_name = self._KEY_FORMAT.format(**f.metadata)
         return Key(self._s3_bucket, name=key_name)
 
     @property

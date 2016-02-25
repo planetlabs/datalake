@@ -18,7 +18,6 @@ from threading import Timer
 import os
 from datalake_common.tests import random_word
 from datalake_common.errors import InsufficientConfiguration
-
 from datalake import Enqueuer, Uploader
 from datalake.queue import has_queue
 from conftest import crtime_setuid
