@@ -1,11 +1,10 @@
 import pytest
 import time
 
+
 from datalake_ingester import DynamoDBStorage, Ingester, \
     SQSQueue, SNSReporter
 from datalake_common.errors import InsufficientConfiguration
-
-from conftest import all_s3_notification_specs, all_bad_s3_notification_specs
 
 
 @pytest.fixture
@@ -40,11 +39,6 @@ def test_listen_no_queue(storage):
 
 
 @pytest.fixture
-def ingester_with_queue(storage, sqs_queue):
-    return Ingester(storage, queue=sqs_queue)
-
-
-@pytest.fixture
 def records_comparator(dynamodb_records_table):
 
     def comparator(expected_records):
@@ -52,19 +46,6 @@ def records_comparator(dynamodb_records_table):
         assert sorted(records) == sorted(expected_records)
 
     return comparator
-
-
-@pytest.fixture(params=all_s3_notification_specs)
-def ingestion_listener_tester(request, ingester_with_queue, spec_maker,
-                              records_comparator, sqs_sender):
-    spec = spec_maker(request.param)
-    sqs_sender(spec['s3_notification'])
-    ingester_with_queue.listen(timeout=1)
-    records_comparator(spec['expected_datalake_records'])
-
-
-def test_ingestion_listener_tests(ingestion_listener_tester):
-    pass
 
 
 @pytest.fixture
@@ -88,7 +69,7 @@ def report_listener(bare_sqs_queue_maker, sns_connection, sns_topic_arn):
 
 
 @pytest.fixture
-def full_ingester(storage, sqs_queue, sns_topic_arn):
+def ingester(storage, sqs_queue, sns_topic_arn):
     reporter = SNSReporter(sns_topic_arn)
     return Ingester(storage, queue=sqs_queue, reporter=reporter)
 
@@ -112,33 +93,14 @@ def report_comparator():
     return comparator
 
 
-@pytest.fixture(params=all_s3_notification_specs)
-def listener_report_tester(request, full_ingester, report_listener, sqs_sender,
-                           spec_maker, report_comparator):
-    spec = spec_maker(request.param)
-    sqs_sender(spec['s3_notification'])
-    full_ingester.listen(timeout=1)
+def test_listener_reports(event_test_driver, ingester, report_listener,
+                          sqs_sender, report_comparator):
+
+    def tester(event):
+        sqs_sender(event['s3_notification'])
+        ingester.listen(timeout=1)
+        records_comparator(event['expected_datalake_records'])
+
+    expected_reports = event_test_driver(tester)
     report_listener.drain()
-    report_comparator(report_listener.messages, spec['expected_reports'])
-
-
-def test_listener_reports(listener_report_tester):
-    pass
-
-
-@pytest.fixture(params=all_bad_s3_notification_specs)
-def bad_ingestion_reporter(request, full_ingester, report_listener,
-                           sqs_sender, spec_maker):
-    def reporter():
-        spec = spec_maker(request.param)
-        sqs_sender(spec['s3_notification'])
-        full_ingester.listen(timeout=1)
-        report_listener.drain()
-        return report_listener.messages, spec['expected_reports']
-
-    return reporter
-
-
-def test_bad_ingestion_reports(bad_ingestion_reporter, report_comparator):
-    actual, expected = bad_ingestion_reporter()
-    report_comparator(actual, expected)
+    report_comparator(report_listener.messages, expected_reports)
