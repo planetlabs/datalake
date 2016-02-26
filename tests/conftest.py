@@ -125,9 +125,10 @@ def sqs_sender(bare_sqs_queue_maker):
 # is comprised of a number of event_specifications. Each event_specifications
 # describes the required s3_files that must be present, the related
 # s3_notifications that would be delivered to the ingester, and the expected
-# outcomes (e.g., translator_exception, expected_datalake_records). Finally,
-# the expected_reports are the ingester reports that we expect to be emitted as
-# a consequence of the event_specifications.
+# outcomes (e.g., s3_notification_exception,
+# expected_datalake_records). Finally, the expected_reports are the ingester
+# reports that we expect to be emitted as a consequence of the
+# event_specifications.
 
 
 _here = os.path.abspath(os.path.dirname(__file__))
