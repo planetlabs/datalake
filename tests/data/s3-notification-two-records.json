@@ -1,69 +1,85 @@
 {
-  "s3_notification": {
-    "Type" : "Notification",
-    "MessageId" : "d736618a-1a92-5f35-bfe8-2fdd2a010abe",
-    "TopicArn" : "arn:aws-us-gov:sns:us-gov-west-1:223494142213:datalake-v0-DatalakeS3Topic-1SCQLYR01AWJB",
-    "Subject" : "Amazon S3 Notification",
-    "Message" : "{\"Records\":[{\"eventVersion\":\"2.0\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-gov-west-1\",\"eventTime\":\"2015-08-26T03:11:15.328Z\",\"eventName\":\"ObjectCreated:Put\",\"userIdentity\":{\"principalId\":\"AWS:AIDAKNSYQ3H62NJNYVNWA\"},\"requestParameters\":{\"sourceIPAddress\":\"96.127.52.88\"},\"responseElements\":{\"x-amz-request-id\":\"D7AB9805A93D785F\",\"x-amz-id-2\":\"bNYd4MT8BQSpJfUnBQpCfMQv4YslipUZTTLJrAoXcf8ymL3jX29k8hxTN9N//ggw\"},\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"DatalakeS3Announcement\",\"bucket\":{\"name\":\"datalake-test\",\"ownerIdentity\":{\"principalId\":\"AWS:223494142213\"},\"arn\":\"arn:aws:s3:::datalake-test\"},\"object\":{\"key\":\"2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt\",\"size\":290816,\"eTag\":\"5d26a2f91a51dec0305ac0a9c2e06b24\",\"sequencer\":\"0055DD2E534346AA85\"}}}]}",
-    "Timestamp" : "2015-08-26T03:11:15.409Z",
-    "SignatureVersion" : "1",
-    "Signature" : "cZkp0H6UXqvBCV1mcmB+WRVNErHrKkJYgaH4kNSmDQa/QkwuRPsgj25A/XPRtEmA4gbrL7DYHlHe7NZiPYJhD6JQGUnayBZZ6VLGB+m2T6aZLhier+xGBDaDiL78MWMmQL0lV6+1K6b6kCfKRGia0wa5BixULcAPlx00H+zF603WbW9W/9l9k8NsjgNyWDZWdNKZxReEOnZMxVs4d7G68QDCPrKiiw+EFdnH+YB91kzx+AzdSevEA2pl+ThqK1N3+3MlsfUhBVo6o0xoZJr9TjV2wZfXBOgrZQ5Z1qnMa4MUrtQLXZyZI+Olu0VRzF+lnwKgjCua9s7E1hfJxdSKcQ==",
-    "SigningCertURL" : "https://sns.us-gov-west-1.amazonaws.com/SimpleNotificationService-615221360fa38fcacc145ca7e25e3f7c.pem",
-    "UnsubscribeURL" : "https://sns.us-gov-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws-us-gov:sns:us-gov-west-1:223494142213:datalake-v0-DatalakeS3Topic-1SCQLYR01AWJB:8a32cf22-a357-4e79-8d3f-9deeda09ac46"
-  },
-  "expected_datalake_records": [{
-    "version": 0,
-    "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
-    "time_index_key": "16552:syslog",
-    "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
-    "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
-    "metadata": {
+  "event_specifications": [{
+    "s3_files": [{
+      "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+      "metadata": {
+        "version": 0,
+        "work_id": null,
+        "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+        "what": "syslog",
+        "path": "/var/log/syslog.log.1",
+        "where": "california",
+        "start": 1430092800000,
+        "end": 1430330070000,
+        "hash": "12345"
+      }
+    }],
+    "s3_notification": {
+      "Type" : "Notification",
+      "MessageId" : "d736618a-1a92-5f35-bfe8-2fdd2a010abe",
+      "TopicArn" : "arn:aws-us-gov:sns:us-gov-west-1:111111111111:datalake-v0-DatalakeS3Topic-1SCQLYR01AWJB",
+      "Subject" : "Amazon S3 Notification",
+      "Message" : "{\"Records\":[{\"eventVersion\":\"2.0\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-gov-west-1\",\"eventTime\":\"2015-08-26T03:11:15.328Z\",\"eventName\":\"ObjectCreated:Put\",\"userIdentity\":{\"principalId\":\"AWS:ABCDEFGHIJKLMNOPQRSTU\"},\"requestParameters\":{\"sourceIPAddress\":\"192.168.1.1\"},\"responseElements\":{\"x-amz-request-id\":\"D7AB9805A93D785F\",\"x-amz-id-2\":\"bNYd4MT8BQSpJfUnBQpCfMQv4YslipUZTTLJrAoXcf8ymL3jX29k8hxTN9N//ggw\"},\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"DatalakeS3Announcement\",\"bucket\":{\"name\":\"datalake-test\",\"ownerIdentity\":{\"principalId\":\"AWS:111111111111\"},\"arn\":\"arn:aws:s3:::datalake-test\"},\"object\":{\"key\":\"2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt\",\"size\":290816,\"eTag\":\"5d26a2f91a51dec0305ac0a9c2e06b24\",\"sequencer\":\"0055DD2E534346AA85\"}}}]}",
+      "Timestamp" : "2015-08-26T03:11:15.409Z",
+      "SignatureVersion" : "1",
+      "Signature" : "cZkp0H6UXqvBCV1mcmB+WRVNErHrKkJYgaH4kNSmDQa/QkwuRPsgj25A/XPRtEmA4gbrL7DYHlHe7NZiPYJhD6JQGUnayBZZ6VLGB+m2T6aZLhier+xGBDaDiL78MWMmQL0lV6+1K6b6kCfKRGia0wa5BixULcAPlx00H+zF603WbW9W/9l9k8NsjgNyWDZWdNKZxReEOnZMxVs4d7G68QDCPrKiiw+EFdnH+YB91kzx+AzdSevEA2pl+ThqK1N3+3MlsfUhBVo6o0xoZJr9TjV2wZfXBOgrZQ5Z1qnMa4MUrtQLXZyZI+Olu0VRzF+lnwKgjCua9s7E1hfJxdSKcQ==",
+      "SigningCertURL" : "https://sns.us-gov-west-1.amazonaws.com/SimpleNotificationService-615221360fa38fcacc145ca7e25e3f7c.pem",
+      "UnsubscribeURL" : "https://sns.us-gov-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws-us-gov:sns:us-gov-west-1:111111111111:datalake-v0-DatalakeS3Topic-1SCQLYR01AWJB:8a32cf22-a357-4e79-8d3f-9deeda09ac46"
+    },
+    "expected_datalake_records": [{
       "version": 0,
-      "work_id": null,
-      "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
-      "what": "syslog",
-      "path": "/var/log/syslog.log.1",
-      "where": "california",
-      "start": 1430092800000,
-      "end": 1430330070000,
-      "hash": "12345"
-    }
-  },
-  {
-    "version": 0,
-    "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
-    "time_index_key": "16553:syslog",
-    "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
-    "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
-    "metadata": {
+      "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+      "time_index_key": "16552:syslog",
+      "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
+      "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+      "metadata": {
+        "version": 0,
+        "work_id": null,
+        "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+        "what": "syslog",
+        "path": "/var/log/syslog.log.1",
+        "where": "california",
+        "start": 1430092800000,
+        "end": 1430330070000,
+        "hash": "12345"
+      }
+    },
+    {
       "version": 0,
-      "work_id": null,
-      "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
-      "what": "syslog",
-      "path": "/var/log/syslog.log.1",
-      "where": "california",
-      "start": 1430092800000,
-      "end": 1430330070000,
-      "hash": "12345"
-    }
-  },
-  {
-    "version": 0,
-    "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
-    "time_index_key": "16554:syslog",
-    "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
-    "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
-    "metadata": {
+      "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+      "time_index_key": "16553:syslog",
+      "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
+      "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+      "metadata": {
+        "version": 0,
+        "work_id": null,
+        "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+        "what": "syslog",
+        "path": "/var/log/syslog.log.1",
+        "where": "california",
+        "start": 1430092800000,
+        "end": 1430330070000,
+        "hash": "12345"
+      }
+    },
+    {
       "version": 0,
-      "work_id": null,
-      "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
-      "what": "syslog",
-      "path": "/var/log/syslog.log.1",
-      "where": "california",
-      "start": 1430092800000,
-      "end": 1430330070000,
-      "hash": "12345"
-    }
+      "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+      "time_index_key": "16554:syslog",
+      "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
+      "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+      "metadata": {
+        "version": 0,
+        "work_id": null,
+        "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+        "what": "syslog",
+        "path": "/var/log/syslog.log.1",
+        "where": "california",
+        "start": 1430092800000,
+        "end": 1430330070000,
+        "hash": "12345"
+      }
+    }]
   }],
   "expected_reports": [{
     "version": 0,

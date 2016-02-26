@@ -1,10 +1,9 @@
 import pytest
-from moto import mock_sns, mock_sqs
+from moto import mock_sns, mock_sqs, mock_dynamodb2
 import os
 import simplejson as json
 from glob import glob
 
-from boto.dynamodb2.layer1 import DynamoDBConnection
 from boto.dynamodb2.table import Table
 from boto.exception import JSONResponseError
 from boto.dynamodb2.fields import HashKey, RangeKey
@@ -17,23 +16,9 @@ from datalake_ingester import SQSQueue
 
 
 @pytest.fixture
-def dynamodb_connection(request):
-    conn = DynamoDBConnection(aws_access_key_id='foo',
-                              aws_secret_access_key='bar',
-                              host='localhost',
-                              port=8000,
-                              is_secure=False)
-
-    # Fail fast if the local dynamodb server is down. This is a bit of a monkey
-    # patch because this magic variable seems to override all configurables
-    # (e.g., num_retries).
-    conn.NumberRetries = 1
-
-    def tear_down():
-        conn.close()
-    request.addfinalizer(tear_down)
-
-    return conn
+def dynamodb_connection(aws_connector):
+    return aws_connector(mock_dynamodb2,
+                         lambda: boto.dynamodb2.connect_to_region('us-west-1'))
 
 
 def _delete_table_if_exists(conn, name):
@@ -135,25 +120,30 @@ def sqs_sender(bare_sqs_queue_maker):
     return sender
 
 
+# we use quick-and-dirty declarative tests here. Specifically, each json file
+# in the data/ directory contains a test specification. Each test specification
+# is comprised of a number of event_specifications. Each event_specifications
+# describes the required s3_files that must be present, the related
+# s3_notifications that would be delivered to the ingester, and the expected
+# outcomes (e.g., translator_exception, expected_datalake_records). Finally,
+# the expected_reports are the ingester reports that we expect to be emitted as
+# a consequence of the event_specifications.
+
+
 _here = os.path.abspath(os.path.dirname(__file__))
-test_data_path = os.path.join(_here, 'data')
-
-_s3_notification_path = os.path.join(test_data_path, 's3-notification-*.json')
-all_s3_notification_specs = glob(_s3_notification_path)
-
-_bad_s3_notification_path = os.path.join(test_data_path,
-                                         'bad-s3-notification-*.json')
-all_bad_s3_notification_specs = glob(_bad_s3_notification_path)
+_test_data_path = os.path.join(_here, 'data')
+_test_specs = glob(os.path.join(_test_data_path, '*.json'))
 
 
-@pytest.fixture
-def spec_maker(s3_file_from_metadata):
+@pytest.fixture(params=_test_specs)
+def event_test_driver(request, s3_file_from_metadata):
 
-    def maker(spec_file):
-        spec = json.load(open(spec_file))
-        expected_records = spec['expected_datalake_records']
-        [s3_file_from_metadata(d['url'], d['metadata'])
-         for d in expected_records]
-        return spec
+    def driver(event_tester):
+        spec = json.load(open(request.param))
+        for e in spec['event_specifications']:
+            for f in e.get('s3_files', []):
+                s3_file_from_metadata(f['url'], f.get('metadata'))
+            event_tester(e)
+        return spec['expected_reports']
 
-    return maker
+    return driver

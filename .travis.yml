@@ -4,9 +4,6 @@ python:
   - '2.7'
   - pypy
 
-before_install:
-  - sudo ./scripts/init.sh
-
 install:
   - pip install -e .[test]
 
