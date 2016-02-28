@@ -54,3 +54,6 @@ class DynamoDBStorage(object):
         except ConditionalCheckFailedException:
             # Tolerate duplicate stores
             pass
+
+    def update(self, record):
+        self._table.put_item(data=record, overwrite=True)

@@ -37,6 +37,8 @@ class S3Notification(dict):
 
 class S3Event(dict):
 
+    EVENTS_WITH_RECORDS = ['ObjectCreated:Put', 'ObjectCreated:Copy']
+
     def __init__(self, event):
         super(S3Event, self).__init__(event)
         self._validate()
@@ -56,7 +58,7 @@ class S3Event(dict):
 
     @memoized_property
     def datalake_records(self):
-        if not self['eventName'].startswith('ObjectCreated'):
+        if self['eventName'] not in self.EVENTS_WITH_RECORDS:
             return []
         return [dlr for dlr in DatalakeRecord.list_from_url(self.s3_url)]
 
@@ -71,3 +73,7 @@ class S3Event(dict):
     @property
     def key_name(self):
         return self['s3']['object']['key']
+
+    @property
+    def event_name(self):
+        return self['eventName']

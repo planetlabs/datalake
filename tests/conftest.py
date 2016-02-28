@@ -145,6 +145,6 @@ def event_test_driver(request, s3_file_from_metadata):
             for f in e.get('s3_files', []):
                 s3_file_from_metadata(f['url'], f.get('metadata'))
             event_tester(e)
-        return spec['expected_reports']
+        return spec.get('expected_reports')
 
     return driver
