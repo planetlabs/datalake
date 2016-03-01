@@ -13,15 +13,6 @@
 # the License.
 
 import pyver
-
-__version__, __version_info__ = pyver.get_version(pkg='datalake')
-__all__ = ['File', 'Archive', 'Uploader', 'Enqueuer', 'get_crtime',
-           'CreationTimeError', 'Translator', 'TranslatorError',
-           'InvalidDatalakeBundle', 'load_config', 'DEFAULT_CONFIG',
-           'DatalakeHttpError', 'InvalidDatalakePath',
-           'UnsupportedStorageError']
-
-
 from dlfile import File, InvalidDatalakeBundle
 from archive import Archive, DatalakeHttpError, InvalidDatalakePath, \
     UnsupportedStorageError
@@ -29,3 +20,11 @@ from queue import Uploader, Enqueuer
 from translator import Translator, TranslatorError
 from crtime import get_crtime, CreationTimeError
 from config_helpers import load_config, DEFAULT_CONFIG
+
+__version__, __version_info__ = pyver.get_version(pkg='datalake')
+
+__all__ = ['File', 'Archive', 'Uploader', 'Enqueuer', 'get_crtime',
+           'CreationTimeError', 'Translator', 'TranslatorError',
+           'InvalidDatalakeBundle', 'load_config', 'DEFAULT_CONFIG',
+           'DatalakeHttpError', 'InvalidDatalakePath',
+           'UnsupportedStorageError']

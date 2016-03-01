@@ -30,7 +30,6 @@ from datalake_common.errors import InsufficientConfiguration
 from logging import getLogger
 import os
 import time
-from . import __version__
 
 from datalake import File
 
@@ -139,6 +138,8 @@ class Uploader(DatalakeQueueBase):
 
     def _listen(self, timeout=None):
         '''listen for files in the queue directory and push them'''
+        from . import __version__
+
         log.info('------------------------------')
         log.info('datalake ' + __version__)
         for f in os.listdir(self.queue_dir):
