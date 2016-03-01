@@ -39,7 +39,9 @@ class Cursor(dict):
     back a non-null LastEvaluated, we stash that in the cursor so we can pass
     it as ExclusiveStartKey. The LastEvaluated key contains the range key which
     contains the last ID that we saw. We use this to prevent sending duplicate
-    records from page to page.
+    records from page to page. This scheme is not perfect. For example, if
+    there are many files with the same work-id that span many time buckets we
+    will fail to deduplicate them. But this is a rare case.
 
     Time-based queries are a bit more complicated because we make one query to
     dynamodb for each time bucket. We query each bucket with

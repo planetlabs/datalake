@@ -1,8 +1,6 @@
 language: python
 python:
 - '2.7'
-before_install:
-- sudo ./init.sh
 install:
 - pip install -e .[test]
 before_script:

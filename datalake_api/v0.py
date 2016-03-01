@@ -29,7 +29,6 @@ dynamodb = None
 def get_dynamodb():
     if not hasattr(app, 'dynamodb'):
         kwargs = dict(
-            endpoint_url=app.config.get('DYNAMODB_ENDPOINT'),
             region_name=app.config.get('AWS_REGION'),
         )
         for k in ['AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID']:

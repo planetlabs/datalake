@@ -103,10 +103,10 @@ def querier(request, dynamodb):
     return request.param('test', dynamodb=dynamodb)
 
 
-def create_test_records(**kwargs):
+def create_test_records(bucket='datalake-test', **kwargs):
     m = random_metadata()
     m.update(**kwargs)
-    url = '/'.join(['s3'] + [str(v) for v in kwargs.values()])
+    url = 's3://' + bucket + '/' + '/'.join([str(v) for v in kwargs.values()])
     return DatalakeRecord.list_from_metadata(url, m)
 
 
@@ -212,7 +212,6 @@ def test_deduplicating_work_id_records(table_maker, querier):
 
 
 def get_multiple_pages(query_function, query_args):
-
     results = []
     cursor = None
     while True:
@@ -231,7 +230,9 @@ def get_multiple_pages(query_function, query_args):
 def test_paginate_work_id_records(table_maker, querier):
     records = []
     for i in range(150):
-        records += create_test_records(what='foo', work_id='job0')
+        records += create_test_records(what='foo', work_id='job0',
+                                       start=1456833600000,
+                                       end=1456837200000)
     table_maker(records)
     results = get_multiple_pages(querier.query_by_work_id, ['job0', 'foo'])
     assert len(results) == 150

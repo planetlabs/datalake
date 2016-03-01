@@ -64,6 +64,7 @@ setup(name='datalake_api',
           'test': [
               'pytest==2.7.2',
               'flake8==2.5.0',
+              'moto==0.4.23',
           ],
       },
       include_package_data=True)

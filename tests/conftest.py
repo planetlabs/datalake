@@ -15,6 +15,7 @@
 import pytest
 import boto3
 from botocore.exceptions import ClientError as BotoClientError
+from moto import mock_dynamodb2
 
 from datalake_api import app as datalake_api
 from datalake_common.tests import *  # noqa
@@ -23,16 +24,21 @@ from datalake_common.tests import *  # noqa
 @pytest.fixture
 def client():
     datalake_api.app.config['TESTING'] = True
-    datalake_api.app.config['DYNAMODB_ENDPOINT'] = 'http://localhost:8000'
     datalake_api.app.config['AWS_ACCESS_KEY_ID'] = 'abc'
     datalake_api.app.config['AWS_SECRET_ACCESS_KEY'] = '123'
     return datalake_api.app.test_client()
 
 
 @pytest.fixture
-def dynamodb():
+def dynamodb(request):
+    mock = mock_dynamodb2()
+    mock.start()
+
+    def tear_down():
+        mock.stop()
+    request.addfinalizer(tear_down)
+
     return boto3.resource('dynamodb',
-                          endpoint_url='http://localhost:8000',
                           region_name='us-west-2',
                           aws_secret_access_key='123',
                           aws_access_key_id='abc')
@@ -110,7 +116,8 @@ def _create_table(dynamodb, table_name):
             'WriteCapacityUnits': 5
         }
     )
-    return dynamodb.create_table(**kwargs)
+    dynamodb.create_table(**kwargs)
+    return dynamodb.Table(table_name)
 
 
 def _populate_table(table, records):
