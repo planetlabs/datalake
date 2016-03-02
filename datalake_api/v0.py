@@ -19,6 +19,8 @@ from flask import current_app as app
 import boto3
 from querier import ArchiveQuerier, Cursor, InvalidCursor
 from fetcher import ArchiveFileFetcher
+from datalake_common.errors import NoSuchDatalakeFile
+
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
 
@@ -77,8 +79,10 @@ def archive_get():
 
 
 @v0.errorhandler(400)
-def handle_bad_request(err):
-    return jsonify({'message': err.response, 'code': err.description}), 400
+@v0.errorhandler(404)
+def handle_4xx_status(err):
+    body = {'message': err.response, 'code': err.description}
+    return jsonify(body), err.code
 
 
 def _convert_param_to_ms(params, key):
@@ -348,11 +352,17 @@ def get_archive_fetcher():
     return app.archive_fetcher
 
 
-@v0.route('/archive/files/<id>/data')
-def file_get_contents(id):
-    aff = get_archive_fetcher()
-    path = '{}/data'.format(id)
-    f = aff.get_file(path)
+def _get_file(file_id):
+    try:
+        aff = get_archive_fetcher()
+        return aff.get_file(file_id)
+    except NoSuchDatalakeFile as e:
+        flask.abort(404, 'NoSuchFile', e.message)
+
+
+@v0.route('/archive/files/<file_id>/data')
+def file_get_contents(file_id):
+    f = _get_file(file_id)
     headers = {}
     if f.content_type is not None:
         headers['Content-Type'] = f.content_type

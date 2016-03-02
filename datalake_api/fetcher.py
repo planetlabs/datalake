@@ -13,9 +13,11 @@
 # the License.
 from mimetypes import guess_type
 from datalake_common import Metadata
+from datalake_common.errors import NoSuchDatalakeFile
 import simplejson as json
 import re
 from memoized_property import memoized_property
+from botocore.exceptions import ClientError as BotoClienError
 
 
 class ArchiveFile(object):
@@ -56,10 +58,20 @@ class ArchiveFileFetcher(object):
     def __init__(self, s3_bucket):
         self.s3_bucket = s3_bucket
 
-    def get_file(self, path):
-        key = self.s3_bucket.Object(path)
-        key = key.get()
+    def get_file(self, file_id):
+        key = self._get_s3_key(file_id)
         fd = key['Body']
         j = json.loads(key['Metadata']['datalake'])
         metadata = Metadata(j)
         return ArchiveFile(fd, metadata)
+
+    def _get_s3_key(self, file_id):
+        path = '{}/data'.format(file_id)
+        try:
+            return self.s3_bucket.Object(path).get()
+        except BotoClienError as e:
+            if e.response['Error']['Code'] == "404":
+                msg = 'No file with id {} exists'.format(file_id)
+                raise NoSuchDatalakeFile(msg)
+            else:
+                raise

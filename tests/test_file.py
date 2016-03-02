@@ -14,6 +14,7 @@
 import pytest
 import gzip
 from StringIO import StringIO
+import simplejson as json
 
 
 @pytest.fixture
@@ -152,3 +153,13 @@ def test_get_log_trailing_md5(file_getter, s3_file_maker, random_metadata):
     assert res.content_type == 'text/plain'
     assert res.content_encoding is None
     assert res.get_data() == content
+
+
+def test_no_such_id(s3_bucket_maker, file_getter):
+    s3_bucket_maker('datalake-test')
+    res = file_getter('12345')
+    assert res.status_code == 404
+    response = json.loads(res.get_data())
+    assert 'code' in response
+    assert response['code'] == 'NoSuchFile'
+    assert 'message' in response
