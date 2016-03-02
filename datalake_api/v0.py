@@ -18,24 +18,26 @@ import simplejson as json
 from flask import current_app as app
 import boto3
 from querier import ArchiveQuerier, Cursor, InvalidCursor
-
+from fetcher import ArchiveFileFetcher
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
 
 
-dynamodb = None
+def _get_aws_kwargs():
+    kwargs = dict(
+        region_name=app.config.get('AWS_REGION'),
+    )
+    for k in ['AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID']:
+        # these guys must be fully absent from the kwargs; None will not
+        # do.
+        if app.config.get(k) is not None:
+            kwargs[k.lower()] = app.config[k]
+    return kwargs
 
 
 def get_dynamodb():
     if not hasattr(app, 'dynamodb'):
-        kwargs = dict(
-            region_name=app.config.get('AWS_REGION'),
-        )
-        for k in ['AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID']:
-            # these guys must be fully absent from the kwargs; None will not
-            # do.
-            if app.config.get(k) is not None:
-                kwargs[k.lower()] = app.config[k]
+        kwargs = _get_aws_kwargs()
         app.dynamodb = boto3.resource('dynamodb', **kwargs)
     return app.dynamodb
 
@@ -328,3 +330,32 @@ def _get_url_with_cursor(request, cursor):
     args = _copy_immutable_dict(request.args)
     args['cursor'] = cursor.serialized
     return url_for(request.endpoint, _external=True, **args)
+
+
+def get_s3_bucket():
+    if not hasattr(app, 's3_bucket'):
+        kwargs = _get_aws_kwargs()
+        s3 = boto3.resource('s3', **kwargs)
+        bucket_url = app.config.get('DATALAKE_STORAGE_URL')
+        bucket_name = bucket_url.rstrip('/').split('/')[-1]
+        app.s3_bucket = s3.Bucket(bucket_name)
+    return app.s3_bucket
+
+
+def get_archive_fetcher():
+    if not hasattr(app, 'archive_fetcher'):
+        app.archive_fetcher = ArchiveFileFetcher(get_s3_bucket())
+    return app.archive_fetcher
+
+
+@v0.route('/archive/files/<id>/data')
+def file_get_contents(id):
+    aff = get_archive_fetcher()
+    path = '{}/data'.format(id)
+    f = aff.get_file(path)
+    headers = {}
+    if f.content_type is not None:
+        headers['Content-Type'] = f.content_type
+    if f.content_encoding is not None:
+        headers['Content-Encoding'] = f.content_encoding
+    return f.read(), 200, headers
