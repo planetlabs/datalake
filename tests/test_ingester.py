@@ -81,6 +81,8 @@ def report_comparator():
         return sorted(l, key=lambda k: k['url'])
 
     def comparator(actual, expected):
+        if expected is None:
+            return
         assert len(actual) == len(expected)
         for a, e in zip(actual, expected):
             err = abs(time.time() - a['start']/1000.0)

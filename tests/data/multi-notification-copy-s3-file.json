@@ -1,0 +1,102 @@
+{
+  "event_specifications": [{
+    "s3_files": [
+      {
+        "url": "s3://foo/existing",
+        "metadata": {
+          "version": 0,
+          "work_id": null,
+          "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+          "what": "syslog",
+          "path": "/var/log/syslog.log.1",
+          "where": "california",
+          "start": 1430092800000,
+          "end": 1430157270000,
+          "hash": "12345"
+        }
+      }
+    ],
+    "s3_notification": {
+      "Type": "Notification",
+      "MessageId": "dc79891a-46f6-5552-a091-c65cfdc95adc",
+      "TopicArn": "arn:aws-us-gov:sns:us-west-1:111111111111:datalake-test-archive",
+      "Subject": "Amazon S3 Notification",
+      "Message": "{\"Records\":[{\"eventVersion\":\"2.0\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-west-1\",\"eventTime\":\"2016-02-23T19:54:39.025Z\",\"eventName\":\"ObjectCreated:Put\",\"userIdentity\":{\"principalId\":\"AWS:ABCDEFGHIJKLMNOPQRSTU\"},\"requestParameters\":{\"sourceIPAddress\":\"192.168.1.1\"},\"responseElements\":{\"x-amz-request-id\":\"0106C2B137BD1D06\",\"x-amz-id-2\":\"FHPxqdasYoRqfGmgv6wULDPf5L0zhxsMjKph6kcPRAYRuo3/wRM6HwOEBdGiItjefuOU7MHE1pw=\"},\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"Y2FjZTkwOTgtNDZmZC00MzJkLTlkOTUtOTFmZjAwZmQ4OTk1\",\"bucket\":{\"name\":\"foo\",\"ownerIdentity\":{\"principalId\":\"AWS:111111111111\"},\"arn\":\"arn:aws:s3:::foo\"},\"object\":{\"key\":\"existing\",\"size\":5,\"eTag\":\"10dc303535874aeccc86a8251e6992f5\",\"sequencer\":\"0056CCB8FEF13F45CC\"}}}]}",
+      "Timestamp": "2016-02-23T19:54:39.208Z",
+      "SignatureVersion": "1",
+      "Signature": "eErfyGZwdQ6u3ZxFqNRduZTUoDkzG3LTJvakQv0fecSYCXBfgGBPZsAfHy0amNX48kgkIDYXZfEYeUSgTv2Fo254OKxelIulvl2Wu8pB5fqqsN9g4eOPIl6lOgsDWtEi2N4OOJ+q13aHNKJV7GMAyCIl5Kb0UrJt4F2QhohDbPr91UpBkddODFNXGJJsyrCR/KwVsLWBtksjbupNCr4QqsNZKJ94pqBfOJrkS/SYAbNvAThrQtgYBBNUpy3sDTHjznFnW5Vyum4ddooKI34NYaTwNQ7xSrIXjXuIU2q2NXsrBgGJdbTR2Tpte/vnwBwX64ihae5cwB0RbrPqEEMPPw==",
+      "SigningCertURL": "https://sns.us-west-1.amazonaws.com/SimpleNotificationService-615221360fa38fcacc145ca7e25e3f7c.pem",
+      "UnsubscribeURL": "https://sns.us-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws-us-gov:sns:us-west-1:111111111111:datalake-test-archive:98dbf47c-9151-4c30-a10a-5de1bba2fbcc"
+    },
+    "expected_datalake_records": [
+      {
+        "url": "s3://foo/existing",
+        "version": 0,
+        "time_index_key": "16552:syslog",
+        "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
+        "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+        "metadata": {
+          "version": 0,
+          "work_id": null,
+          "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+          "what": "syslog",
+          "path": "/var/log/syslog.log.1",
+          "where": "california",
+          "start": 1430092800000,
+          "end": 1430157270000,
+          "hash": "12345"
+        }
+      }
+    ]
+  },
+  {
+    "s3_files": [
+      {
+        "url": "s3://foo/new_name",
+        "metadata": {
+          "version": 0,
+          "work_id": null,
+          "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+          "what": "syslog",
+          "path": "/var/log/syslog.log.1",
+          "where": "california",
+          "start": 1430092800000,
+          "end": 1430157270000,
+          "hash": "12345"
+        }
+      }
+    ],
+    "s3_notification": {
+      "Type": "Notification",
+      "MessageId": "368f4641-4f3e-54b2-82e1-09078f19e338",
+      "TopicArn": "arn:aws-us-gov:sns:us-west-1:111111111111:datalake-test-archive",
+      "Subject": "Amazon S3 Notification",
+      "Message": "{\"Records\":[{\"eventVersion\":\"2.0\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-west-1\",\"eventTime\":\"2016-02-23T20:15:35.176Z\",\"eventName\":\"ObjectCreated:Copy\",\"userIdentity\":{\"principalId\":\"AWS:ABCDEFGHIJKLMNOPQRSTU\"},\"requestParameters\":{\"sourceIPAddress\":\"192.168.1.1\"},\"responseElements\":{\"x-amz-request-id\":\"48C4BBF2D98725AA\",\"x-amz-id-2\":\"rBLo6zBiPVNxyAgR318Wk4QjVnjcijwv9iMkIuypNmpYPgvjIh0q9KQT1UyYj/+wv/2CjiDaI3A=\"},\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"Y2FjZTkwOTgtNDZmZC00MzJkLTlkOTUtOTFmZjAwZmQ4OTk1\",\"bucket\":{\"name\":\"foo\",\"ownerIdentity\":{\"principalId\":\"AWS:111111111111\"},\"arn\":\"arn:aws:s3:::datalake-test\"},\"object\":{\"key\":\"new_name\",\"size\":5,\"sequencer\":\"0056CCBDE71CA93A33\"}}}]}",
+      "Timestamp": "2016-02-23T20:15:35.251Z",
+      "SignatureVersion": "1",
+      "Signature": "g5XCnsqjO0df1rC6VL+I90hGnyzQlQONkZEd9rAAScse20ukY7NE594oYTW+TPtzsxUkO4gGm6YWXOm4P4vccswZTGmyE114opkaEsb6EI+UAq92Zzp53i+z2eeZm7kNRJXM15+8eDQspbP39kZBGzVg3BMVAdNuRLHR42wjTgBUUON1SCl2iSL1hKCeH6Vgxbh/nIGJxU6HY+WTtVgBtIYjhIbRNVgV+fBJFIfaob44gom4fcwcGEaT/RFlvCIyCyf2DLWNfXqVc4lhuoCB3B2PJAiCt0a7nd72qyGHP9Atm3Ye64Idpt+ct5J/dLmcdBQEMZmp5LSAqWTocV0OoA==",
+      "SigningCertURL": "https://sns.us-west-1.amazonaws.com/SimpleNotificationService-615221360fa38fcacc145ca7e25e3f7c.pem",
+      "UnsubscribeURL": "https://sns.us-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws-us-gov:sns:us-west-1:111111111111:datalake-test-archive:98dbf47c-9151-4c30-a10a-5de1bba2fbcc"
+    },
+    "expected_datalake_records": [
+      {
+        "url": "s3://foo/new_name",
+        "version": 0,
+        "time_index_key": "16552:syslog",
+        "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
+        "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+        "metadata": {
+          "version": 0,
+          "work_id": null,
+          "id": "2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
+          "what": "syslog",
+          "path": "/var/log/syslog.log.1",
+          "where": "california",
+          "start": 1430092800000,
+          "end": 1430157270000,
+          "hash": "12345"
+        }
+      }
+    ]
+  }]
+}

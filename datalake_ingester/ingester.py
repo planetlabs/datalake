@@ -1,8 +1,7 @@
-from memoized_property import memoized_property
 from datalake_common import DatalakeRecord, InvalidDatalakeMetadata
 from datalake_common.errors import InsufficientConfiguration, \
     UnsupportedTimeRange, NoSuchDatalakeFile
-from translator import S3ToDatalakeTranslator
+from s3_notification import S3Notification
 import time
 import logging
 from storage import DynamoDBStorage
@@ -84,10 +83,6 @@ class Ingester(object):
         for r in records:
             self.storage.store(r)
 
-    @memoized_property
-    def _translator(self):
-        return S3ToDatalakeTranslator()
-
     def handler(self, msg):
         ir = IngesterReport().start()
         try:
@@ -101,11 +96,24 @@ class Ingester(object):
         finally:
             self._report(ir)
 
-    def _handler(self, msg, ir):
-        records = self._translator.translate(msg)
-        for r in records:
+    def _handler(self, s3_notification, ir):
+
+        n = S3Notification(s3_notification)
+        for e in n.events:
+            if e.event_name == 'ObjectCreated:Put':
+                self._add_records(e.datalake_records, ir)
+            elif e.event_name == 'ObjectCreated:Copy':
+                self._update_records(e.datalake_records, ir)
+
+    def _add_records(self, datalake_records, ir):
+        for r in datalake_records:
             ir.add_record(r)
             self.storage.store(r)
+
+    def _update_records(self, datalake_records, ir):
+        for r in datalake_records:
+            ir.add_record(r)
+            self.storage.update(r)
 
     def _report(self, r):
         if self.reporter is None:

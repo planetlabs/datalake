@@ -11,26 +11,21 @@ Architecture Notes
 
 The ingester looks something like this:
 
-                                          +----------+     +---------+
-           +-------+    +------------+    |          |---->| storage |
-        -->| queue |--->| translator |--->| ingester |     +---------+
-           +-------+    +------------+    |          |--+
-                                          +----------+  |  +----------+
-                                                        +->| reporter |
-                                                           +----------+
+                                               +----------+     +---------+
+           +-------+    +-----------------+    |          |---->| storage |
+        -->| queue |--->| s3_notification |--->| ingester |     +---------+
+           +-------+    +-----------------+    |          |--+
+                                               +----------+  |  +----------+
+                                                             +->| reporter |
+                                                                +----------+
 
 
-A queue receives notice that a new file has been uploaded to the datalake. A
-translator translates the event from the queue-specific format to the datalake
-record format (see
+A queue receives notice that an event has occured in the datalake's s3
+bucket. An s3_notification object translates the event from the queue's format
+to the datalake record format (see
 [datalake-common](https://github.com/planetlabs/datalake-common)). Next the
-ingester writes the ingestion record to the storage and reports the ingestion
-status to the reporter.
-
-In practice, the queue is an SQS queue the receives S3 notifications. The
-translator translates from the S3 event format to our own datalake record
-format. The storage is a DynamoDB table. The reporter is an SNS topic. But the
-abstractions in place should permit porting to other services.
+ingester updates the storage (i.e., dynamodb) and reports the ingestion status
+to the reporter (i.e., SNS).
 
 Datalake Ingester Report Format
 ===============================

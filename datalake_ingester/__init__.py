@@ -16,11 +16,11 @@ import pyver
 from storage import DynamoDBStorage
 from reporter import SNSReporter
 from queue import SQSQueue
-from translator import S3ToDatalakeTranslator
+from s3_notification import S3Notification
 from errors import *  # noqa
 from ingester import Ingester
 import log  # noqa
 
 __version__, __version_info__ = pyver.get_version(pkg='datalake_ingester')
 __all__ = ['DynamoDBStorage', 'SNSReporter', 'SQSQueue',
-           'S3ToDatalakeTranslator', 'Ingester']
+           'S3Notification', 'Ingester']
