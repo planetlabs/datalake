@@ -65,3 +65,12 @@ def test_no_such_bucket(s3_connection):
     url = 's3://no/such/file'
     with pytest.raises(NoSuchDatalakeFile):
         DatalakeRecord.list_from_url(url)
+
+
+def test_no_end(random_metadata):
+    url = 's3://foo/baz'
+    del(random_metadata['end'])
+    records = DatalakeRecord.list_from_metadata(url, random_metadata)
+    assert len(records) >= 1
+    for r in records:
+        assert r['metadata'] == random_metadata
