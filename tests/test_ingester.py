@@ -32,6 +32,19 @@ def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker):
         assert r['metadata'] == metadata
 
 
+def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,
+                       random_metadata):
+    del(random_metadata['end'])
+    url = 's3://foo/' + random_metadata['id']
+    s3_file_from_metadata(url, random_metadata)
+    ingester = Ingester(storage)
+    ingester.ingest(url)
+    records = [dict(r) for r in dynamodb_records_table.scan()]
+    assert len(records) >= 1
+    for r in records:
+        assert r['metadata'] == random_metadata
+
+
 def test_listen_no_queue(storage):
     ingester = Ingester(storage)
     with pytest.raises(InsufficientConfiguration):
