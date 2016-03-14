@@ -362,6 +362,29 @@ def _get_file(file_id):
 
 @v0.route('/archive/files/<file_id>/data')
 def file_get_contents(file_id):
+    '''Retrieve a file
+
+    Retrieve a file's contents.
+    ---
+    tags:
+      - file contents
+    parameters:
+        - in: path
+          name: file_id
+          description:
+              The id of the file to retrieve
+          type: string
+          required: true
+    responses:
+      200:
+        description: success
+        schema:
+          type: file
+      404:
+        description: no such file
+        schema:
+          id: DatalakeAPIError
+    '''
     f = _get_file(file_id)
     headers = {}
     if f.content_type is not None:
