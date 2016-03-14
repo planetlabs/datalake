@@ -38,10 +38,8 @@ if level is not None and not app.debug:
 
 sentry_dsn = app.config.get('SENTRY_DSN')
 if sentry_dsn is not None:
-    from raven.handlers.logging import SentryHandler
-    handler = SentryHandler(sentry_dsn)
-    handler.setLevel(logging.ERROR)
-    app.logger.addHandler(handler)
+    from raven.contrib.flask import Sentry
+    sentry = Sentry(app, dsn=sentry_dsn)
 
 
 @app.route('/')
