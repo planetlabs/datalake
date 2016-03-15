@@ -20,6 +20,7 @@ import boto3
 from querier import ArchiveQuerier, Cursor, InvalidCursor
 from fetcher import ArchiveFileFetcher
 from datalake_common.errors import NoSuchDatalakeFile
+from urlparse import urljoin
 
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
@@ -218,7 +219,10 @@ def files_get():
                         properties:
                           url:
                             type: string
-                            description: url where the file may be retrieved
+                            description: s3 url where the file may be retrieved
+                          http_url:
+                            type: string
+                            description: http url where the file contents
                           metadata:
                             schema:
                               id: DatalakeMetadata
@@ -317,11 +321,17 @@ def files_get():
                                    where=params.get('where'),
                                    cursor=params.get('cursor'))
 
+    [_add_http_url(flask.request, r) for r in results]
     response = {
         'records': results,
         'next': _get_next_url(flask.request, results),
     }
     return Response(json.dumps(response), content_type='application/json')
+
+
+def _add_http_url(request, result):
+    base = url_for(request.endpoint, _external=True)
+    result['http_url'] = urljoin(base, result['metadata']['id'] + '/data')
 
 
 def _get_next_url(request, results):

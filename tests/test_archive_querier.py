@@ -37,7 +37,14 @@ class HttpResults(list):
     def _validate_response(self):
         for k in ['next', 'records']:
             assert k in self.response
+        for r in self.response['records']:
+            self._validate_record(r)
+
         self._validate_next_url(self.response['next'])
+
+    def _validate_record(self, record):
+        assert 'http_url' in record
+        assert record['http_url'].endswith(record['metadata']['id'] + '/data')
 
     def _validate_next_url(self, next):
         if next is None:
