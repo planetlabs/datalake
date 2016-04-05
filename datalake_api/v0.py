@@ -397,7 +397,9 @@ def file_get_contents(file_id):
     '''
     f = _get_file(file_id)
     headers = {}
-    if f.content_type is not None:
+    if f.content_type is None:
+        headers['Content-Type'] = 'text/plain'
+    else:
         headers['Content-Type'] = f.content_type
     if f.content_encoding is not None:
         headers['Content-Encoding'] = f.content_encoding
