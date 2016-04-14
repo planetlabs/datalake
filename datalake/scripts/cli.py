@@ -276,3 +276,21 @@ def _fetch(url, filename_template):
         url = url.rstrip('\n')
         f = archive.fetch_to_filename(url, filename_template=filename_template)
         click.echo(f)
+
+
+@cli.command()
+@click.argument('url', nargs=-1)
+def cat(**kwargs):
+    _cat(**kwargs)
+
+
+@clean_up_datalake_errors
+def _cat(url):
+    _prepare_archive_or_fail()
+    urls = url or click.get_text_stream('stdin')
+    out = click.open_file('-', 'w')
+    for url in urls:
+        url = url.rstrip('\n')
+        f = archive.fetch(url)
+        out.write(f.read())
+    out.close()
