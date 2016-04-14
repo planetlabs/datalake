@@ -14,6 +14,7 @@
 import pytest
 from datalake import InvalidDatalakePath
 import os
+import responses
 
 
 def test_invalid_fetch_url(archive):
@@ -87,3 +88,27 @@ def test_cli_fetch_to_file(monkeypatch, cli_tester, datalake_url_maker,
     assert os.path.exists(random_metadata['id'])
     contents = open(random_metadata['id']).read()
     assert contents == 'look ma, CLI'
+
+
+@responses.activate
+def test_fetch_http_url(archive, random_metadata):
+    base_url = 'http://datalake.example.com/v0/archive/files/1234/'
+    responses.add(responses.GET, base_url + 'data', body='foobar',
+                  content_type='text/plain', status=200)
+    responses.add(responses.GET, base_url + 'metadata', json=random_metadata,
+                  content_type='application/json', status=200)
+    f = archive.fetch(base_url + 'data')
+    assert f.metadata == random_metadata
+    assert f.read() == 'foobar'
+
+
+def test_invalid_url(archive, random_metadata):
+    url = 'http://datalake.example.com/v0/archive/files/1234/'
+    with pytest.raises(InvalidDatalakePath):
+        archive.fetch(url)
+
+
+def test_invalid_server(archive, random_metadata):
+    url = 'http://not-my-datalake.example.com/v0/archive/files/1234/data'
+    with pytest.raises(InvalidDatalakePath):
+        archive.fetch(url)
