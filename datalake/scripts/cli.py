@@ -20,6 +20,8 @@ from datalake_common.errors import InsufficientConfiguration
 import time
 import simplejson as json
 from datalake import Enqueuer, Uploader
+from datetime import datetime
+from pytz import utc
 
 archive = None
 
@@ -202,6 +204,22 @@ def _uploader(**kwargs):
     u.listen(**kwargs)
 
 
+def _ms_to_iso(ms):
+    return datetime.fromtimestamp(ms/1000.0, utc).isoformat()
+
+
+def _human_format(result):
+    s = ''
+    for k, v in result.iteritems():
+        if k == 'metadata':
+            s += _human_format(v)
+            continue
+        if k in ['start', 'end']:
+            v = _ms_to_iso(v)
+        s += '{}: {}\n'.format(k, v)
+    return s
+
+
 _list_result_formatters = {
     'url': lambda result: result['url'],
     'json': lambda result: json.dumps(result),
@@ -209,6 +227,7 @@ _list_result_formatters = {
                                              sort_keys=True,
                                              indent=4,
                                              separators=(',', ': ')),
+    'human': _human_format,
 }
 
 
@@ -257,3 +276,21 @@ def _fetch(url, filename_template):
         url = url.rstrip('\n')
         f = archive.fetch_to_filename(url, filename_template=filename_template)
         click.echo(f)
+
+
+@cli.command()
+@click.argument('url', nargs=-1)
+def cat(**kwargs):
+    _cat(**kwargs)
+
+
+@clean_up_datalake_errors
+def _cat(url):
+    _prepare_archive_or_fail()
+    urls = url or click.get_text_stream('stdin')
+    out = click.open_file('-', 'w')
+    for url in urls:
+        url = url.rstrip('\n')
+        f = archive.fetch(url)
+        out.write(f.read())
+    out.close()

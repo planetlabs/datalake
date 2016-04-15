@@ -170,14 +170,43 @@ class Archive(object):
 
         Args:
 
-        url: the url to fetch.
+        url: the url to fetch. Both s3 and http(s) are supported.
         '''
+        if url.startswith('s3://'):
+            return self._fetch_s3_url(url)
+        elif self._is_valid_http_url(url):
+            return self._fetch_http_url(url)
+        else:
+            msg = '{} does not appear to be a url in this datalake'
+            msg = msg.format(url)
+            raise InvalidDatalakePath(msg)
+
+    def _is_valid_http_url(self, url):
+        return url.startswith(self.http_url) and url.endswith('/data')
+
+    def _fetch_s3_url(self, url):
         k = self._get_key_from_url(url)
         m = self._get_metadata_from_key(k)
         fd = StringIO()
         k.get_contents_to_file(fd)
         fd.seek(0)
         return File(fd, **m)
+
+    def _fetch_http_url(self, url):
+        m = self._get_metadata_from_http_url(url)
+        response = requests.get(url, stream=True)
+        self._check_http_response(response)
+        fd = StringIO()
+        for block in response.iter_content(1024):
+            fd.write(block)
+        fd.seek(0)
+        return File(fd, **m)
+
+    def _get_metadata_from_http_url(self, url):
+        url = url.rstrip('/data') + '/metadata'
+        response = requests.get(url, stream=True)
+        self._check_http_response(response)
+        return response.json()
 
     def fetch_to_filename(self, url, filename_template=None):
         '''fetch the specified url and write it to a file
