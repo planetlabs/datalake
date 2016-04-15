@@ -404,3 +404,32 @@ def file_get_contents(file_id):
     if f.content_encoding is not None:
         headers['Content-Encoding'] = f.content_encoding
     return f.read(), 200, headers
+
+
+@v0.route('/archive/files/<file_id>/metadata')
+def file_get_metadata(file_id):
+    '''Retrieve metadata for a file
+
+    Retrieve a file's metadata.
+    ---
+    tags:
+      - file contents
+    parameters:
+        - in: path
+          name: file_id
+          description:
+              The id of the file whose metadata to retrieve
+          type: string
+          required: true
+    responses:
+      200:
+        description: success
+        schema:
+          id: DatalakeMetadata
+      404:
+        description: no such file
+        schema:
+          id: DatalakeAPIError
+    '''
+    f = _get_file(file_id)
+    return Response(json.dumps(f.metadata), content_type='application/json')
