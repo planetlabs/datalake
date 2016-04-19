@@ -275,3 +275,22 @@ def test_paginate_many_records_single_time_bucket(table_maker, querier):
     table_maker(records)
     results = get_multiple_pages(querier.query_by_time, [0, very_end, 'foo'])
     evaluate_time_based_results(results, 150)
+
+
+def test_no_end(table_maker, querier):
+    m = {
+        "start": 1461023640000,
+        "what": "file",
+        "version": 0,
+        "end": None,
+        "work_id": None,
+        "path": "/home/foo/file",
+        "where": "somehost",
+        "id": "fedcba09876543210",
+        "hash": "0123456789abcdef"
+    }
+    url = 's3://datalake-test/' + m['id']
+    records = DatalakeRecord.list_from_metadata(url, m)
+    table_maker(records)
+    results = querier.query_by_time(1461023630000, 1461023650000, 'file')
+    assert len(results) == 1
