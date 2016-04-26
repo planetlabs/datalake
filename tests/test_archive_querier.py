@@ -277,7 +277,7 @@ def test_paginate_many_records_single_time_bucket(table_maker, querier):
     evaluate_time_based_results(results, 150)
 
 
-def test_no_end(table_maker, querier):
+def test_null_end(table_maker, querier):
     m = {
         "start": 1461023640000,
         "what": "file",
@@ -294,3 +294,23 @@ def test_no_end(table_maker, querier):
     table_maker(records)
     results = querier.query_by_time(1461023630000, 1461023650000, 'file')
     assert len(results) == 1
+
+
+def test_no_end(table_maker, querier):
+    m = random_metadata()
+    del(m['end'])
+    url = 's3://datalake-test/' + m['id']
+    records = DatalakeRecord.list_from_metadata(url, m)
+    table_maker(records)
+    results = querier.query_by_time(m['start'], m['start'] + 1, m['what'])
+    assert len(results) == 1
+
+
+def test_no_end_exclusion(table_maker, querier):
+    m = random_metadata()
+    del(m['end'])
+    url = 's3://datalake-test/' + m['id']
+    records = DatalakeRecord.list_from_metadata(url, m)
+    table_maker(records)
+    results = querier.query_by_time(m['start'] + 1, m['start'] + 2, m['what'])
+    assert len(results) == 0
