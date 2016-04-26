@@ -213,9 +213,14 @@ class ArchiveQuerier(object):
         return QueryResults(results, cursor)
 
     def _exclude_outside(self, records, start, end):
-        return [r for r in records if self._is_between(r, start, end)]
+        return [r for r in records if self._intersects_time(r, start, end)]
 
-    def _is_between(self, record, start, end):
+    def _intersects_time(self, record, start, end):
+        '''return true if a record intersects the specified time interval
+
+        Note: the record may not have an 'end', or the 'end' may be None. In
+        these cases, we only need to consider the 'start'.
+        '''
         m = record['metadata']
         if 'end' not in m or m['end'] is None:
             if m['start'] < start or m['start'] > end:
