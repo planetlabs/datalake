@@ -216,10 +216,13 @@ class ArchiveQuerier(object):
         return [r for r in records if self._is_between(r, start, end)]
 
     def _is_between(self, record, start, end):
-        if record['metadata']['end'] is not None and \
-           record['metadata']['end'] < start:
-            return False
-        if record['metadata']['start'] > end:
+        m = record['metadata']
+        if 'end' not in m or m['end'] is None:
+            if m['start'] < start or m['start'] > end:
+                return False
+            else:
+                return True
+        if m['end'] < start or m['start'] > end:
             return False
         return True
 
