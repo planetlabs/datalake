@@ -17,6 +17,7 @@ from boto3.dynamodb.conditions import Key, And, Not, Attr
 from datalake_common import DatalakeRecord
 import base64
 import simplejson as json
+import time
 
 
 '''the maximum number of results to return to the user
@@ -25,6 +26,19 @@ dynamodb will return a max of 1MB to us. And our documents could be
 ~2kB. Keeping MAX_RESULTS at 100 keeps us from hitting this limit.
 '''
 MAX_RESULTS = 100
+
+
+'''the maximum number of days to lookback for latest files
+
+We do not index the latest files as such. Instead, we naively scan backwards
+through each time bucket looking for the expected file. We will not look
+arbitrarily far back, though, because this makes the failing case terribly
+slow.
+'''
+MAX_LOOKBACK_DAYS = 14
+
+
+_ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 
 class InvalidCursor(Exception):
@@ -196,7 +210,8 @@ class ArchiveQuerier(object):
             buckets = buckets[i:]
 
         for b in buckets:
-            kwargs = self._prepare_time_bucket_kwargs(b, what)
+            kwargs = self._prepare_time_bucket_kwargs(b, what,
+                                                      limit=MAX_RESULTS/2)
             if where is not None:
                 self._add_range_key_condition(kwargs, where)
             if cursor is not None:
@@ -231,12 +246,14 @@ class ArchiveQuerier(object):
             return False
         return True
 
-    def _prepare_time_bucket_kwargs(self, bucket, what):
+    def _prepare_time_bucket_kwargs(self, bucket, what, limit=None):
         i = str(bucket) + ':' + what
-        return dict(
-            KeyConditionExpression=Key('time_index_key').eq(i),
-            Limit=MAX_RESULTS/2,
-        )
+        kwargs = {
+            'KeyConditionExpression': Key('time_index_key').eq(i)
+        }
+        if limit is not None:
+            kwargs.update(Limit=limit)
+        return kwargs
 
     def _cursor_for_time_query(self, response, results, current_bucket):
         last_evaluated = response.get('LastEvaluatedKey')
@@ -258,3 +275,36 @@ class ArchiveQuerier(object):
     @memoized_property
     def _table(self):
         return self.dynamodb.Table(self.table_name)
+
+    def query_latest(self, what, where):
+        current = int(time.time() * 1000)
+        end = current - MAX_LOOKBACK_DAYS * _ONE_DAY_MS
+        while current > end:
+            bucket = current/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+            r = self._get_latest_record_in_bucket(bucket, what, where)
+            if r is not None:
+                return r
+            current -= _ONE_DAY_MS
+
+        return None
+
+    def _get_latest_record_in_bucket(self, bucket, what, where):
+        kwargs = self._prepare_time_bucket_kwargs(bucket, what)
+        self._add_range_key_condition(kwargs, where)
+        records = self._get_all_records_in_bucket(bucket, **kwargs)
+        if not records:
+            return None
+
+        records = sorted(records, key=lambda r: r['metadata']['start'])
+        result = records[-1]
+        return dict(url=result['url'], metadata=result['metadata'])
+
+    def _get_all_records_in_bucket(self, bucket, **kwargs):
+        records = []
+        while True:
+            response = self._table.query(**kwargs)
+            records += response['Items']
+            if 'LastEvaluatedKey' not in response:
+                break
+            kwargs['ExclusiveStartKey'] = response['LastEvaluatedKey']
+        return records
