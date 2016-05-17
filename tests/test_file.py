@@ -15,6 +15,7 @@ import pytest
 import gzip
 from StringIO import StringIO
 import simplejson as json
+from datalake_api.fetcher import ArchiveFile
 
 
 @pytest.fixture
@@ -163,3 +164,19 @@ def test_no_such_id(s3_bucket_maker, file_getter):
     assert 'code' in response
     assert response['code'] == 'NoSuchFile'
     assert 'message' in response
+
+
+def test_archive_file_read_twice(tmpfile, random_metadata):
+    content = 'it was the best of times, it was the worst of times'
+    f = open(tmpfile(content))
+    af = ArchiveFile(f, random_metadata)
+    assert af.read() == content
+    assert af.read() == ''
+
+
+def test_archive_file_bigger_than_header(tmpfile, random_metadata):
+    content = 'x' * 1024 + 'y' * 1024
+    f = open(tmpfile(content))
+    af = ArchiveFile(f, random_metadata)
+    assert af.read() == content
+    assert af.read() == ''

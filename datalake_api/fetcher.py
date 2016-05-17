@@ -20,13 +20,16 @@ from memoized_property import memoized_property
 from botocore.exceptions import ClientError as BotoClienError
 
 
+_HEADER_BYTES = 1024
+
+
 class ArchiveFile(object):
 
     def __init__(self, fd, metadata):
         self.fd = fd
         self.metadata = metadata
-        self.read = self.fd.read
-        self._guess_type()
+        self._header = self.fd.read(_HEADER_BYTES)
+        self._read_done = False
 
     _has_trailing_checksum = re.compile(r'(?P<path>.+)-[0-9a-f]{32,40}?')
 
@@ -37,20 +40,31 @@ class ArchiveFile(object):
             return m.group('path')
         return self.metadata['path']
 
-    def _guess_type(self):
-        self.content_type, self.content_encoding = \
-            guess_type(self._adjusted_path)
-        if self.content_type is None and self._is_log_file():
-            self.content_type = 'text/plain'
+    @memoized_property
+    def content_type(self):
+        _type, _encoding = guess_type(self._adjusted_path)
+        return _type
+
+    @memoized_property
+    def content_encoding(self):
+        if self._is_gzip():
+            return 'gzip'
+        return None
 
     _KNOWN_LOGS = ['syslog', 'dmesg']
 
-    def _is_log_file(self):
-        return self.metadata['what'] in self._KNOWN_LOGS or \
-            self._adjusted_path.endswith('.log') or \
-            self._adjusted_path.endswith('.log.gz') or \
-            self._adjusted_path.endswith('.log.1.gz') or \
-            self._adjusted_path.endswith('.log.1')
+    def read(self):
+        if self._read_done:
+            return ''
+        self._read_done = True
+        return self._header + self.fd.read()
+
+    _GZIP_MAGIC_NUMBERS = "\x1f\x8b\x08"
+
+    def _is_gzip(self):
+        # Thanks to:
+        # http://stackoverflow.com/questions/13044562/python-mechanism-to-identify-compressed-file-type-and-uncompress  # noqa
+        return self._header.startswith(self._GZIP_MAGIC_NUMBERS)
 
 
 class ArchiveFileFetcher(object):
