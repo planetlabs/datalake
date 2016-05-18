@@ -64,6 +64,7 @@ class HttpRecord(dict):
 
     def _validate(self):
         assert 'http_url' in self
+        assert self['http_url'].startswith('http')
         assert self['http_url'].endswith(self['metadata']['id'] + '/data')
 
 
