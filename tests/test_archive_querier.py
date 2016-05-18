@@ -17,9 +17,14 @@ from datalake_common import DatalakeRecord
 from datalake_common.tests import random_metadata
 import simplejson as json
 from urlparse import urlparse
-
+import time
 from datalake_api.querier import ArchiveQuerier, MAX_RESULTS
 from conftest import client
+from conftest import create_test_records
+
+
+_ONE_DAY_MS = 24 * 60 * 60 * 1000
+
 
 # we run all of the tests in this file against both the ArchiveQuerier and the
 # HTTP API. To achieve the latter, we wrap up the flask test client in an
@@ -32,19 +37,13 @@ class HttpResults(list):
         assert result.status_code == 200
         self.response = json.loads(result.get_data())
         self._validate_response()
-        super(HttpResults, self).__init__(self.response['records'])
+        records = [HttpRecord(**r) for r in self.response['records']]
+        super(HttpResults, self).__init__(records)
 
     def _validate_response(self):
         for k in ['next', 'records']:
             assert k in self.response
-        for r in self.response['records']:
-            self._validate_record(r)
-
         self._validate_next_url(self.response['next'])
-
-    def _validate_record(self, record):
-        assert 'http_url' in record
-        assert record['http_url'].endswith(record['metadata']['id'] + '/data')
 
     def _validate_next_url(self, next):
         if next is None:
@@ -55,6 +54,17 @@ class HttpResults(list):
     @property
     def cursor(self):
         return self.response['next']
+
+
+class HttpRecord(dict):
+
+    def __init__(self, **kwargs):
+        super(HttpRecord, self).__init__(**kwargs)
+        self._validate()
+
+    def _validate(self):
+        assert 'http_url' in self
+        assert self['http_url'].endswith(self['metadata']['id'] + '/data')
 
 
 class HttpQuerier(object):
@@ -103,18 +113,20 @@ class HttpQuerier(object):
         cursor = '/'.join([''] + cursor.split('/')[3:])
         return self.client.get(cursor)
 
+    def query_latest(self, what, where):
+        uri = '/v0/archive/latest/{}/{}'.format(what, where)
+        result = self.client.get(uri)
+        if result.status_code == 404:
+            return None
+        assert result.status_code == 200
+        record = json.loads(result.get_data())
+        return HttpRecord(**record)
+
 
 @pytest.fixture(params=[ArchiveQuerier, HttpQuerier],
                 ids=['archive_querier', 'http'])
 def querier(request, dynamodb):
     return request.param('test', dynamodb=dynamodb)
-
-
-def create_test_records(bucket='datalake-test', **kwargs):
-    m = random_metadata()
-    m.update(**kwargs)
-    url = 's3://' + bucket + '/' + '/'.join([str(v) for v in kwargs.values()])
-    return DatalakeRecord.list_from_metadata(url, m)
 
 
 def in_url(result, part):
@@ -314,3 +326,50 @@ def test_no_end_exclusion(table_maker, querier):
     table_maker(records)
     results = querier.query_by_time(m['start'] + 1, m['start'] + 2, m['what'])
     assert len(results) == 0
+
+
+def _validate_latest_result(result, **kwargs):
+    assert result is not None
+    for k, v in kwargs.iteritems():
+        assert result['metadata'][k] == v
+
+
+def test_latest_happened_today(table_maker, querier):
+    now = int(time.time() * 1000)
+    records = create_test_records(start=now, end=None, what='foo', where='boo')
+    table_maker(records)
+    result = querier.query_latest('foo', 'boo')
+    _validate_latest_result(result, what='foo', where='boo')
+
+
+def test_no_latest(table_maker, querier):
+    table_maker([])
+    result = querier.query_latest('statue', 'newyork')
+    assert result is None
+
+
+def test_latest_happened_yesterday(table_maker, querier):
+    yesterday = int(time.time() * 1000) - _ONE_DAY_MS
+    records = create_test_records(start=yesterday, end=None, what='tower',
+                                  where='pisa')
+    table_maker(records)
+    result = querier.query_latest('tower', 'pisa')
+    _validate_latest_result(result, what='tower', where='pisa')
+
+
+def test_latest_many_records_single_time_bucket(table_maker, querier):
+    now = int(time.time() * 1000)
+    records = []
+    bucket = now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150
+    very_end = start + DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    last_start = very_end - interval
+    for t in range(start, very_end, interval):
+        end = t + interval
+        records += create_test_records(start=t, end=end,
+                                       what='meow', where='tree')
+    table_maker(records)
+    result = querier.query_latest('meow', 'tree')
+    _validate_latest_result(result, what='meow', where='tree',
+                            start=last_start)

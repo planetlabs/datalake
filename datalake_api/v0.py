@@ -17,10 +17,9 @@ from flask import jsonify, Response, url_for
 import simplejson as json
 from flask import current_app as app
 import boto3
-from querier import ArchiveQuerier, Cursor, InvalidCursor
+from querier import ArchiveQuerier, Cursor, InvalidCursor, MAX_LOOKBACK_DAYS
 from fetcher import ArchiveFileFetcher
 from datalake_common.errors import NoSuchDatalakeFile
-from urlparse import urljoin
 
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
@@ -321,7 +320,7 @@ def files_get():
                                    where=params.get('where'),
                                    cursor=params.get('cursor'))
 
-    [_add_http_url(flask.request, r) for r in results]
+    [r.update(http_url=_get_canonical_http_url(r)) for r in results]
     response = {
         'records': results,
         'next': _get_next_url(flask.request, results),
@@ -329,9 +328,8 @@ def files_get():
     return Response(json.dumps(response), content_type='application/json')
 
 
-def _add_http_url(request, result):
-    base = url_for(request.endpoint, _external=True)
-    result['http_url'] = urljoin(base, result['metadata']['id'] + '/data')
+def _get_canonical_http_url(record):
+    return url_for('v0.file_get_contents', file_id=record['metadata']['id'])
 
 
 def _get_next_url(request, results):
@@ -370,6 +368,28 @@ def _get_file(file_id):
         flask.abort(404, 'NoSuchFile', e.message)
 
 
+def _get_headers_for_file(f):
+    headers = {}
+    if f.content_type is None:
+        headers['Content-Type'] = 'text/plain'
+    else:
+        headers['Content-Type'] = f.content_type
+    if f.content_encoding is not None:
+        headers['Content-Encoding'] = f.content_encoding
+    return headers
+
+
+def _get_latest(what, where):
+    aq = get_archive_querier()
+    f = aq.query_latest(what, where)
+    if f is not None:
+        return f
+
+    m = 'No "{}" files found in last {} days from "{}"'
+    m = m.format(what, MAX_LOOKBACK_DAYS, where)
+    flask.abort(404, 'NoSuchFile', m)
+
+
 @v0.route('/archive/files/<file_id>/data')
 def file_get_contents(file_id):
     '''Retrieve a file
@@ -396,13 +416,7 @@ def file_get_contents(file_id):
           id: DatalakeAPIError
     '''
     f = _get_file(file_id)
-    headers = {}
-    if f.content_type is None:
-        headers['Content-Type'] = 'text/plain'
-    else:
-        headers['Content-Type'] = f.content_type
-    if f.content_encoding is not None:
-        headers['Content-Encoding'] = f.content_encoding
+    headers = _get_headers_for_file(f)
     return f.read(), 200, headers
 
 
@@ -433,3 +447,85 @@ def file_get_metadata(file_id):
     '''
     f = _get_file(file_id)
     return Response(json.dumps(f.metadata), content_type='application/json')
+
+
+@v0.route('/archive/latest/<what>/<where>')
+def latest_get(what, where):
+    '''Retrieve the latest file for a give what and where
+
+    Retrieve latest file. Note that the current implementation of latest only
+    tracks the last 14 days of files. If you expect files older than this, you
+    must retrieve them using the files endpoint.
+
+    ---
+    tags:
+      - latest
+    parameters:
+        - in: path
+          name: what
+          description:
+              The process or program of interest
+          type: string
+          required: true
+        - in: path
+          name: where
+          description:
+              The location of interest (e.g., server or location)
+          type: string
+          required: true
+    responses:
+      200:
+        description: success
+        schema:
+          id: DatalakeRecord
+      404:
+        description: no latest file found for the given what or where in the
+                     last 14 days.
+        schema:
+          id: DatalakeAPIError
+
+    '''
+    f = _get_latest(what, where)
+    f.update(http_url=_get_canonical_http_url(f))
+    return Response(json.dumps(f), content_type='application/json')
+
+
+@v0.route('/archive/latest/<what>/<where>/data')
+def latest_get_contents(what, where):
+    '''Retrieve the latest file data for a given what and where
+
+    Note that the current implementation of latest only tracks the last 14 days
+    of files. If you expect files older than this, you must retrieve them using
+    the files endpoint.
+    ---
+    tags:
+      - latest
+    parameters:
+        - in: path
+          name: what
+          description:
+              The process or program of interest
+          type: string
+          required: true
+        - in: path
+          name: where
+          description:
+              The location of interest (e.g., server or location)
+          type: string
+          required: true
+    responses:
+      200:
+        description: success
+        schema:
+          type: file
+      404:
+        description: no latest file found for the given what or where in the
+                     last 14 days.
+        schema:
+          id: DatalakeAPIError
+
+    '''
+    f = _get_latest(what, where)
+    f = _get_file(f['metadata']['id'])
+    headers = _get_headers_for_file(f)
+    return f.read(), 200, headers

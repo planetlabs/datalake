@@ -19,6 +19,7 @@ from moto import mock_dynamodb2
 
 from datalake_api import app as datalake_api
 from datalake_common.tests import *  # noqa
+from datalake_common import DatalakeRecord
 
 
 @pytest.fixture
@@ -141,3 +142,10 @@ def table_maker(request, dynamodb):
         return table
 
     return maker
+
+
+def create_test_records(bucket='datalake-test', **kwargs):
+    m = random_metadata()
+    m.update(**kwargs)
+    url = 's3://' + bucket + '/' + '/'.join([str(v) for v in kwargs.values()])
+    return DatalakeRecord.list_from_metadata(url, m)

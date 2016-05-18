@@ -16,6 +16,8 @@ import gzip
 from StringIO import StringIO
 import simplejson as json
 from datalake_api.fetcher import ArchiveFile
+import time
+from conftest import create_test_records
 
 
 @pytest.fixture
@@ -28,16 +30,21 @@ def file_getter(client):
     return getter
 
 
+def _validate_file_result(result, content, content_type='text/plain',
+                          content_encoding=None):
+    assert result.status_code == 200
+    assert result.content_type == content_type
+    assert result.content_encoding == content_encoding
+    assert result.get_data() == content
+
+
 def test_get_text_file(file_getter, s3_file_maker, random_metadata):
     random_metadata['path'] = '/home/you/foo.txt'
     random_metadata['id'] = '12345'
     content = 'once upon a time'
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
-    assert res.status_code == 200
-    assert res.content_type == 'text/plain'
-    assert res.content_encoding is None
-    assert res.get_data() == 'once upon a time'
+    _validate_file_result(res, content)
 
 
 def create_gzip_string(content):
@@ -56,10 +63,7 @@ def test_get_gzipped_text_file(file_getter, s3_file_maker, random_metadata):
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
-    assert res.status_code == 200
-    assert res.content_type == 'text/plain'
-    assert res.content_encoding == 'gzip'
-    assert res.get_data() == content
+    _validate_file_result(res, content, content_encoding='gzip')
 
 
 def test_get_json_file(file_getter, s3_file_maker, random_metadata):
@@ -69,10 +73,7 @@ def test_get_json_file(file_getter, s3_file_maker, random_metadata):
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
-    assert res.status_code == 200
-    assert res.content_type == 'application/json'
-    assert res.content_encoding is None
-    assert res.get_data() == content
+    _validate_file_result(res, content, content_type='application/json')
 
 
 def test_get_syslog(file_getter, s3_file_maker, random_metadata):
@@ -83,10 +84,7 @@ def test_get_syslog(file_getter, s3_file_maker, random_metadata):
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
-    assert res.status_code == 200
-    assert res.content_type == 'text/plain'
-    assert res.content_encoding is None
-    assert res.get_data() == content
+    _validate_file_result(res, content)
 
 
 def test_get_random_log(file_getter, s3_file_maker, random_metadata):
@@ -96,10 +94,7 @@ def test_get_random_log(file_getter, s3_file_maker, random_metadata):
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
-    assert res.status_code == 200
-    assert res.content_type == 'text/plain'
-    assert res.content_encoding is None
-    assert res.get_data() == content
+    _validate_file_result(res, content)
 
 
 def test_get_random_rotated_log(file_getter, s3_file_maker, random_metadata):
@@ -109,10 +104,7 @@ def test_get_random_rotated_log(file_getter, s3_file_maker, random_metadata):
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
-    assert res.status_code == 200
-    assert res.content_type == 'text/plain'
-    assert res.content_encoding is None
-    assert res.get_data() == content
+    _validate_file_result(res, content)
 
 
 def test_get_random_gz_log(file_getter, s3_file_maker, random_metadata):
@@ -122,10 +114,7 @@ def test_get_random_gz_log(file_getter, s3_file_maker, random_metadata):
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
-    assert res.status_code == 200
-    assert res.content_type == 'text/plain'
-    assert res.content_encoding == 'gzip'
-    assert res.get_data() == content
+    _validate_file_result(res, content, content_encoding='gzip')
 
 
 def test_get_log_trailing_sha1(file_getter, s3_file_maker, random_metadata):
@@ -136,10 +125,7 @@ def test_get_log_trailing_sha1(file_getter, s3_file_maker, random_metadata):
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
-    assert res.status_code == 200
-    assert res.content_type == 'text/plain'
-    assert res.content_encoding == 'gzip'
-    assert res.get_data() == content
+    _validate_file_result(res, content, content_encoding='gzip')
 
 
 def test_get_log_trailing_md5(file_getter, s3_file_maker, random_metadata):
@@ -150,10 +136,7 @@ def test_get_log_trailing_md5(file_getter, s3_file_maker, random_metadata):
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
-    assert res.status_code == 200
-    assert res.content_type == 'text/plain'
-    assert res.content_encoding is None
-    assert res.get_data() == content
+    _validate_file_result(res, content)
 
 
 def test_no_such_id(s3_bucket_maker, file_getter):
@@ -180,3 +163,64 @@ def test_archive_file_bigger_than_header(tmpfile, random_metadata):
     af = ArchiveFile(f, random_metadata)
     assert af.read() == content
     assert af.read() == ''
+
+
+@pytest.fixture
+def latest_getter(client):
+
+    def getter(what, where):
+        uri = '/v0/archive/latest/{}/{}/data'.format(what, where)
+        return client.get(uri)
+
+    return getter
+
+
+@pytest.fixture
+def record_maker(table_maker, s3_file_maker):
+
+    def maker(content, metadata):
+        path = metadata['id'] + '/data'
+        s3_file_maker('datalake-test', path, content, metadata)
+        records = create_test_records(**metadata)
+        table_maker(records)
+
+    return maker
+
+
+def test_get_latest_text_file(record_maker, latest_getter, random_metadata):
+    now = int(time.time() * 1000)
+    random_metadata['path'] = '/home/you/foo.txt'
+    random_metadata['id'] = '12345'
+    random_metadata['what'] = 'text'
+    random_metadata['where'] = 'there'
+    random_metadata['start'] = now
+    random_metadata['end'] = None
+    content = 'once upon a time'
+    record_maker(content, random_metadata)
+    res = latest_getter('text', 'there')
+    _validate_file_result(res, content)
+
+
+def test_latest_gzipped_text_file(record_maker, latest_getter,
+                                  random_metadata):
+    now = int(time.time() * 1000)
+    random_metadata['path'] = '/home/you/foo.txt.gz'
+    random_metadata['id'] = '12345'
+    random_metadata['what'] = 'gz'
+    random_metadata['where'] = 'here'
+    random_metadata['start'] = now
+    random_metadata['end'] = None
+    content = create_gzip_string('no place like home')
+    record_maker(content, random_metadata)
+    res = latest_getter('gz', 'here')
+    _validate_file_result(res, content, content_encoding='gzip')
+
+
+def test_no_such_where_when(table_maker, latest_getter):
+    table_maker([])
+    res = latest_getter('this', 'that')
+    assert res.status_code == 404
+    response = json.loads(res.get_data())
+    assert 'code' in response
+    assert response['code'] == 'NoSuchFile'
+    assert 'message' in response
