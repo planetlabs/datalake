@@ -329,7 +329,8 @@ def files_get():
 
 
 def _get_canonical_http_url(record):
-    return url_for('v0.file_get_contents', file_id=record['metadata']['id'])
+    return url_for('v0.file_get_contents', file_id=record['metadata']['id'],
+                   _external=True)
 
 
 def _get_next_url(request, results):
