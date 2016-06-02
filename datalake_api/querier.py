@@ -210,20 +210,22 @@ class ArchiveQuerier(object):
             buckets = buckets[i:]
 
         for b in buckets:
-            kwargs = self._prepare_time_bucket_kwargs(b, what,
-                                                      limit=MAX_RESULTS/2)
-            if where is not None:
-                self._add_range_key_condition(kwargs, where)
-            if cursor is not None:
-                self._add_cursor_conditions(kwargs, cursor)
+            while len(results) <= MAX_RESULTS/2:
+                kwargs = self._prepare_time_bucket_kwargs(b, what,
+                                                          limit=MAX_RESULTS/2)
+                if where is not None:
+                    self._add_range_key_condition(kwargs, where)
+                if cursor is not None:
+                    self._add_cursor_conditions(kwargs, cursor)
 
-            response = self._table.query(**kwargs)
-            results += self._exclude_outside(response['Items'], start, end)
-            # we _could_ deduplicate the results here to make more headroom for
-            # another bucket.
-            cursor = self._cursor_for_time_query(response, results, b)
-            if cursor is not None:
-                break
+                response = self._table.query(**kwargs)
+                results += self._exclude_outside(response['Items'], start, end)
+                # we _could_ deduplicate the results here to make more headroom
+                # for another bucket.
+                cursor = self._cursor_for_time_query(response, results, b)
+                if cursor is None:
+                    # no more results in the bucket
+                    break
 
         return QueryResults(results, cursor)
 

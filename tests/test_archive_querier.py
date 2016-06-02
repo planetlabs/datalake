@@ -238,8 +238,8 @@ def get_multiple_pages(query_function, query_args):
         page = query_function(*query_args, cursor=cursor)
         page_len = len(page)
         assert page_len <= MAX_RESULTS
-        if len(results) == 0:
-            assert page.cursor is not None
+        # Don't allow empty pages
+        assert page_len > 0
         results += page
         cursor = page.cursor
         if cursor is None:
@@ -288,6 +288,18 @@ def test_paginate_many_records_single_time_bucket(table_maker, querier):
     table_maker(records)
     results = get_multiple_pages(querier.query_by_time, [0, very_end, 'foo'])
     evaluate_time_based_results(results, 150)
+
+
+def test_paginate_few_records_single_bucket_no_empty_page(table_maker, querier):
+    records = []
+    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 2 / MAX_RESULTS
+    very_end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    for start in range(0, very_end, interval):
+        end = start + interval
+        records += create_test_records(start=start, end=end, what='foo')
+    table_maker(records)
+    results = get_multiple_pages(querier.query_by_time, [very_end - 2 * interval + 1, very_end, 'foo'])
+    evaluate_time_based_results(results, 2)
 
 
 def test_null_end(table_maker, querier):
