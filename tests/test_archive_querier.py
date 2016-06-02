@@ -292,13 +292,13 @@ def test_paginate_many_records_single_time_bucket(table_maker, querier):
 
 def test_paginate_few_records_single_bucket_no_empty_page(table_maker, querier):
     records = []
-    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 2 / MAX_RESULTS
-    very_end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS / MAX_RESULTS
+    very_end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS - 1
     for start in range(0, very_end, interval):
         end = start + interval
         records += create_test_records(start=start, end=end, what='foo')
     table_maker(records)
-    results = get_multiple_pages(querier.query_by_time, [very_end - 2 * interval + 1, very_end, 'foo'])
+    results = get_multiple_pages(querier.query_by_time, [very_end - 2 * interval + 2, very_end, 'foo'])
     evaluate_time_based_results(results, 2)
 
 
