@@ -159,8 +159,9 @@ class DatalakeRecord(dict):
     def get_time_buckets(start, end):
         '''get the time buckets spanned by the start and end times'''
         d = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
-        num_buckets = (end - start)/d + 1
-        return [(start + i * d)/d for i in xrange(num_buckets)]
+        first_bucket = start / d
+        last_bucket = end / d
+        return range(first_bucket, last_bucket + 1)
 
     def _get_range_key(self):
         return self.metadata['where'] + ':' + self.metadata['id']
