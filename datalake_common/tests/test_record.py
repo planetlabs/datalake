@@ -75,6 +75,7 @@ def test_no_end(random_metadata):
     for r in records:
         assert r['metadata'] == random_metadata
 
+
 def test_get_time_buckets_misaligned():
     # Test for regression on bug when querying over x buckets for a timeframe
     # (end - start) of < x buckets (i.e. end of B0 to start of B2)
