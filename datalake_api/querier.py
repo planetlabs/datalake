@@ -234,9 +234,11 @@ class ArchiveQuerier(object):
             # for another bucket.
             cursor = self._cursor_for_time_query(response, results, bucket)
             if cursor is None:
+                print "cursor is none"
                 # no more results in the bucket
                 break
             headroom = MAX_RESULTS - len(results)
+        print "Returning with {} results".format(len(results))
         return cursor
 
     def _exclude_outside(self, records, start, end):
@@ -271,7 +273,7 @@ class ArchiveQuerier(object):
         last_evaluated = response.get('LastEvaluatedKey')
 
         if last_evaluated is None:
-            if len(results) <= MAX_RESULTS/2:
+            if len(results) < MAX_RESULTS:
                 # there's enough headroom for another bucket.
                 return None
             else:
