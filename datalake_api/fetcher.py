@@ -84,8 +84,7 @@ class ArchiveFileFetcher(object):
         try:
             return self.s3_bucket.Object(path).get()
         except BotoClienError as e:
-            if 'ResponseMetadata' in e.response and \
-                    e.response['ResponseMetadata']['HTTPStatusCode'] == 404:
+            if e.response['ResponseMetadata']['HTTPStatusCode'] == 404:
                 msg = 'No file with id {} exists'.format(file_id)
                 raise NoSuchDatalakeFile(msg)
             else:
