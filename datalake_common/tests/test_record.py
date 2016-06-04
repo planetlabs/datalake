@@ -74,3 +74,12 @@ def test_no_end(random_metadata):
     assert len(records) >= 1
     for r in records:
         assert r['metadata'] == random_metadata
+
+
+def test_get_time_buckets_misaligned():
+    # Test for regression on bug when querying over x buckets for a timeframe
+    # (end - start) of < x buckets (i.e. end of B0 to start of B2)
+    start = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 4 / 5
+    end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 11 / 5
+    buckets = DatalakeRecord.get_time_buckets(start, end)
+    assert buckets == [0, 1, 2]
