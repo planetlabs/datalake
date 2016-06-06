@@ -210,16 +210,16 @@ class ArchiveQuerier(object):
             buckets = buckets[i:]
 
         for b in buckets:
-            cursor = self._query_time_bucket(b, results, start, end, what, where, cursor)
+            cursor = self._query_time_bucket(b, results, start, end, what,
+                                             where, cursor)
 
         return QueryResults(results, cursor)
 
-    def _query_time_bucket(self, bucket, results, start, end, what, where=None, cursor=None):
-        print "Querying " + str(bucket)
+    def _query_time_bucket(self, bucket, results, start, end, what,
+                           where=None, cursor=None):
         headroom = MAX_RESULTS - len(results)
         new_results = []
-        while headroom > 0: # and (cursor or not any(new_results)):
-            print "Headroom = {}".format(headroom)
+        while headroom > 0:
             kwargs = self._prepare_time_bucket_kwargs(bucket, what,
                                                       limit=headroom)
             if where is not None:
@@ -234,11 +234,9 @@ class ArchiveQuerier(object):
             # for another bucket.
             cursor = self._cursor_for_time_query(response, results, bucket)
             if cursor is None:
-                print "cursor is none"
                 # no more results in the bucket
                 break
             headroom = MAX_RESULTS - len(results)
-        print "Returning with {} results".format(len(results))
         return cursor
 
     def _exclude_outside(self, records, start, end):

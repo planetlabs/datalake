@@ -234,10 +234,8 @@ def test_deduplicating_work_id_records(table_maker, querier):
 def get_multiple_pages(query_function, query_args, allow_single_page=False):
     results = []
     cursor = None
-    num_pages = 0
     while True:
         page = query_function(*query_args, cursor=cursor)
-        num_pages += 1
         page_len = len(page)
         assert page_len <= MAX_RESULTS
         # Ensure the first page has a cursor or is not empty
@@ -250,7 +248,6 @@ def get_multiple_pages(query_function, query_args, allow_single_page=False):
         cursor = page.cursor
         if cursor is None:
             break
-    print "Got {} pages".format(num_pages)
     return results
 
 
@@ -298,7 +295,7 @@ def test_paginate_many_records_single_time_bucket(table_maker, querier):
 
 
 def test_paginate_few_records_single_bucket_no_empty_page(table_maker,
-                                                        querier):
+                                                          querier):
     records = []
     # Fill one bucket with 2x MAX_RESULTS,
     # but we only want the first 2 of the last 3 records
@@ -307,14 +304,14 @@ def test_paginate_few_records_single_bucket_no_empty_page(table_maker,
     for start in range(0, very_end, interval):
         end = start + interval
         records += create_test_records(start=start, end=end, what='foo')
-    print "Creating {} records".format(len(records))
     table_maker(records)
     results = get_multiple_pages(
         querier.query_by_time,
         [very_end - 3 * interval + 1,
-        very_end - interval - 1, 'foo'],
-         True)
+         very_end - interval - 1, 'foo'],
+        True)
     evaluate_time_based_results(results, 2)
+
 
 def test_unaligned_multibucket_queries(table_maker, querier):
     records = []
@@ -336,16 +333,14 @@ def test_unaligned_multibucket_queries(table_maker, querier):
         start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*11/4,
         end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*11/4+1, what='foo')
 
-    print "Creating {} records".format(len(records))
     table_maker(records)
     start = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 3 / 4
     end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 9 / 4
-    print "Querying {} - {}".format(start, end)
     results = get_multiple_pages(
         querier.query_by_time,
         [start,
          end, 'foo'],
-         True)
+        True)
     evaluate_time_based_results(results, 3)
 
 
