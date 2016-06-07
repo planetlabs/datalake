@@ -210,22 +210,34 @@ class ArchiveQuerier(object):
             buckets = buckets[i:]
 
         for b in buckets:
-            kwargs = self._prepare_time_bucket_kwargs(b, what,
-                                                      limit=MAX_RESULTS/2)
+            cursor = self._query_time_bucket(b, results, start, end, what,
+                                             where, cursor)
+
+        return QueryResults(results, cursor)
+
+    def _query_time_bucket(self, bucket, results, start, end, what,
+                           where=None, cursor=None):
+        headroom = MAX_RESULTS - len(results)
+        new_results = []
+        while headroom > 0:
+            kwargs = self._prepare_time_bucket_kwargs(bucket, what,
+                                                      limit=headroom)
             if where is not None:
                 self._add_range_key_condition(kwargs, where)
             if cursor is not None:
                 self._add_cursor_conditions(kwargs, cursor)
 
             response = self._table.query(**kwargs)
-            results += self._exclude_outside(response['Items'], start, end)
-            # we _could_ deduplicate the results here to make more headroom for
-            # another bucket.
-            cursor = self._cursor_for_time_query(response, results, b)
-            if cursor is not None:
+            new_results = self._exclude_outside(response['Items'], start, end)
+            results += new_results
+            # we _could_ deduplicate the results here to make more headroom
+            # for another bucket.
+            cursor = self._cursor_for_time_query(response, results, bucket)
+            if cursor is None:
+                # no more results in the bucket
                 break
-
-        return QueryResults(results, cursor)
+            headroom = MAX_RESULTS - len(results)
+        return cursor
 
     def _exclude_outside(self, records, start, end):
         return [r for r in records if self._intersects_time(r, start, end)]
@@ -259,7 +271,7 @@ class ArchiveQuerier(object):
         last_evaluated = response.get('LastEvaluatedKey')
 
         if last_evaluated is None:
-            if len(results) <= MAX_RESULTS/2:
+            if len(results) < MAX_RESULTS:
                 # there's enough headroom for another bucket.
                 return None
             else:

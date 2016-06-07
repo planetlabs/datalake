@@ -235,9 +235,8 @@ def get_multiple_pages(query_function, query_args):
     results = []
     cursor = None
     while True:
-        page = query_function(*query_args, cursor=cursor)
-        page_len = len(page)
-        assert page_len <= MAX_RESULTS
+        page = get_page(query_function, query_args, cursor)
+        # Ensure the first page has a cursor
         if len(results) == 0:
             assert page.cursor is not None
         results += page
@@ -245,6 +244,16 @@ def get_multiple_pages(query_function, query_args):
         if cursor is None:
             break
     return results
+
+
+def get_page(query_function, query_args, cursor=None):
+    page = query_function(*query_args, cursor=cursor)
+    page_len = len(page)
+    assert page_len <= MAX_RESULTS
+    # Only allow the last page to be empty
+    if page.cursor is not None:
+        assert page_len > 0
+    return page
 
 
 def test_paginate_work_id_records(table_maker, querier):
@@ -288,6 +297,49 @@ def test_paginate_many_records_single_time_bucket(table_maker, querier):
     table_maker(records)
     results = get_multiple_pages(querier.query_by_time, [0, very_end, 'foo'])
     evaluate_time_based_results(results, 150)
+
+
+def test_paginate_few_records_single_bucket_no_empty_page(table_maker,
+                                                          querier):
+    records = []
+    # Fill one bucket with 2x MAX_RESULTS,
+    # but we only want the last record.
+    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS / MAX_RESULTS / 2
+    very_end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    for start in range(0, very_end, interval):
+        end = start + interval
+        records += create_test_records(start=start, end=end, what='foo')
+    table_maker(records)
+    results = get_page(querier.query_by_time, [very_end - interval + 1,
+                       very_end, 'foo'])
+    evaluate_time_based_results(results, 1)
+
+
+def test_unaligned_multibucket_queries(table_maker, querier):
+    records = []
+
+    # Create 5 records spanning 3 buckets, of which we want the middle 3
+    records += create_test_records(
+        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*1/4,
+        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*1/4+1, what='foo')
+    records += create_test_records(
+        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*3/4,
+        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*3/4+1, what='foo')
+    records += create_test_records(
+        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*6/4,
+        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*6/4+1, what='foo')
+    records += create_test_records(
+        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*9/4,
+        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*9/4+1, what='foo')
+    records += create_test_records(
+        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*11/4,
+        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*11/4+1, what='foo')
+
+    table_maker(records)
+    start = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 3 / 4
+    end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 9 / 4
+    results = get_page(querier.query_by_time, [start, end, 'foo'])
+    evaluate_time_based_results(results, 3)
 
 
 def test_null_end(table_maker, querier):
