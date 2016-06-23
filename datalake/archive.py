@@ -13,6 +13,7 @@
 # the License.
 
 import os
+import re
 from os import environ
 import urlparse
 from memoized_property import memoized_property
@@ -203,7 +204,8 @@ class Archive(object):
         return File(fd, **m)
 
     def _get_metadata_from_http_url(self, url):
-        url = url.rstrip('/data') + '/metadata'
+        p = re.compile('/data$')
+        url = p.sub('/metadata', url)
         response = requests.get(url, stream=True)
         self._check_http_response(response)
         return response.json()

@@ -112,3 +112,15 @@ def test_invalid_server(archive, random_metadata):
     url = 'http://not-my-datalake.example.com/v0/archive/files/1234/data'
     with pytest.raises(InvalidDatalakePath):
         archive.fetch(url)
+
+
+@responses.activate
+def test_metadata_from_http_url(archive, random_metadata):
+    url = 'http://datalake.example.com/v0/archive/files/1234data'
+    responses.add(responses.GET, url + '/data', body='foobody',
+                  content_type='text/plain', status=200)
+    responses.add(responses.GET, url + '/metadata', json=random_metadata,
+                  content_type='application/json', status=200)
+    f = archive.fetch(url + '/data')
+    assert f.read() == 'foobody'
+    assert f.metadata == random_metadata
