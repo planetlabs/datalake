@@ -113,6 +113,7 @@ def test_invalid_server(archive, random_metadata):
     with pytest.raises(InvalidDatalakePath):
         archive.fetch(url)
 
+
 @responses.activate
 def test_metadata_from_http_url(archive, random_metadata):
     url = 'http://datalake.example.com/v0/archive/files/1234data'
@@ -123,4 +124,3 @@ def test_metadata_from_http_url(archive, random_metadata):
     f = archive.fetch(url + '/data')
     assert f.read() == 'foobody'
     assert f.metadata == random_metadata
-
