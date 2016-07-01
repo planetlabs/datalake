@@ -37,7 +37,6 @@ setup(name='datalake-common',
       install_requires=[
           'python-dateutil>=2.4.2',
           'pytz>=2015.4',
-          'versioneer>=0.16',
           'simplejson>=3.3.1',
           'python-dotenv>=0.1.3',
       ],
