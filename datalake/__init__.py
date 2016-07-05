@@ -12,16 +12,17 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-import pyver
-from dlfile import File, InvalidDatalakeBundle
-from archive import Archive, DatalakeHttpError, InvalidDatalakePath, \
+from .dlfile import File, InvalidDatalakeBundle
+from .archive import Archive, DatalakeHttpError, InvalidDatalakePath, \
     UnsupportedStorageError
-from queue import Uploader, Enqueuer
-from translator import Translator, TranslatorError
-from crtime import get_crtime, CreationTimeError
-from config_helpers import load_config, DEFAULT_CONFIG
+from .queue import Uploader, Enqueuer
+from .translator import Translator, TranslatorError
+from .crtime import get_crtime, CreationTimeError
+from .config_helpers import load_config, DEFAULT_CONFIG
 
-__version__, __version_info__ = pyver.get_version(pkg='datalake')
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
 
 __all__ = ['File', 'Archive', 'Uploader', 'Enqueuer', 'get_crtime',
            'CreationTimeError', 'Translator', 'TranslatorError',
