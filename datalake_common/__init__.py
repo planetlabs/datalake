@@ -12,11 +12,12 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-import pyver
-from metadata import Metadata, InvalidDatalakeMetadata, \
+from .metadata import Metadata, InvalidDatalakeMetadata, \
     UnsupportedDatalakeMetadataVersion
-from record import DatalakeRecord, has_s3
+from .record import DatalakeRecord, has_s3
 
-__version__, __version_info__ = pyver.get_version(pkg='datalake-common')
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
 __all__ = ['Metadata', 'InvalidDatalakeMetadata',
            'UnsupportedDatalakeMetadataVersion', 'DatalakeRecord', 'has_s3']
