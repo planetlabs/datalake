@@ -4,6 +4,7 @@ import logging
 from memoized_property import memoized_property
 import os
 
+
 class SNSReporter(object):
     '''report ingestion events to SNS'''
 
