@@ -29,6 +29,11 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from boto.s3.connection import NoHostProvided
 
+try:
+    from requests_kerberos import HTTPKerberosAuth, DISABLED
+    REQUESTS_AUTH = HTTPKerberosAuth(mutual_authentication=DISABLED)
+except ImportError:
+    REQUESTS_AUTH = None
 
 # The name in s3 of the datalake metadata document
 METADATA_NAME = 'datalake'
@@ -100,7 +105,7 @@ class Archive(object):
             where=where,
             work_id=work_id,
         )
-        response = requests.get(url, params=params)
+        response = self._requests_get(url, params=params)
 
         while True:
             self._check_http_response(response)
@@ -108,7 +113,7 @@ class Archive(object):
             for record in response['records']:
                 yield record
             if response['next']:
-                response = requests.get(response['next'])
+                response = self._requests_get(response['next'])
             else:
                 break
 
@@ -195,7 +200,7 @@ class Archive(object):
 
     def _fetch_http_url(self, url):
         m = self._get_metadata_from_http_url(url)
-        response = requests.get(url, stream=True)
+        response = self._requests_get(url, stream=True)
         self._check_http_response(response)
         fd = StringIO()
         for block in response.iter_content(1024):
@@ -206,7 +211,7 @@ class Archive(object):
     def _get_metadata_from_http_url(self, url):
         p = re.compile('/data$')
         url = p.sub('/metadata', url)
-        response = requests.get(url, stream=True)
+        response = self._requests_get(url, stream=True)
         self._check_http_response(response)
         return response.json()
 
@@ -327,3 +332,10 @@ class Archive(object):
                                       aws_secret_access_key=s,
                                       host=self._s3_host)
         return self._conn
+
+    def _requests_get(self, url, **kwargs):
+        return self._session.get(url, auth=REQUESTS_AUTH, **kwargs)
+
+    @memoized_property
+    def _session(self):
+        return requests.Session()
