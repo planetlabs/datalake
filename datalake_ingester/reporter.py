@@ -3,8 +3,6 @@ import simplejson as json
 import logging
 from memoized_property import memoized_property
 import os
-from datalake_common.errors import InsufficientConfiguration
-
 
 class SNSReporter(object):
     '''report ingestion events to SNS'''
@@ -17,7 +15,7 @@ class SNSReporter(object):
     def from_config(cls):
         report_key = os.environ.get('DATALAKE_REPORT_KEY')
         if report_key is None:
-            raise InsufficientConfiguration('Please configure a report_key')
+            return None
         return cls(report_key)
 
     @property
