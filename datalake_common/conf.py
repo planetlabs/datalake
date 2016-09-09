@@ -11,6 +11,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
+from six import iteritems
 from dotenv import load_dotenv
 import os
 from .errors import InsufficientConfiguration
@@ -70,7 +71,7 @@ def load_config(config_file, default_config_file, **kwargs):
 
 
 def _update_environment(**kwargs):
-    for k, v in kwargs.iteritems():
+    for k, v in iteritems(kwargs):
         if v is None:
             continue
         if not k.startswith('aws_'):

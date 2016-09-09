@@ -13,12 +13,12 @@
 # the License.
 
 from datalake_common import Metadata, InvalidDatalakeMetadata
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 import simplejson as json
 import os
 
 
-from errors import InsufficientConfiguration, UnsupportedTimeRange, \
+from .errors import InsufficientConfiguration, UnsupportedTimeRange, \
     NoSuchDatalakeFile
 
 '''whether or not s3 features are available
@@ -161,7 +161,9 @@ class DatalakeRecord(dict):
         d = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
         first_bucket = start / d
         last_bucket = end / d
-        return range(first_bucket, last_bucket + 1)
+        return list(range(
+            int(first_bucket),
+            int(last_bucket) + 1))
 
     def _get_range_key(self):
         return self.metadata['where'] + ':' + self.metadata['id']

@@ -39,10 +39,11 @@ setup(name='datalake-common',
           'pytz>=2015.4',
           'simplejson>=3.3.1',
           'python-dotenv>=0.1.3',
+          'six>=1.10.0'
       ],
       extras_require={
           'test': [
-              'pytest==2.7.2',
+              'pytest==3.0.2',
               'pip==7.1.0',
               'wheel==0.24.0',
               'flake8==2.5.0',
@@ -51,6 +52,6 @@ setup(name='datalake-common',
               'boto>=2.38.0',
           ],
           'test-s3': [
-              'moto==0.4.12',
+              'moto==0.4.25',
           ]
       })
