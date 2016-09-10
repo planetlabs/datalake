@@ -51,7 +51,7 @@ setup(name='datalake-common',
           's3': [
               'boto>=2.38.0',
           ],
-          'test-s3': [
+          'test_s3': [
               'moto==0.4.25',
           ]
       })
