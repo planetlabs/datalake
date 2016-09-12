@@ -16,13 +16,14 @@ import pytest
 import random
 import string
 import os
+import six
 
 
 try:
     from moto import mock_s3
     import boto.s3
     from boto.s3.key import Key
-    from urlparse import urlparse
+    from six.moves.urllib.parse import urlparse
     import simplejson as json
 except ImportError:
     # if developers use s3-test features without having installed s3 stuff,
@@ -46,7 +47,11 @@ def basic_metadata():
 
 
 def random_word(length):
-    return ''.join(random.choice(string.lowercase) for i in xrange(length))
+    if six.PY2:
+        lowercase = string.lowercase
+    else:
+        lowercase = string.ascii_lowercase
+    return ''.join(random.choice(lowercase) for i in range(length))
 
 
 def random_hex(length):

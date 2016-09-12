@@ -163,5 +163,5 @@ Developer Setup
         pip install -e .[test]
         py.test
 
-Do `pip install -e .[test,s3,test-s3]` instead to work on the s3-enabled
+Do `pip install -e .[test,s3,test_s3]` instead to work on the s3-enabled
 features.
