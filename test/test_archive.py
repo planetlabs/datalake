@@ -17,7 +17,7 @@ import re
 
 
 def test_push_file(archive, random_metadata, tmpfile, s3_key):
-    expected_content = 'mwahaha'
+    expected_content = 'mwahaha'.encode('utf-8')
     f = tmpfile(expected_content)
     url = archive.prepare_metadata_and_push(f, **random_metadata)
     from_s3 = s3_key(url)

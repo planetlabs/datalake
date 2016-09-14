@@ -15,14 +15,14 @@
 import os
 import re
 from os import environ
-import urlparse
+from six.moves.urllib.parse import urlparse
 from memoized_property import memoized_property
 import simplejson as json
 from datalake import File
 from datalake_common.errors import InsufficientConfiguration
 from datalake_common import Metadata
 import requests
-from cStringIO import StringIO
+from io import BytesIO
 import errno
 
 from boto.s3.connection import S3Connection
@@ -71,7 +71,7 @@ class Archive(object):
 
     @property
     def _parsed_storage_url(self):
-        return urlparse.urlparse(self.storage_url)
+        return urlparse(self.storage_url)
 
     def list(self, what, start=None, end=None, where=None, work_id=None):
         '''list metadata records for specified files
@@ -193,7 +193,7 @@ class Archive(object):
     def _fetch_s3_url(self, url):
         k = self._get_key_from_url(url)
         m = self._get_metadata_from_key(k)
-        fd = StringIO()
+        fd = BytesIO()
         k.get_contents_to_file(fd)
         fd.seek(0)
         return File(fd, **m)
@@ -202,7 +202,7 @@ class Archive(object):
         m = self._get_metadata_from_http_url(url)
         response = self._requests_get(url, stream=True)
         self._check_http_response(response)
-        fd = StringIO()
+        fd = BytesIO()
         for block in response.iter_content(1024):
             fd.write(block)
         fd.seek(0)
@@ -271,13 +271,13 @@ class Archive(object):
             return template.format(**metadata)
         except KeyError as e:
             m = '"{}" does not appear in the datalake metadata'
-            m = m.format(e.message)
+            m = m.format(str(e))
             raise InvalidDatalakePath(m)
         except ValueError as e:
-            raise InvalidDatalakePath(e.message)
+            raise InvalidDatalakePath(str(e))
 
     def _get_key_name_from_url(self, url):
-        parts = urlparse.urlparse(url)
+        parts = urlparse(url)
         if not parts.path:
             msg = '{} is not a valid datalake url'.format(url)
             raise InvalidDatalakePath(msg)

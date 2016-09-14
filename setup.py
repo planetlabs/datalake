@@ -28,12 +28,13 @@ setup(name='datalake',
           'click>=4.1',
           'datalake-common>=0.15',
           'python-dotenv>=0.1.3',
-          'requests>=2.5'
+          'requests>=2.5',
+          'six>=1.10.0',
       ],
       extras_require={
           'test': [
-              'pytest==2.7.2',
-              'moto==0.4.2',
+              'pytest==3.0.2',
+              'moto==0.4.27',
               'twine==1.5.0',
               'pip==7.1.0',
               'wheel==0.24.0',
@@ -53,6 +54,10 @@ setup(name='datalake',
             'requests-kerberos>=0.10.0',
           ]
       },
+      classifiers=[
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.5',
+      ],
       entry_points="""
       [console_scripts]
       datalake=datalake.scripts.cli:cli

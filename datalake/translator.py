@@ -59,7 +59,7 @@ class Translator(object):
         try:
             self._re = re.compile(self._extract)
         except sre_constants.error as e:
-            raise TranslatorError(e.message)
+            raise TranslatorError(str(e))
 
     def _validate_tilde(self):
         if self._te.count('~') != 1:
@@ -92,8 +92,8 @@ class Translator(object):
         try:
             return self._format.format(**kwargs)
         except ValueError as e:
-            raise TranslatorError(e.message)
+            raise TranslatorError(str(e))
         except KeyError as e:
             m = 'Failed to extract "{}" from "{}" using "{}"'
-            m = m.format(e.message, path, self._extract)
+            m = m.format(str(e), path, self._extract)
             raise TranslatorError(m)

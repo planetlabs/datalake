@@ -110,7 +110,7 @@ def test_upload_existing_cli(cli_tester, random_file, random_metadata,
     cmd = 'uploader --timeout=0.1'
     cli_tester(cmd)
 
-    expected_content = open(random_file).read()
+    expected_content = open(random_file, 'rb').read()
     uploaded_content_validator(expected_content)
 
 

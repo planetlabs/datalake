@@ -34,10 +34,11 @@ def test_key_does_not_exist(archive):
 
 
 def test_fetch(archive, datalake_url_maker, random_metadata):
+    content = 'welcome to the jungle'.encode('utf-8')
     url = datalake_url_maker(metadata=random_metadata,
-                             content='welcome to the jungle')
+                             content=content)
     f = archive.fetch(url)
-    assert f.read() == 'welcome to the jungle'
+    assert f.read() == content
 
 
 def test_fetch_to_file(monkeypatch, archive, datalake_url_maker,
@@ -93,13 +94,14 @@ def test_cli_fetch_to_file(monkeypatch, cli_tester, datalake_url_maker,
 @responses.activate
 def test_fetch_http_url(archive, random_metadata):
     base_url = 'http://datalake.example.com/v0/archive/files/1234/'
-    responses.add(responses.GET, base_url + 'data', body='foobar',
+    content = 'foobar'.encode('utf-8')
+    responses.add(responses.GET, base_url + 'data', body=content,
                   content_type='text/plain', status=200)
     responses.add(responses.GET, base_url + 'metadata', json=random_metadata,
                   content_type='application/json', status=200)
     f = archive.fetch(base_url + 'data')
     assert f.metadata == random_metadata
-    assert f.read() == 'foobar'
+    assert f.read() == content
 
 
 def test_invalid_url(archive, random_metadata):
@@ -117,10 +119,11 @@ def test_invalid_server(archive, random_metadata):
 @responses.activate
 def test_metadata_from_http_url(archive, random_metadata):
     url = 'http://datalake.example.com/v0/archive/files/1234data'
-    responses.add(responses.GET, url + '/data', body='foobody',
+    content = 'foobody'.encode('utf-8')
+    responses.add(responses.GET, url + '/data', body=content,
                   content_type='text/plain', status=200)
     responses.add(responses.GET, url + '/metadata', json=random_metadata,
                   content_type='application/json', status=200)
     f = archive.fetch(url + '/data')
-    assert f.read() == 'foobody'
+    assert f.read() == content
     assert f.metadata == random_metadata

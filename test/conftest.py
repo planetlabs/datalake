@@ -15,7 +15,7 @@
 import pytest
 from moto import mock_s3
 import boto
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 from datalake_common.tests import random_metadata, tmpfile  # noqa
 import os
 from click.testing import CliRunner
@@ -90,7 +90,7 @@ def cli_tester(s3_bucket):
 @pytest.fixture  # noqa
 def datalake_url_maker(archive, tmpfile, random_metadata):
 
-    def maker(metadata=random_metadata, content=''):
+    def maker(metadata=random_metadata, content=b''):
         f = tmpfile(content)
         return archive.prepare_metadata_and_push(f, **metadata)
 

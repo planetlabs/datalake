@@ -57,7 +57,7 @@ def test_translate_with_bad_expression_fails(cli_tester):
 def test_translate_with_good_args_succceeds(cli_tester):
     cmd = ("translate .*job-(?P<job_id>[0-9]+).log$~job{job_id} "
            "/var/log/job-456.log")
-    print cmd
+    print(cmd)
     cli_tester(cmd)
 
 

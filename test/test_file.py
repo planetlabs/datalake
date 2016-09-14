@@ -18,7 +18,7 @@ from datalake_common import InvalidDatalakeMetadata
 import os
 import json
 import tarfile
-from cStringIO import StringIO
+from io import BytesIO
 
 from datalake import File, InvalidDatalakeBundle
 
@@ -89,7 +89,7 @@ def test_bundle_not_tar(tmpfile):
 def add_string_to_tar(tfile, arcname, data):
     if data is None:
         return
-    s = StringIO(data)
+    s = BytesIO(data)
     info = tarfile.TarInfo(name=arcname)
     s.seek(0, os.SEEK_END)
     info.size = s.tell()
@@ -114,34 +114,66 @@ def bundle_maker(tmpdir):
 
 
 def test_bundle_without_version(bundle_maker, random_metadata):
-    m = json.dumps(random_metadata)
-    b = bundle_maker(content='1234', metadata=m)
+    m = json.dumps(random_metadata).encode('utf-8')
+    b = bundle_maker(content='1234'.encode('utf-8'), metadata=m)
     with pytest.raises(InvalidDatalakeBundle):
         File.from_bundle(b)
 
 
 def test_bundle_without_metadata(bundle_maker):
-    b = bundle_maker(content='1234', version='0')
+    b = bundle_maker(content='1234'.encode('utf-8'),
+                     version='0'.encode('utf-8'))
     with pytest.raises(InvalidDatalakeBundle):
         File.from_bundle(b)
 
 
 def test_bundle_without_content(bundle_maker, random_metadata):
-    m = json.dumps(random_metadata)
-    b = bundle_maker(metadata=m, version='0')
+    m = json.dumps(random_metadata).encode('utf-8')
+    b = bundle_maker(metadata=m, version='0'.encode('utf-8'))
     with pytest.raises(InvalidDatalakeBundle):
         File.from_bundle(b)
 
 
 def test_bundle_with_non_json_metadata(bundle_maker):
-    b = bundle_maker(content='1234', metadata='not:a%json#', version='0')
+    b = bundle_maker(content='1234'.encode('utf-8'),
+                     metadata='not:a%json#'.encode('utf-8'),
+                     version='0'.encode('utf-8'))
     with pytest.raises(InvalidDatalakeBundle):
         File.from_bundle(b)
 
 
 def test_bundle_with_invalid_metadata(bundle_maker, random_metadata):
     del(random_metadata['what'])
-    m = json.dumps(random_metadata)
-    b = bundle_maker(content='1234', metadata=m, version='0')
+    m = json.dumps(random_metadata).encode('utf-8')
+    b = bundle_maker(content='1234'.encode('utf-8'),
+                     metadata=m,
+                     version='0'.encode('utf-8'))
     with pytest.raises(InvalidDatalakeMetadata):
         File.from_bundle(b)
+
+
+here = os.path.dirname(__file__)
+legacy_bundles = os.path.join(here, 'legacy_bundles')
+
+
+def test_pre_python_3_bundle():
+    # prior to python 3 support, we relied on python to choose the most
+    # suitable encoding for files. Now we do it explicitly. Make sure legacy
+    # bundles work.
+    eyedee = '7c72f3ab092445a08aa6983c864c087c'
+    expected_content = b'Wake up.\nEat. Mmm.\nHappy hour.\nSleep.\n'
+    expected_metadata = {
+        'end': 1474308636507,
+        'hash': '70373dec2de49d566fc1e34bacca7561',
+        'id': eyedee,
+        'path': '/home/brian/src/datalake/chicken.log',
+        'start': 1474308548000,
+        'version': 0,
+        'what': 'chicken',
+        'where': 'nomad',
+        'work_id': None
+    }
+    b = os.path.join(legacy_bundles, eyedee + '.tar')
+    f = File.from_bundle(b)
+    assert f.metadata == expected_metadata
+    assert f.read() == expected_content
