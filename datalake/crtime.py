@@ -14,6 +14,7 @@
 
 import os
 from subprocess import check_output, STDOUT, CalledProcessError
+from locale import getpreferredencoding
 
 
 class CreationTimeError(Exception):
@@ -43,7 +44,7 @@ def _crtime_linux(f):
             m += 'Perhaps you need to setuid root on crtime?'
         else:
             m = '"' + cmd + '" failed with code ' + str(e.returncode) + ': '
-            m += e.output
+            m += e.output.decode(getpreferredencoding(False))
         raise CreationTimeError(m)
 
 

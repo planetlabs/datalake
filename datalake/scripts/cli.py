@@ -22,6 +22,8 @@ import simplejson as json
 from datalake import Enqueuer, Uploader
 from datetime import datetime
 from pytz import utc
+from six import iteritems
+
 
 archive = None
 
@@ -36,7 +38,7 @@ def clean_up_datalake_errors(f):
                 InsufficientConfiguration,
                 DatalakeHttpError,
                 UnsupportedStorageError) as e:
-            raise click.UsageError(e.message)
+            raise click.UsageError(str(e))
     return wrapped
 
 
@@ -100,7 +102,7 @@ def cli(ctx, **kwargs):
 
 
 def _update_environment(**kwargs):
-    for k, v in kwargs.iteritems():
+    for k, v in iteritems(kwargs):
         if v is None:
             continue
         if not k.startswith('aws'):
@@ -210,7 +212,7 @@ def _ms_to_iso(ms):
 
 def _human_format(result):
     s = ''
-    for k, v in result.iteritems():
+    for k, v in iteritems(result):
         if k == 'metadata':
             s += _human_format(v)
             continue
@@ -231,7 +233,7 @@ _list_result_formatters = {
 }
 
 
-_list_result_formats = _list_result_formatters.keys()
+_list_result_formats = list(_list_result_formatters.keys())
 
 
 @cli.command()
@@ -240,7 +242,7 @@ _list_result_formats = _list_result_formatters.keys()
 @click.option('--where')
 @click.option('--work-id')
 @click.option('--format', type=click.Choice(_list_result_formats),
-              default=_list_result_formats[0])
+              default='url')
 @click.argument('what')
 def list(**kwargs):
     _prepare_archive_or_fail()

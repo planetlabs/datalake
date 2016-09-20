@@ -14,11 +14,10 @@
 
 import os
 from pyblake2 import blake2b
-from translator import Translator
-from cStringIO import StringIO
+from .translator import Translator
+from io import BytesIO
 import tarfile
 import simplejson as json
-
 from datalake_common import Metadata
 
 
@@ -57,7 +56,7 @@ class File(object):
         filename = os.path.abspath(filename)
         if 'path' not in metadata_fields:
             metadata_fields['path'] = filename
-        fd = open(filename)
+        fd = open(filename, 'rb')
         return cls(fd, **metadata_fields)
 
     def _initialize_methods_from_fd(self):
@@ -138,7 +137,7 @@ class File(object):
 
     @staticmethod
     def _validate_bundle_version(bundle):
-        v = File._get_content_from_bundle(bundle, 'version')
+        v = File._get_content_from_bundle(bundle, 'version').decode('utf-8')
         if v != File.DATALAKE_BUNDLE_VERSION:
             msg = '{} has unsupported bundle version {}.'
             msg = msg.format(bundle.name, v)
@@ -187,7 +186,7 @@ class File(object):
         self.seek(0, 0)
 
     def _add_string_to_tar(self, tfile, arcname, data):
-        s = StringIO(data)
+        s = BytesIO(data.encode('utf-8'))
         info = tarfile.TarInfo(name=arcname)
         s.seek(0, os.SEEK_END)
         info.size = s.tell()
