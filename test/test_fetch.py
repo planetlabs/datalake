@@ -110,8 +110,8 @@ def test_invalid_url(archive, random_metadata):
         archive.fetch(url)
 
 
-def test_invalid_server(archive, random_metadata):
-    url = 'http://not-my-datalake.example.com/v0/archive/files/1234/data'
+def test_invalid_protocol(archive, random_metadata):
+    url = 'ftp://alternate-datalake.example.com/v0/archive/files/1234/data'
     with pytest.raises(InvalidDatalakePath):
         archive.fetch(url)
 

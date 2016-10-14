@@ -183,12 +183,12 @@ class Archive(object):
         elif self._is_valid_http_url(url):
             return self._fetch_http_url(url)
         else:
-            msg = '{} does not appear to be a url in this datalake'
+            msg = '{} does not appear to be a fetchable url'
             msg = msg.format(url)
             raise InvalidDatalakePath(msg)
 
     def _is_valid_http_url(self, url):
-        return url.startswith(self.http_url) and url.endswith('/data')
+        return url.startswith('http') and url.endswith('/data')
 
     def _fetch_s3_url(self, url):
         k = self._get_key_from_url(url)
