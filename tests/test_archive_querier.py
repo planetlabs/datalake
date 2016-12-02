@@ -19,7 +19,7 @@ import simplejson as json
 from urlparse import urlparse
 import time
 from datalake_api.querier import ArchiveQuerier, MAX_RESULTS
-from conftest import client
+from conftest import client, YEAR_2010
 from conftest import create_test_records
 
 
@@ -187,43 +187,46 @@ def test_query_work_id_with_where(table_maker, querier):
 
 def test_query_by_time(table_maker, querier):
     records = []
-    for start in range(0, 100, 10):
+    for start in range(YEAR_2010, YEAR_2010+100, 10):
         end = start + 9
         records += create_test_records(start=start, end=end, what='foo')
     table_maker(records)
-    results = querier.query_by_time(0, 9, 'foo')
+    results = querier.query_by_time(YEAR_2010, YEAR_2010+9, 'foo')
     assert len(results) == 1
-    assert all_results_between(results, 0, 9)
+    assert all_results_between(results, YEAR_2010, YEAR_2010+9)
 
 
 def test_query_by_time_with_where(table_maker, querier):
     records = []
     for i in range(4):
         where = 'worker{}'.format(i)
-        records += create_test_records(start=0, end=10, what='foo',
-                                       where=where)
+        records += create_test_records(start=YEAR_2010, end=YEAR_2010+10,
+                                       what='foo', where=where)
 
     table_maker(records)
-    results = querier.query_by_time(0, 10, 'foo', where='worker2')
+    results = querier.query_by_time(YEAR_2010, YEAR_2010+10, 'foo',
+                                    where='worker2')
     assert len(results) == 1
-    assert all_results(results, start=0, end=10, where='worker2')
-    assert all_results_between(results, 0, 10)
+    assert all_results(results, start=YEAR_2010, end=YEAR_2010+10,
+                       where='worker2')
+    assert all_results_between(results, YEAR_2010, YEAR_2010+10)
 
 
 def test_deduplicating_time_records(table_maker, querier):
     # Create a record that definitively spans two time buckets, and make sure
     # that we only get one record back when we query for it.
-    start = 0
-    end = 2 * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    start = YEAR_2010
+    two_buckets = 2 * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    end = YEAR_2010 + two_buckets
     records = create_test_records(start=start, end=end, what='foo')
     table_maker(records)
-    results = querier.query_by_time(start, 2*end, 'foo')
+    results = querier.query_by_time(start, end+two_buckets, 'foo')
     assert len(results) == 1
 
 
 def test_deduplicating_work_id_records(table_maker, querier):
-    start = 0
-    end = 2 * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    start = YEAR_2010
+    end = YEAR_2010 + 2 * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     records = create_test_records(start=start, end=end, what='foo',
                                   work_id='job0')
     table_maker(records)
@@ -278,24 +281,26 @@ def evaluate_time_based_results(results, num_expected):
 def test_paginate_time_records(table_maker, querier):
     records = []
     interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
-    very_end = 150 * interval
-    for start in range(0, very_end, interval):
+    very_end = YEAR_2010 + 150 * interval
+    for start in range(YEAR_2010, very_end, interval):
         end = start + interval
         records += create_test_records(start=start, end=end, what='foo')
     table_maker(records)
-    results = get_multiple_pages(querier.query_by_time, [0, very_end, 'foo'])
+    results = get_multiple_pages(
+        querier.query_by_time, [YEAR_2010, very_end, 'foo'])
     evaluate_time_based_results(results, 150)
 
 
 def test_paginate_many_records_single_time_bucket(table_maker, querier):
     records = []
     interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150
-    very_end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
-    for start in range(0, very_end, interval):
+    very_end = YEAR_2010 + DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    for start in range(YEAR_2010, very_end, interval):
         end = start + interval
         records += create_test_records(start=start, end=end, what='foo')
     table_maker(records)
-    results = get_multiple_pages(querier.query_by_time, [0, very_end, 'foo'])
+    results = get_multiple_pages(
+        querier.query_by_time, [YEAR_2010, very_end, 'foo'])
     evaluate_time_based_results(results, 150)
 
 
@@ -305,8 +310,8 @@ def test_paginate_few_records_single_bucket_no_empty_page(table_maker,
     # Fill one bucket with 2x MAX_RESULTS,
     # but we only want the last record.
     interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS / MAX_RESULTS / 2
-    very_end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
-    for start in range(0, very_end, interval):
+    very_end = YEAR_2010 + DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    for start in range(YEAR_2010, very_end, interval):
         end = start + interval
         records += create_test_records(start=start, end=end, what='foo')
     table_maker(records)
@@ -320,24 +325,24 @@ def test_unaligned_multibucket_queries(table_maker, querier):
 
     # Create 5 records spanning 3 buckets, of which we want the middle 3
     records += create_test_records(
-        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*1/4,
-        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*1/4+1, what='foo')
+        start=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*1/4,
+        end=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*1/4+1, what='foo')
     records += create_test_records(
-        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*3/4,
-        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*3/4+1, what='foo')
+        start=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*3/4,
+        end=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*3/4+1, what='foo')
     records += create_test_records(
-        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*6/4,
-        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*6/4+1, what='foo')
+        start=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*6/4,
+        end=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*6/4+1, what='foo')
     records += create_test_records(
-        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*9/4,
-        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*9/4+1, what='foo')
+        start=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*9/4,
+        end=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*9/4+1, what='foo')
     records += create_test_records(
-        start=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*11/4,
-        end=DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*11/4+1, what='foo')
+        start=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*11/4,
+        end=YEAR_2010+DatalakeRecord.TIME_BUCKET_SIZE_IN_MS*11/4+1, what='foo')
 
     table_maker(records)
-    start = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 3 / 4
-    end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 9 / 4
+    start = YEAR_2010 + DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 3 / 4
+    end = YEAR_2010 + DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 9 / 4
     results = get_page(querier.query_by_time, [start, end, 'foo'])
     evaluate_time_based_results(results, 3)
 

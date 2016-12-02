@@ -20,6 +20,7 @@ import boto3
 from querier import ArchiveQuerier, Cursor, InvalidCursor, MAX_LOOKBACK_DAYS
 from fetcher import ArchiveFileFetcher
 from datalake_common.errors import NoSuchDatalakeFile
+from datalake_common.metadata import Metadata, InvalidDatalakeMetadata
 
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
@@ -89,8 +90,8 @@ def _convert_param_to_ms(params, key):
     if key not in params:
         return
     try:
-        params[key] = int(params[key])
-    except ValueError:
+        params[key] = Metadata.normalize_date(params[key])
+    except InvalidDatalakeMetadata:
         msg = key + ' must be milliseconds since the epoch.'
         flask.abort(400, 'InvalidTime', msg)
 
@@ -189,13 +190,13 @@ def files_get():
           description:
               Only return files with data after this start time in ms since
               the epoch.
-          type: integer
+          type: string
         - in: query
           name: end
           description:
               Only return files with data before this end time in ms since
               the epoch.
-          type: integer
+          type: string
     responses:
       200:
         description: success
