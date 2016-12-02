@@ -27,6 +27,13 @@ import pytz
 # as milliseconds: 1973-03-03 09:46:40
 MAX_TS_SECONDS = 100000000000
 
+try:
+    long = long
+except NameError:
+    # Python3
+    long = int
+    basestring = str
+
 
 class InvalidDatalakeMetadata(Exception):
     pass
