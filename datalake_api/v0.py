@@ -190,13 +190,13 @@ def files_get():
           description:
               Only return files with data after this start time in ms since
               the epoch.
-          type: integer
+          type: string
         - in: query
           name: end
           description:
               Only return files with data before this end time in ms since
               the epoch.
-          type: integer
+          type: string
     responses:
       200:
         description: success
