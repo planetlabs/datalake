@@ -22,6 +22,9 @@ from datalake_common.tests import *  # noqa
 from datalake_common import DatalakeRecord
 
 
+YEAR_2010 = 1262304000000
+
+
 @pytest.fixture
 def client():
     datalake_api.app.config['TESTING'] = True
