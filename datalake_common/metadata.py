@@ -21,6 +21,11 @@ import re
 import simplejson as json
 from simplejson.scanner import JSONDecodeError
 import os
+import pytz
+
+# as seconds: 5138-11-16 09:46:40
+# as milliseconds: 1973-03-03 09:46:40
+MAX_TS_SECONDS = 100000000000
 
 
 class InvalidDatalakeMetadata(Exception):
@@ -161,50 +166,36 @@ class Metadata(dict):
     def normalize_date(date):
         '''normalize the specified date to milliseconds since the epoch
 
-        If the specified date is an integer or a string that looks like an
-        integer, it is assumed to be milliseconds since the epoch. If it is a
-        float, it is assumed to be seconds since the epoch. If it is a string,
-        it is assumed to be some sort of datetime such as "2015-12-27" or
-        "2015-12-27T11:01:20.954". If date is a naive datetime, it is assumed
-        to be UTC.
+        If it is a string, it is assumed to be some sort of datetime such as
+        "2015-12-27" or "2015-12-27T11:01:20.954". If date is a naive datetime,
+        it is assumed to be UTC.
+
+        If numeric arguments are beyond 5138-11-16 (100,000,000,000 seconds
+        after epoch), they are interpreted as milliseconds since the epoch.
         '''
-        if type(date) is int:
-            return date
-        elif type(date) is float:
-            return int(date * 1000.0)
-        elif type(date) is datetime:
-            return Metadata._from_datetime(date)
+
+        if isinstance(date, datetime):
+            pass
+        elif date == "now":
+            date = datetime.now(pytz.UTC)
+        elif isinstance(date, (basestring, int, float, long)):
+            try:
+                ts = float(date)
+                if ts > MAX_TS_SECONDS:
+                    # ts was provided in ms
+                    ts = ts / 1000.0
+                # For unix timestamps on command line
+                date = datetime.utcfromtimestamp(float(ts))
+            except ValueError:
+                try:
+                    date = dateparse(date)
+                except ValueError as e:
+                    raise InvalidDatalakeMetadata(str(e))
         else:
-            return Metadata._normalize_date_from_string(date)
-
-    @staticmethod
-    def _normalize_date_from_string(date):
-        return Metadata._from_int_string(date) or \
-            Metadata._from_float_string(date) or \
-            Metadata._from_date_string(date)
-
-    @staticmethod
-    def _from_float_string(date):
-        try:
-            return int(float(date) * 1000.0)
-        except ValueError:
-            return None
-
-    @staticmethod
-    def _from_int_string(date):
-        try:
-            return int(date)
-        except ValueError:
-            return None
-
-    @staticmethod
-    def _from_date_string(date):
-        try:
-            d = dateparse(date)
-            return Metadata._from_datetime(d)
-        except ValueError:
-            msg = 'could not parse a date from {}'.format(date)
+            msg = 'could not parse a date from {!r}'.format(date)
             raise InvalidDatalakeMetadata(msg)
+
+        return Metadata._from_datetime(date)
 
     @staticmethod
     def _from_datetime(date):
