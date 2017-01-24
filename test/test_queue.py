@@ -21,6 +21,8 @@ from datalake_common.errors import InsufficientConfiguration
 from datalake import Enqueuer, Uploader
 from datalake.queue import has_queue
 from conftest import crtime_setuid
+from gzip import GzipFile
+import zlib
 
 
 @pytest.fixture
@@ -44,11 +46,14 @@ def uploader(archive, queue_dir):
 @pytest.fixture
 def uploaded_content_validator(s3_key):
 
-    def validator(expected_content, expected_metadata=None):
+    def validator(expected_content, expected_metadata=None, compressed=False):
 
         from_s3 = s3_key()
         assert from_s3 is not None
-        assert from_s3.get_contents_as_string() == expected_content
+        content = from_s3.get_contents_as_string()
+        if compressed:
+            content = zlib.decompress(content, 16 + zlib.MAX_WBITS)
+        assert content == expected_content
         if expected_metadata is not None:
             metadata = json.loads(from_s3.get_metadata('datalake'))
             assert metadata == expected_metadata
@@ -133,3 +138,30 @@ def test_uploader_queable_not_installed(archive, queue_dir):
 def test_enqueuer_queable_not_installed(queue_dir):
     with pytest.raises(InsufficientConfiguration):
         Enqueuer(queue_dir)
+
+
+@pytest.mark.skipif(not has_queue, reason='requires queuable features')
+def test_enqueue_compressed(enqueuer, uploader, random_file, random_metadata,
+                            uploaded_file_validator):
+    f = enqueuer.enqueue(random_file, compress=True, **random_metadata)
+
+    expected = open(random_file, 'rb').read()
+    assert GzipFile(fileobj=f, mode='rb').read() == expected
+    f.seek(0, 0)
+
+    uploader.listen(timeout=0.1)
+    uploaded_file_validator(f)
+
+
+@pytest.mark.skipif(not has_queue, reason='requires queuable features')
+def test_enqueue_compress_cli(cli_tester, uploader, random_file,
+                              random_metadata, uploaded_content_validator,
+                              queue_dir):
+    cmd = 'enqueue --compress --start=now --where server123 '
+    cmd += '--what randomefile '
+    cli_tester(cmd + random_file)
+
+    uploader.listen(timeout=0.1)
+
+    expected_content = open(random_file, 'rb').read()
+    uploaded_content_validator(expected_content, compressed=True)
