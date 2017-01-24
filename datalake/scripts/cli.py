@@ -178,6 +178,7 @@ def _translate(**kwargs):
 @click.option('--where')
 @click.option('--what')
 @click.option('--work-id')
+@click.option('--compress/--no-compress')
 @click.argument('file')
 def enqueue(file, **kwargs):
     _enqueue(file, **kwargs)

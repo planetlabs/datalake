@@ -81,13 +81,22 @@ class DatalakeQueueBase(object):
 
 class Enqueuer(DatalakeQueueBase):
 
-    def enqueue(self, filename, **metadata_fields):
-        '''enqueue a file with the specified metadata o be pushed
+    def enqueue(self, filename, compress=False, **metadata_fields):
+        '''enqueue a file with the specified metadata to be pushed
+
+        Args:
+            filename: the file to enqueue
+
+            compress: whether or not to compress the file before enqueueing
 
         Returns the File with complete metadata that will be pushed.
+
         '''
         log.info('Enqueing ' + filename)
-        f = File.from_filename(filename, **metadata_fields)
+        if compress:
+            f = File.from_filename_compressed(filename, **metadata_fields)
+        else:
+            f = File.from_filename(filename, **metadata_fields)
         fname = f.metadata['id'] + '.tar'
         dest = os.path.join(self.queue_dir, fname)
         f.to_bundle(dest)

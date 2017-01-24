@@ -19,6 +19,11 @@ from io import BytesIO
 import tarfile
 import simplejson as json
 from datalake_common import Metadata
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
+from gzip import GzipFile
 
 
 class InvalidDatalakeBundle(Exception):
@@ -58,6 +63,26 @@ class File(object):
             metadata_fields['path'] = filename
         fd = open(filename, 'rb')
         return cls(fd, **metadata_fields)
+
+    @classmethod
+    def from_filename_compressed(cls, filename, **metadata_fields):
+        '''Create a File from a filename, compressing the input data first
+
+        This is a convenience method that will create a compressed File from
+        the specified filename.
+        '''
+        filename = os.path.abspath(filename)
+        if 'path' not in metadata_fields:
+            metadata_fields['path'] = filename
+
+        fgz = StringIO()
+        gz = GzipFile(filename=filename, mode='wb', fileobj=fgz)
+        with gz, open(filename, 'rb') as f:
+            gz.write(f.read())
+
+        fgz.seek(0, os.SEEK_SET)
+
+        return cls(fgz, **metadata_fields)
 
     def _initialize_methods_from_fd(self):
         for m in ['read', 'readlines', 'seek', 'tell', 'close']:
@@ -195,5 +220,12 @@ class File(object):
 
     def _add_fd_to_tar(self, tfile, arcname, fd):
         info = tarfile.TarInfo(name=arcname)
-        info.size = os.fstat(fd.fileno()).st_size
+        info.size = self._get_fd_size(fd)
         tfile.addfile(tarinfo=info, fileobj=fd)
+
+    def _get_fd_size(self, fd):
+        p = fd.tell()
+        fd.seek(0, os.SEEK_END)
+        size = fd.tell()
+        fd.seek(p, os.SEEK_SET)
+        return size
