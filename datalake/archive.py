@@ -317,7 +317,7 @@ class Archive(object):
 
     @property
     def _s3_host(self):
-        r = environ.get('AWS_REGION')
+        r = environ.get('AWS_REGION') or environ.get('AWS_DEFAULT_REGION')
         if r is not None:
             return 's3-' + r + '.amazonaws.com'
         else:
