@@ -20,6 +20,7 @@ from datalake_common.tests import random_metadata, tmpfile  # noqa
 import os
 from click.testing import CliRunner
 import stat
+import responses
 
 from datalake.scripts.cli import cli
 from datalake import Archive
@@ -103,3 +104,12 @@ crtime_setuid = False
 if crtime_available:
     s = os.stat(crtime)
     crtime_setuid = s.st_mode & stat.S_ISUID and s.st_uid == 0
+
+
+def prepare_response(response, status=200, url=None, **query_params):
+    url = url or 'http://datalake.example.com/v0/archive/files/'
+    if len(query_params):
+        q = ['{}={}'.format(k, query_params[k]) for k in query_params.keys()]
+        url = url + '?' + '&'.join(q)
+    responses.add(responses.GET, url, json=response, status=status,
+                  match_querystring=True)
