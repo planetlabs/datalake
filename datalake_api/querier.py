@@ -28,14 +28,14 @@ dynamodb will return a max of 1MB to us. And our documents could be
 MAX_RESULTS = 100
 
 
-'''the maximum number of days to lookback for latest files
+'''the default number of days to lookback for latest files
 
 We do not index the latest files as such. Instead, we naively scan backwards
 through each time bucket looking for the expected file. We will not look
 arbitrarily far back, though, because this makes the failing case terribly
-slow.
+slow and expensive.
 '''
-MAX_LOOKBACK_DAYS = 14
+DEFAULT_LOOKBACK_DAYS = 14
 
 
 _ONE_DAY_MS = 24 * 60 * 60 * 1000
@@ -288,10 +288,10 @@ class ArchiveQuerier(object):
     def _table(self):
         return self.dynamodb.Table(self.table_name)
 
-    def query_latest(self, what, where):
+    def query_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS):
         current = int(time.time() * 1000)
-        end = current - MAX_LOOKBACK_DAYS * _ONE_DAY_MS
-        while current > end:
+        end = current - lookback_days * _ONE_DAY_MS
+        while current >= end:
             bucket = current/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
             r = self._get_latest_record_in_bucket(bucket, what, where)
             if r is not None:

@@ -18,6 +18,7 @@ import simplejson as json
 from datalake_api.fetcher import ArchiveFile
 import time
 from conftest import create_test_records
+from urllib import urlencode
 
 
 @pytest.fixture
@@ -168,8 +169,10 @@ def test_archive_file_bigger_than_header(tmpfile, random_metadata):
 @pytest.fixture
 def latest_getter(client):
 
-    def getter(what, where):
+    def getter(what, where, **kwargs):
         uri = '/v0/archive/latest/{}/{}/data'.format(what, where)
+        if kwargs:
+            uri += '?' + urlencode(kwargs)
         return client.get(uri)
 
     return getter
@@ -223,4 +226,34 @@ def test_no_such_where_when(table_maker, latest_getter):
     response = json.loads(res.get_data())
     assert 'code' in response
     assert response['code'] == 'NoSuchFile'
+    assert 'message' in response
+
+
+def test_non_default_lookback(record_maker, random_metadata, latest_getter):
+    MS_PER_DAY = 24 * 60 * 60 * 1000
+    now = int(time.time() * 1000) - 20 * MS_PER_DAY
+    random_metadata['what'] = 'text'
+    random_metadata['where'] = 'there'
+    random_metadata['start'] = now
+    random_metadata['end'] = None
+    content = 'once upon a time'
+    record_maker(content, random_metadata)
+
+    res = latest_getter('text', 'there', lookback=19)
+    assert res.status_code == 404
+    response = json.loads(res.get_data())
+    assert 'code' in response
+    assert response['code'] == 'NoSuchFile'
+    assert 'message' in response
+
+    res = latest_getter('text', 'there', lookback=20)
+    _validate_file_result(res, content)
+
+
+def test_invalid_lookback(record_maker, random_metadata, latest_getter):
+    res = latest_getter('text', 'there', lookback='foo')
+    assert res.status_code == 400
+    response = json.loads(res.get_data())
+    assert 'code' in response
+    assert response['code'] == 'InvalidLookback'
     assert 'message' in response

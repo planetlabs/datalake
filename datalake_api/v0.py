@@ -17,7 +17,8 @@ from flask import jsonify, Response, url_for
 import simplejson as json
 from flask import current_app as app
 import boto3
-from querier import ArchiveQuerier, Cursor, InvalidCursor, MAX_LOOKBACK_DAYS
+from querier import ArchiveQuerier, Cursor, InvalidCursor, \
+    DEFAULT_LOOKBACK_DAYS
 from fetcher import ArchiveFileFetcher
 from datalake_common.errors import NoSuchDatalakeFile
 from datalake_common.metadata import Metadata, InvalidDatalakeMetadata
@@ -381,14 +382,14 @@ def _get_headers_for_file(f):
     return headers
 
 
-def _get_latest(what, where):
+def _get_latest(what, where, lookback):
     aq = get_archive_querier()
-    f = aq.query_latest(what, where)
+    f = aq.query_latest(what, where, lookback_days=lookback)
     if f is not None:
         return f
 
     m = 'No "{}" files found in last {} days from "{}"'
-    m = m.format(what, MAX_LOOKBACK_DAYS, where)
+    m = m.format(what, lookback, where)
     flask.abort(404, 'NoSuchFile', m)
 
 
@@ -451,13 +452,30 @@ def file_get_metadata(file_id):
     return Response(json.dumps(f.metadata), content_type='application/json')
 
 
+def _validate_lookback(lookback):
+    try:
+        return int(lookback)
+    except ValueError:
+        msg = 'lookback must be an integer not {}'.format(type(lookback))
+        flask.abort(400, 'InvalidLookback', msg)
+
+
+def _validate_latest_params(params):
+    validated = _copy_immutable_dict(params)
+    if 'lookback' in params:
+        validated['lookback'] = _validate_lookback(validated['lookback'])
+    return validated
+
+
 @v0.route('/archive/latest/<what>/<where>')
 def latest_get(what, where):
     '''Retrieve the latest file for a give what and where
 
     Retrieve latest file. Note that the current implementation of latest only
-    tracks the last 14 days of files. If you expect files older than this, you
-    must retrieve them using the files endpoint.
+    examines the last 14 days of files by default. If you expect files older
+    than this, you must retrieve them using the files endpoint or set the
+    `lookback` parameter to something that works for you. Note that there may
+    be a performance pentalty for very large lookbacks.
 
     ---
     tags:
@@ -475,19 +493,27 @@ def latest_get(what, where):
               The location of interest (e.g., server or location)
           type: string
           required: true
+        - in: query
+          name: lookback
+          description:
+              The number of days to lookback for the latest file. The default
+              is 14.
+          type: integer
     responses:
       200:
         description: success
         schema:
           id: DatalakeRecord
       404:
-        description: no latest file found for the given what or where in the
-                     last 14 days.
+        description: no latest file found for the given what or where since the
+                     lookback.
         schema:
           id: DatalakeAPIError
 
     '''
-    f = _get_latest(what, where)
+    params = flask.request.args
+    params = _validate_latest_params(params)
+    f = _get_latest(what, where, params.get('lookback', DEFAULT_LOOKBACK_DAYS))
     f.update(http_url=_get_canonical_http_url(f))
     return Response(json.dumps(f), content_type='application/json')
 
@@ -496,9 +522,11 @@ def latest_get(what, where):
 def latest_get_contents(what, where):
     '''Retrieve the latest file data for a given what and where
 
-    Note that the current implementation of latest only tracks the last 14 days
-    of files. If you expect files older than this, you must retrieve them using
-    the files endpoint.
+    Note that the current implementation of latest only examines the last 14
+    days of files by default. If you expect files older than this, you must
+    retrieve them using the files endpoint or set the `lookback` parameter to
+    something that works for you. Note that there may be a performance pentalty
+    for very large lookbacks.
     ---
     tags:
       - latest
@@ -515,6 +543,12 @@ def latest_get_contents(what, where):
               The location of interest (e.g., server or location)
           type: string
           required: true
+        - in: query
+          name: lookback
+          description:
+              The number of days to lookback for the latest file. The default
+              is 14.
+          type: integer
     responses:
       200:
         description: success
@@ -527,7 +561,9 @@ def latest_get_contents(what, where):
           id: DatalakeAPIError
 
     '''
-    f = _get_latest(what, where)
+    params = flask.request.args
+    params = _validate_latest_params(params)
+    f = _get_latest(what, where, params.get('lookback', DEFAULT_LOOKBACK_DAYS))
     f = _get_file(f['metadata']['id'])
     headers = _get_headers_for_file(f)
     return f.read(), 200, headers
