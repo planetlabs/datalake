@@ -117,6 +117,15 @@ class Archive(object):
             else:
                 break
 
+    def latest(self, what, where, lookback=None):
+        url = self.http_url + '/v0/archive/latest/{}/{}'.format(what, where)
+        params = dict(
+            lookback=lookback,
+        )
+        response = self._requests_get(url, params=params)
+        self._check_http_response(response)
+        return response.json()
+
     @property
     def http_url(self):
         self._http_url = self._http_url or environ.get('DATALAKE_HTTP_URL')
@@ -125,7 +134,7 @@ class Archive(object):
         return self._http_url.rstrip('/')
 
     def _check_http_response(self, response):
-        if response.status_code == 400:
+        if response.status_code in (400, 404):
             err = response.json()
             msg = '{} ({})'.format(err['message'], err['code'])
             raise DatalakeHttpError(msg)

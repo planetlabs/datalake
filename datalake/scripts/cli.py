@@ -297,3 +297,23 @@ def _cat(url):
         f = archive.fetch(url)
         out.write(f.read())
     out.close()
+
+
+@cli.command()
+@click.option('--lookback', type=int)
+@click.option('--format', type=click.Choice(_list_result_formats),
+              default='url')
+@click.argument('what')
+@click.argument('where')
+def latest(**kwargs):
+    _prepare_archive_or_fail()
+    _latest(**kwargs)
+
+
+@clean_up_datalake_errors
+def _latest(**kwargs):
+    format = kwargs.pop('format')
+    what = kwargs.pop('what')
+    where = kwargs.pop('where')
+    result = archive.latest(what, where, **kwargs)
+    _print_list_results([result], format)

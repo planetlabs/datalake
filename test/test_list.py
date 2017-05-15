@@ -6,15 +6,7 @@ from datalake_common import Metadata
 from datetime import datetime, timedelta
 from pytz import utc
 import simplejson as json
-
-
-def _prepare_response(response, status=200, url=None, **query_params):
-    url = url or 'http://datalake.example.com/v0/archive/files/'
-    if len(query_params):
-        q = ['{}={}'.format(k, query_params[k]) for k in query_params.keys()]
-        url = url + '?' + '&'.join(q)
-    responses.add(responses.GET, url, json=response, status=status,
-                  match_querystring=True)
+from conftest import prepare_response
 
 
 @responses.activate
@@ -28,9 +20,9 @@ def test_list_one_page(archive, random_metadata):
         ],
         'next': None,
     }
-    _prepare_response(r, what=random_metadata['what'],
-                      start=random_metadata['start'],
-                      end=random_metadata['end'])
+    prepare_response(r, what=random_metadata['what'],
+                     start=random_metadata['start'],
+                     end=random_metadata['end'])
     l = list(archive.list(random_metadata['what'],
                           start=random_metadata['start'],
                           end=random_metadata['end']))
@@ -52,8 +44,8 @@ def test_list_two_pages(archive, random_metadata):
         ],
         'next': 'http://the-next-url/',
     }
-    _prepare_response(r1, what=random_metadata['what'], start=m1['start'],
-                      end=m1['end'])
+    prepare_response(r1, what=random_metadata['what'], start=m1['start'],
+                     end=m1['end'])
 
     m2 = copy(random_metadata)
     m2['id'] = '2'
@@ -66,7 +58,7 @@ def test_list_two_pages(archive, random_metadata):
         ],
         'next': None,
     }
-    _prepare_response(r2, url='http://the-next-url/')
+    prepare_response(r2, url='http://the-next-url/')
     l = list(archive.list(m1['what'],
                           start=random_metadata['start'],
                           end=random_metadata['end']))
@@ -84,7 +76,7 @@ def test_bad_request(archive):
         "code": "NoWorkInterval",
         "message": "You must provide either work_id or start/end"
     }
-    _prepare_response(r, status=400, what='syslog')
+    prepare_response(r, status=400, what='syslog')
 
     with pytest.raises(DatalakeHttpError):
         list(archive.list('syslog'))
@@ -94,7 +86,7 @@ def test_bad_request(archive):
 def test_internal_server_error(archive):
 
     r = 'INTERNAL SERVER ERROR'
-    _prepare_response(r, status=500, what='syslog')
+    prepare_response(r, status=500, what='syslog')
 
     with pytest.raises(DatalakeHttpError):
         list(archive.list('syslog'))
@@ -116,9 +108,9 @@ def date_tester(archive, random_metadata):
             'next': None,
         }
 
-        _prepare_response(r, what=random_metadata['what'],
-                          start=random_metadata['start'],
-                          end=random_metadata['end'])
+        prepare_response(r, what=random_metadata['what'],
+                         start=random_metadata['start'],
+                         end=random_metadata['end'])
         l = list(archive.list(random_metadata['what'], start=start, end=end))
         assert len(l) == 1
         assert l[0]['url'] == 's3://bucket/file'
@@ -152,10 +144,10 @@ def test_with_where(archive, random_metadata):
         ],
         'next': None,
     }
-    _prepare_response(r, what=random_metadata['what'],
-                      where=random_metadata['where'],
-                      start=random_metadata['start'],
-                      end=random_metadata['end'])
+    prepare_response(r, what=random_metadata['what'],
+                     where=random_metadata['where'],
+                     start=random_metadata['start'],
+                     end=random_metadata['end'])
     l = list(archive.list(random_metadata['what'],
                           where=random_metadata['where'],
                           start=random_metadata['start'],
@@ -178,8 +170,8 @@ def test_with_work_id(archive, random_metadata):
         ],
         'next': None,
     }
-    _prepare_response(r, what=random_metadata['what'],
-                      work_id=random_metadata['work_id'])
+    prepare_response(r, what=random_metadata['what'],
+                     work_id=random_metadata['work_id'])
     l = list(archive.list(random_metadata['what'],
                           work_id='foo123'))
     assert len(l) == 1
@@ -202,9 +194,9 @@ def test_list_cli_url_format(cli_tester, random_metadata):
         ],
         'next': None,
     }
-    _prepare_response(r, what=random_metadata['what'],
-                      start=random_metadata['start'],
-                      end=random_metadata['end'])
+    prepare_response(r, what=random_metadata['what'],
+                     start=random_metadata['start'],
+                     end=random_metadata['end'])
     cmd = 'list {what} --start={start} --end={end}'
     cmd = cmd.format(**random_metadata)
     output = cli_tester(cmd)
@@ -232,7 +224,7 @@ def test_list_cli_json_format(cli_tester, random_metadata):
         ],
         'next': None,
     }
-    _prepare_response(r, what=m1['what'], work_id=m1['work_id'])
+    prepare_response(r, what=m1['what'], work_id=m1['work_id'])
     cmd = 'list {what} --work-id={work_id} --format=json'
     cmd = cmd.format(**m1)
     output_lines = cli_tester(cmd).rstrip('\n').split('\n')
