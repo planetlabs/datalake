@@ -17,7 +17,6 @@ from pyblake2 import blake2b
 from .translator import Translator
 from io import BytesIO
 import tarfile
-import tempfile
 import simplejson as json
 from datalake_common import Metadata
 try:
@@ -165,7 +164,7 @@ class File(object):
     def _validate_bundle_version(bundle):
         v = File._get_content_from_bundle(bundle, 'version').decode('utf-8')
         if v != File.DATALAKE_BUNDLE_VERSION:
-            msg = '{} has unsupported bundle version {}.'
+            msg = '{} has unsupported bundle version {}'
             msg = msg.format(bundle.name, v)
             raise InvalidDatalakeBundle(msg)
 
@@ -201,14 +200,21 @@ class File(object):
         Args:
         bundle_filename: output file
         '''
-        temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-        t = tarfile.open(fileobj=temp_file)
-        self._add_fd_to_tar(t, 'content', self._fd)
-        self._add_string_to_tar(t, 'version', self.DATALAKE_BUNDLE_VERSION)
-        self._add_string_to_tar(t, 'datalake-metadata.json',
-                                self.metadata.json)
-        t.close()
-        os.rename(temp_file.name, bundle_filename)
+        temp_filename = self._dot_filename(bundle_filename)
+        with open(temp_filename, 'w') as f:
+            t = tarfile.open(fileobj=f, mode='w')
+            self._add_fd_to_tar(t, 'content', self._fd)
+            self._add_string_to_tar(t, 'version', self.DATALAKE_BUNDLE_VERSION)
+            self._add_string_to_tar(t, 'datalake-metadata.json',
+                                    self.metadata.json)
+        os.rename(temp_filename, bundle_filename)
+
+        # reset the file pointer in case somebody else wants to read us.
+        self.seek(0, 0)
+
+    def _dot_filename(self, path):
+        return os.path.join(os.path.dirname(path),
+                            '.{}'.format(os.path.basename(path)))
 
     def _add_string_to_tar(self, tfile, arcname, data):
         s = BytesIO(data.encode('utf-8'))

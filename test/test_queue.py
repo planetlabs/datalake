@@ -18,7 +18,7 @@ from threading import Timer
 import os
 from datalake_common.tests import random_word
 from datalake_common.errors import InsufficientConfiguration
-from datalake import Enqueuer, Uploader
+from datalake import Enqueuer, Uploader, InvalidDatalakeBundle
 from datalake.queue import has_queue
 from conftest import crtime_setuid
 from gzip import GzipFile
@@ -72,6 +72,15 @@ def uploaded_file_validator(archive, uploaded_content_validator):
 
 
 @pytest.fixture
+def assert_s3_bucket_empty(s3_bucket):
+
+    def asserter():
+        assert len([k for k in s3_bucket.list()]) == 0
+
+    return asserter
+
+
+@pytest.fixture
 def random_file(tmpfile, random_metadata):
     expected_content = random_word(100)
     return tmpfile(expected_content)
@@ -101,6 +110,40 @@ def test_upload_incoming(enqueuer, uploader, random_file, random_metadata,
 
     for f in enqueued_files:
         uploaded_file_validator(f)
+
+
+@pytest.mark.skipif(not has_queue, reason='requires queuable features')
+def test_skip_incoming_dotfile(random_file, queue_dir, uploader,
+                               assert_s3_bucket_empty):
+
+    def enqueue():
+        enqueued_name = os.path.join(queue_dir, '.ignoreme')
+        os.rename(str(random_file), enqueued_name)
+
+    t = Timer(0.5, enqueue)
+    t.start()
+    uploader.listen(timeout=1.0)
+
+    assert_s3_bucket_empty()
+
+
+@pytest.mark.skipif(not has_queue, reason='requires queuable features')
+def test_skip_invalid_bundles(random_file, queue_dir, uploader,
+                              assert_s3_bucket_empty):
+
+    def enqueue():
+        enqueued_name = os.path.join(queue_dir, 'invalid-bundle')
+        os.rename(str(random_file), enqueued_name)
+
+    t = Timer(0.5, enqueue)
+    t.start()
+
+    try:
+        uploader.listen(timeout=1.0)
+    except InvalidDatalakeBundle:
+        pytest.fail("Didn't catch InvalidDatalakeBundle exception.")
+
+    assert_s3_bucket_empty()
 
 
 @pytest.mark.skipif(not has_queue, reason='requires queuable features')
