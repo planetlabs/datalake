@@ -17,6 +17,7 @@ from pyblake2 import blake2b
 from .translator import Translator
 from io import BytesIO
 import tarfile
+import tempfile
 import simplejson as json
 from datalake_common import Metadata
 try:
@@ -200,15 +201,14 @@ class File(object):
         Args:
         bundle_filename: output file
         '''
-        t = tarfile.open(bundle_filename, 'w')
+        temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        t = tarfile.open(fileobj=temp_file)
         self._add_fd_to_tar(t, 'content', self._fd)
         self._add_string_to_tar(t, 'version', self.DATALAKE_BUNDLE_VERSION)
         self._add_string_to_tar(t, 'datalake-metadata.json',
                                 self.metadata.json)
         t.close()
-
-        # reset the file pointer in case somebody else wants to read us.
-        self.seek(0, 0)
+        os.rename(temp_file.name, bundle_filename)
 
     def _add_string_to_tar(self, tfile, arcname, data):
         s = BytesIO(data.encode('utf-8'))
