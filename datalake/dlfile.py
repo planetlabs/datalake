@@ -15,14 +15,13 @@
 import os
 from pyblake2 import blake2b
 from .translator import Translator
-from io import BytesIO
 import tarfile
 import simplejson as json
 from datalake_common import Metadata
 try:
     from cStringIO import StringIO
 except ImportError:
-    from io import BytesIO as StringIO
+    from io import StringIO
 from gzip import GzipFile
 
 
@@ -217,7 +216,7 @@ class File(object):
                             '.{}'.format(os.path.basename(path)))
 
     def _add_string_to_tar(self, tfile, arcname, data):
-        s = BytesIO(data.encode('utf-8'))
+        s = StringIO(data.encode('utf-8'))
         info = tarfile.TarInfo(name=arcname)
         s.seek(0, os.SEEK_END)
         info.size = s.tell()
