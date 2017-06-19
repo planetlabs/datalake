@@ -26,12 +26,12 @@ gets uploaded. On success, it gets deleted. If the upload fails for some
 reason, the file remains in the queue.
 '''
 from os import environ
+import os
 from datalake_common.errors import InsufficientConfiguration
 from logging import getLogger
-import os
 import time
 
-from datalake import File
+from datalake import File, InvalidDatalakeBundle
 
 
 '''whether or not queue feature is available
@@ -132,7 +132,14 @@ class Uploader(DatalakeQueueBase):
                            pyinotify.IN_CLOSE_WRITE | pyinotify.IN_MOVED_TO)
 
     def _push(self, filename):
-        f = File.from_bundle(filename)
+        if os.path.basename(filename).startswith('.'):
+            return
+        try:
+            f = File.from_bundle(filename)
+        except InvalidDatalakeBundle as e:
+            msg = '{}. Skipping upload.'.format(e.args[0])
+            log.exception(msg)
+            return
         url = self._archive.push(f)
         msg = 'Pushed {}({}) to {}'.format(filename, f.metadata['path'], url)
         log.info(msg)
