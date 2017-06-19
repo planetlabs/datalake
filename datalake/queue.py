@@ -137,7 +137,7 @@ class Uploader(DatalakeQueueBase):
         try:
             f = File.from_bundle(filename)
         except InvalidDatalakeBundle as e:
-            msg = '{}. Skipping upload.'.format(e.message)
+            msg = '{}. Skipping upload.'.format(e.args[0])
             log.exception(msg)
             return
         url = self._archive.push(f)
