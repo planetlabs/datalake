@@ -105,6 +105,8 @@ class DatalakeRecord(dict):
                 msg = 'Cannot find datalake file (s3 bucket {} does not exist)'
                 msg = msg.format(bucket_name)
                 raise NoSuchDatalakeFile(msg)
+            else:
+                raise
 
     _CONNECTION = None
 
