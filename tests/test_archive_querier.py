@@ -249,6 +249,18 @@ def get_multiple_pages(query_function, query_args):
     return results
 
 
+def get_all_pages(query_function, query_args):
+    pages = []
+    cursor = None
+    while True:
+        page = get_page(query_function, query_args, cursor)
+        pages.append(page)
+        cursor = page.cursor
+        if cursor is None:
+            break
+    return pages
+
+
 def get_page(query_function, query_args, cursor=None):
     page = query_function(*query_args, cursor=cursor)
     page_len = len(page)
@@ -259,6 +271,12 @@ def get_page(query_function, query_args, cursor=None):
     return page
 
 
+def consolidate_pages(pages):
+    for p in pages[:-1]:
+        assert p.cursor is not None
+    return [record for page in pages for record in page]
+
+
 def test_paginate_work_id_records(table_maker, querier):
     records = []
     for i in range(150):
@@ -266,7 +284,9 @@ def test_paginate_work_id_records(table_maker, querier):
                                        start=1456833600000,
                                        end=1456837200000)
     table_maker(records)
-    results = get_multiple_pages(querier.query_by_work_id, ['job0', 'foo'])
+    pages = get_all_pages(querier.query_by_work_id, ['job0', 'foo'])
+    assert len(pages) > 1
+    results = consolidate_pages(pages)
     assert len(results) == 150
 
 
@@ -286,8 +306,9 @@ def test_paginate_time_records(table_maker, querier):
         end = start + interval
         records += create_test_records(start=start, end=end, what='foo')
     table_maker(records)
-    results = get_multiple_pages(
-        querier.query_by_time, [YEAR_2010, very_end, 'foo'])
+    pages = get_all_pages(querier.query_by_time, [YEAR_2010, very_end, 'foo'])
+    assert len(pages) > 1
+    results = consolidate_pages(pages)
     evaluate_time_based_results(results, 150)
 
 
@@ -299,8 +320,9 @@ def test_paginate_many_records_single_time_bucket(table_maker, querier):
         end = start + interval
         records += create_test_records(start=start, end=end, what='foo')
     table_maker(records)
-    results = get_multiple_pages(
-        querier.query_by_time, [YEAR_2010, very_end, 'foo'])
+    pages = get_all_pages(querier.query_by_time, [YEAR_2010, very_end, 'foo'])
+    assert len(pages) > 1
+    results = consolidate_pages(pages)
     evaluate_time_based_results(results, 150)
 
 
@@ -431,3 +453,37 @@ def test_latest_many_records_single_time_bucket(table_maker, querier):
     result = querier.query_latest('meow', 'tree')
     _validate_latest_result(result, what='meow', where='tree',
                             start=last_start)
+
+
+def test_max_results_in_one_bucket(table_maker, querier):
+    now = int(time.time() * 1000)
+    records = []
+    bucket = now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    end = start
+    for i in range(MAX_RESULTS):
+        records += create_test_records(start=start,
+                                       end=end,
+                                       what='boo',
+                                       where='hoo{}'.format(i))
+    table_maker(records)
+    pages = get_all_pages(querier.query_by_time, [start, end, 'boo'])
+    results = consolidate_pages(pages)
+    assert len(results) == MAX_RESULTS
+
+
+def test_2x_max_results_in_one_bucket(table_maker, querier):
+    now = int(time.time() * 1000)
+    records = []
+    bucket = now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    end = start
+    for i in range(MAX_RESULTS * 2):
+        records += create_test_records(start=start,
+                                       end=end,
+                                       what='boo',
+                                       where='hoo{}'.format(i))
+    table_maker(records)
+    pages = get_all_pages(querier.query_by_time, [start, end, 'boo'])
+    results = consolidate_pages(pages)
+    assert len(results) == MAX_RESULTS * 2
