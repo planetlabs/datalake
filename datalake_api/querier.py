@@ -131,6 +131,10 @@ class Cursor(dict):
     def last_evaluated(self):
         return self.get('last_evaluated')
 
+    @property
+    def current_time_bucket(self):
+        return self.get('current_time_bucket')
+
 
 class QueryResults(list):
 
@@ -213,6 +217,14 @@ class ArchiveQuerier(object):
             cursor = self._query_time_bucket(b, results, start, end, what,
                                              where, cursor)
 
+        if cursor and \
+           cursor.current_time_bucket and \
+           cursor.current_time_bucket > buckets[-1]:
+            # this is a corner case. It means that the next query would take us
+            # into the next bucket, but the next bucket is beyond the time of
+            # interest. Just clear the cursor in this case.
+            cursor = None
+
         return QueryResults(results, cursor)
 
     def _query_time_bucket(self, bucket, results, start, end, what,
@@ -272,11 +284,16 @@ class ArchiveQuerier(object):
 
         if last_evaluated is None:
             if len(results) < MAX_RESULTS:
-                # there's enough headroom for another bucket.
+                # There are no more results in this bucket, but there's enough
+                # headroom for records from another bucket.
                 return None
             else:
+                # there are no more results in this bucket. So the next cursor
+                # will start at the next bucket. It is possible that the next
+                # bucket is not relevant to this query. We leave this up to a
+                # higher level to figure out.
                 last_id = results[-1]['metadata']['id']
-                return Cursor(current_time_bucket=current_bucket,
+                return Cursor(current_time_bucket=current_bucket + 1,
                               last_id=last_id)
         else:
             # Results from this time bucket did not fit in the page. Prepare
