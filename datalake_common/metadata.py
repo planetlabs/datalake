@@ -45,6 +45,9 @@ class UnsupportedDatalakeMetadataVersion(Exception):
 _EPOCH = datetime.fromtimestamp(0, utc)
 
 
+_WINDOWS_ABS_PATH = re.compile(r'^[a-zA-Z]:\\.+')
+
+
 class Metadata(dict):
 
     _VERSION = 0
@@ -148,9 +151,13 @@ class Metadata(dict):
             raise InvalidDatalakeMetadata(msg)
 
     def _validate_path(self):
-        if not os.path.isabs(self['path']):
+        if not os.path.isabs(self['path']) and \
+           not self._is_windows_abs(self['path']):
             msg = '{} is not an absolute path.'.format(self['path'])
             raise InvalidDatalakeMetadata(msg)
+
+    def _is_windows_abs(self, path):
+        return _WINDOWS_ABS_PATH.match(path) is not None
 
     def _validate_interval(self):
         if self.get('end') is None:

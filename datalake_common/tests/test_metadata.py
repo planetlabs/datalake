@@ -168,3 +168,37 @@ def test_normalize_date_with_datetime(basic_metadata):
 def test_normalize_garbage(basic_metadata):
     with pytest.raises(InvalidDatalakeMetadata):
         Metadata.normalize_date('bleeblaaablooo')
+
+
+def test_path_with_leading_dot_not_allowed(basic_metadata):
+    basic_metadata['path'] = './abc.txt'
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
+
+
+def test_relative_path_not_allowed(basic_metadata):
+    basic_metadata['path'] = 'abc.txt'
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
+
+
+def test_absolute_windows_path(basic_metadata):
+    path = r'Z:\\foo\bar.txt'
+    basic_metadata['path'] = path
+    m = Metadata(basic_metadata)
+    assert m['path'] == path
+
+
+def test_absolute_windows_path_single_slash(basic_metadata):
+    # some cygwin environments seem to have a single slash after the
+    # drive. Shrug.
+    path = r'Z:\foo\bar.txt'
+    basic_metadata['path'] = path
+    m = Metadata(basic_metadata)
+    assert m['path'] == path
+
+
+def test_relative_windows_path_not_allowed(basic_metadata):
+    basic_metadata['path'] = r'foo\abc.txt'
+    with pytest.raises(InvalidDatalakeMetadata):
+        Metadata(basic_metadata)
