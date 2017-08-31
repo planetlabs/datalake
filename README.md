@@ -3,8 +3,6 @@ Introduction
 
 [![Build Status](https://travis-ci.org/planetlabs/datalake.svg)](https://travis-ci.org/planetlabs/datalake)
 
-NOTE: Much of this README is an aspirational.
-
 A datalake is an archive that contains files and
 [metadata](https://github.com/planetlabs/datalake-common) records about those
 files. The datalake project consists of a number of pieces:
