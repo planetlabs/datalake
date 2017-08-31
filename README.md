@@ -93,7 +93,7 @@ Developer Setup
 
         apt-get install libffi-dev # to enable queuable feature
         mkvirtualenv datalake # Or however you like to manage virtualenvs
-        pip install -e .[queuable, test]
+        pip install -e .[queuable,test]
         flake8 .
         py.test
 
