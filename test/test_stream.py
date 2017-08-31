@@ -14,6 +14,7 @@
 import pytest
 from datalake import InvalidDatalakePath
 import responses
+from io import BytesIO
 
 
 def test_invalid_stream_url(archive):
@@ -44,12 +45,21 @@ def test_invalid_protocol(archive, random_metadata):
         archive.stream_contents(url)
 
 
+def _stream_bytes_to_buffer(stream):
+    f = BytesIO()
+    for block in stream:
+        f.write(block)
+    f.seek(0)
+    return f
+
+
 def test_stream(archive, datalake_url_maker, random_metadata):
     content = 'welcome to the jungle'.encode('utf-8')
     url = datalake_url_maker(metadata=random_metadata,
                              content=content)
     s = archive.stream_contents(url)
-    assert ''.join(s) == content
+    f = _stream_bytes_to_buffer(s)
+    assert f.read() == content
 
 
 @responses.activate
@@ -61,11 +71,12 @@ def test_stream_http_url(archive, random_metadata):
     responses.add(responses.GET, base_url + 'metadata', json=random_metadata,
                   content_type='application/json', status=200)
     s = archive.stream_contents(base_url + 'data')
-    assert ''.join(s) == content
+    f = _stream_bytes_to_buffer(s)
+    assert f.read() == content
 
 
 @responses.activate
-def test_stream_http_url_chunks(archive, random_metadata):
+def test_stream_http_url_chunking(archive, random_metadata):
     base_url = 'http://datalake.example.com/v0/archive/files/1234/'
     content = ('0' * 4096).encode('utf-8')
     responses.add(responses.GET, base_url + 'data', body=content,
@@ -75,10 +86,7 @@ def test_stream_http_url_chunks(archive, random_metadata):
     stream = archive.stream_contents(base_url + 'data')
 
     chunk_lengths = []
-    chunks = ''
     for chunk in stream:
         assert len(chunk) < len(content)
         chunk_lengths += [len(chunk)]
-        chunks += chunk
     assert sum(chunk_lengths) == len(content)
-    assert chunks == content
