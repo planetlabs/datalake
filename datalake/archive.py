@@ -196,6 +196,23 @@ class Archive(object):
             msg = msg.format(url)
             raise InvalidDatalakePath(msg)
 
+    def stream_contents(self, url):
+        '''fetch the specified url and return it as a byte stream
+
+        Args:
+
+        url: the url to fetch. Both s3 and http(s) are supported.
+        '''
+        if url.startswith('s3://'):
+            k = self._get_key_from_url(url)
+            return self._stream_s3_key(k)
+        elif self._is_valid_http_url(url):
+            return self._stream_http_url(url)
+        else:
+            msg = '{} does not appear to be a fetchable url'
+            msg = msg.format(url)
+            raise InvalidDatalakePath(msg)
+
     def _is_valid_http_url(self, url):
         return url.startswith('http') and url.endswith('/data')
 
@@ -207,15 +224,24 @@ class Archive(object):
         fd.seek(0)
         return File(fd, **m)
 
+    def _stream_s3_key(self, k):
+        for block in k:
+            yield block
+
     def _fetch_http_url(self, url):
         m = self._get_metadata_from_http_url(url)
-        response = self._requests_get(url, stream=True)
-        self._check_http_response(response)
+        stream = self._stream_http_url(url)
         fd = BytesIO()
-        for block in response.iter_content(1024):
+        for block in stream:
             fd.write(block)
         fd.seek(0)
         return File(fd, **m)
+
+    def _stream_http_url(self, url):
+        response = self._requests_get(url, stream=True)
+        self._check_http_response(response)
+        for block in response.iter_content(1024):
+            yield block
 
     def _get_metadata_from_http_url(self, url):
         p = re.compile('/data$')
