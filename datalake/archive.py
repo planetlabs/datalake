@@ -18,7 +18,11 @@ from os import environ
 from six.moves.urllib.parse import urlparse
 from memoized_property import memoized_property
 import simplejson as json
-from datalake import File
+from datalake import (
+    File,
+    StreamingFile,
+    StreamingHTTPFile,
+)
 from datalake_common.errors import InsufficientConfiguration
 from datalake_common import Metadata
 import requests
@@ -180,17 +184,18 @@ class Archive(object):
 
     _URL_FORMAT = 's3://{bucket}/{key}'
 
-    def fetch(self, url):
+    def fetch(self, url, stream=False):
         '''fetch the specified url and return it as a datalake.File
 
         Args:
 
         url: the url to fetch. Both s3 and http(s) are supported.
+        stream: if true, return a StreamingFile
         '''
         if url.startswith('s3://'):
-            return self._fetch_s3_url(url)
+            return self._fetch_s3_url(url, stream=stream)
         elif self._is_valid_http_url(url):
-            return self._fetch_http_url(url)
+            return self._fetch_http_url(url, stream=stream)
         else:
             msg = '{} does not appear to be a fetchable url'
             msg = msg.format(url)
@@ -199,23 +204,31 @@ class Archive(object):
     def _is_valid_http_url(self, url):
         return url.startswith('http') and url.endswith('/data')
 
-    def _fetch_s3_url(self, url):
+    def _fetch_s3_url(self, url, stream=False):
         k = self._get_key_from_url(url)
         m = self._get_metadata_from_key(k)
+        if stream:
+            return StreamingFile(k, **m)
         fd = BytesIO()
         k.get_contents_to_file(fd)
         fd.seek(0)
         return File(fd, **m)
 
-    def _fetch_http_url(self, url):
+    def _fetch_http_url(self, url, stream=False):
         m = self._get_metadata_from_http_url(url)
-        response = self._requests_get(url, stream=True)
-        self._check_http_response(response)
+        k = self._stream_http_url(url)
+        if stream:
+            return StreamingHTTPFile(k, **m)
         fd = BytesIO()
-        for block in response.iter_content(1024):
+        for block in k.iter_content(1024):
             fd.write(block)
         fd.seek(0)
         return File(fd, **m)
+
+    def _stream_http_url(self, url):
+        response = self._requests_get(url, stream=True)
+        self._check_http_response(response)
+        return response
 
     def _get_metadata_from_http_url(self, url):
         p = re.compile('/data$')

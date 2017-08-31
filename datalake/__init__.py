@@ -12,9 +12,18 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-from .dlfile import File, InvalidDatalakeBundle
-from .archive import Archive, DatalakeHttpError, InvalidDatalakePath, \
-    UnsupportedStorageError
+from .dlfile import (
+    File,
+    StreamingFile,
+    StreamingHTTPFile,
+    InvalidDatalakeBundle,
+)
+from .archive import (
+    Archive,
+    DatalakeHttpError,
+    InvalidDatalakePath,
+    UnsupportedStorageError,
+)
 from .queue import Uploader, Enqueuer
 from .translator import Translator, TranslatorError
 from .crtime import get_crtime, CreationTimeError
@@ -24,8 +33,8 @@ from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
-__all__ = ['File', 'Archive', 'Uploader', 'Enqueuer', 'get_crtime',
-           'CreationTimeError', 'Translator', 'TranslatorError',
-           'InvalidDatalakeBundle', 'load_config', 'DEFAULT_CONFIG',
-           'DatalakeHttpError', 'InvalidDatalakePath',
+__all__ = ['File', 'StreamingFile', 'StreamingHTTPFile', 'Archive', 'Uploader',
+           'Enqueuer', 'get_crtime', 'CreationTimeError', 'Translator',
+           'TranslatorError', 'InvalidDatalakeBundle', 'load_config',
+           'DEFAULT_CONFIG', 'DatalakeHttpError', 'InvalidDatalakePath',
            'UnsupportedStorageError']

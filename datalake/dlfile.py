@@ -25,12 +25,115 @@ except ImportError:
     from io import BytesIO as StringIO
 from gzip import GzipFile
 
+ITER_SIZE = 1024 * 8
+
 
 class InvalidDatalakeBundle(Exception):
     pass
 
 
+class StreamingFile(object):
+
+    '''A StreamingFile to be fetched by the Archive'''
+
+    def __init__(self, stream, **metadata_fields):
+        '''Create a StreamingFile
+        A StreamingFile is never loaded as a whole into memory.
+
+        Args:
+
+            stream: a generator from which the file data can be read.
+
+            metadata_fields: known metadata fields that go with this
+            file. Missing fields will be added if they can be
+            determined. Othwerise, InvalidDatalakeMetadata will be raised.
+
+        '''
+        self._stream = stream
+        self._buffer = b''
+        self._content_gen = False
+        self.metadata = Metadata(metadata_fields)
+
+    @property
+    def encoding(self):
+        return self._stream.encoding
+
+    def iter_content(self):
+        """Iterates over the stream of bytes.
+        When stream=True is set on the fetch, the entire file is not loaded
+        into memory, and is read in batches instead.
+        """
+        if self._stream is None:
+            raise ValueError("I/O operation on closed stream")
+
+        for chunk in self._stream:
+            yield chunk
+
+    def read(self, size=None):
+        """Iterates over the stream returning the number of requested bytes.
+        This avoids loading the entire file into memory at once.
+        """
+        if not self._content_gen:
+            self._content_gen = self.iter_content()
+
+        while size is None or len(self._buffer) < size:
+            try:
+                self._buffer += next(self._content_gen)
+            except StopIteration:
+                # buffer < size, at the end of the stream
+                # so clear out buffer and return it
+                ret = self._buffer
+                self._buffer = b''
+                return ret
+
+        ret, self._buffer = (self._buffer[:size], self._buffer[size:])
+        return ret
+
+    def readlines(self):
+        """Iterates over the stream, one line at a time.
+        this avoids reading the entire file into memory at once.
+        """
+
+        pending = None
+
+        for chunk in self.iter_content():
+
+            if pending is not None:
+                chunk = pending + chunk
+
+            lines = chunk.splitlines(True)
+
+            if lines and lines[-1] and chunk and lines[-1][-1] == chunk[-1]:
+                pending = lines.pop()
+            else:
+                pending = None
+
+            for line in lines:
+                yield line
+
+        if pending is not None:
+            yield pending
+
+    def close(self):
+        if self._stream is not None:
+            self._stream.close()
+        self._stream = None
+        self._buffer = b''
+        self._content_gen = False
+
+
+class StreamingHTTPFile(StreamingFile):
+
+    '''A StreamingHTTPFile to be fetched by the Archive
+    Optimized with larger chunk size for large file delivery over HTTP
+    '''
+
+    def iter_content(self, chunk_size=ITER_SIZE):
+        return self._stream.iter_content(chunk_size)
+
+
 class File(object):
+
     '''A File to be manipulated by the Archive'''
 
     def __init__(self, fd, **metadata_fields):
