@@ -46,7 +46,7 @@ def requires_s3(f):
 
 class DatalakeRecord(dict):
 
-    def __init__(self, url, metadata, time_bucket):
+    def __init__(self, url, metadata, time_bucket, create_time, size):
         self.metadata = metadata
         parts = {
             'version': 0,
@@ -54,6 +54,8 @@ class DatalakeRecord(dict):
             'time_index_key': '{}:{}'.format(time_bucket, metadata['what']),
             'work_id_index_key': self._get_work_id_index_key(),
             'range_key': self._get_range_key(),
+            'create_time': create_time,
+            'size': size,
             'metadata': metadata,
         }
         super(DatalakeRecord, self).__init__(parts)
@@ -62,19 +64,28 @@ class DatalakeRecord(dict):
     @requires_s3
     def list_from_url(cls, url):
         '''return a list of DatalakeRecords for the specified url'''
-        metadata = cls._get_metadata(url)
+        key = cls._get_key(url)
+        metadata = cls._get_metadata_from_key(key)
+        ct = cls._get_create_time(key)
         time_buckets = cls.get_time_buckets_from_metadata(metadata)
-        return [cls(url, metadata, t) for t in time_buckets]
+        return [cls(url, metadata, t, ct, key.size) for t in time_buckets]
 
     @classmethod
+    @requires_s3
     def list_from_metadata(cls, url, metadata):
         '''return a list of DatalakeRecords for the url and metadata'''
+        key = cls._get_key(url)
         metadata = Metadata(**metadata)
+        ct = cls._get_create_time(key)
         time_buckets = cls.get_time_buckets_from_metadata(metadata)
-        return [cls(url, metadata, t) for t in time_buckets]
+        return [cls(url, metadata, t, ct, key.size) for t in time_buckets]
 
     @classmethod
-    def _get_metadata(cls, url):
+    def _get_create_time(cls, key):
+        return Metadata.normalize_date(key.last_modified)
+
+    @classmethod
+    def _get_key(cls, url):
         parsed_url = urlparse(url)
         bucket = cls._get_bucket(parsed_url.netloc)
         key = bucket.get_key(parsed_url.path)
@@ -82,9 +93,15 @@ class DatalakeRecord(dict):
             msg = '{} does not appear to be in the datalake'
             msg = msg.format(url)
             raise NoSuchDatalakeFile(msg)
+        return key
+
+    @classmethod
+    def _get_metadata_from_key(cls, key):
         metadata = key.get_metadata('datalake')
         if not metadata:
-            raise InvalidDatalakeMetadata('No datalake metadata for ' + url)
+            msg = 'No datalake metadata for s3://{}{}'
+            msg = msg.format(key.bucket.name, key.name)
+            raise InvalidDatalakeMetadata(msg)
         return Metadata.from_json(metadata)
 
     _BUCKETS = {}

@@ -136,6 +136,8 @@ to work with the dynamodb indexes. These records have the following format:
             "time_index_key": "16636:nginx",
             "work_id_index_key": "nullc177bfc032c548ba9e056c8e8672dba8:nginx",
             "range_key": "nebraska:91dd2525a5924c6c972e3d67fee8cda9",
+            "create_time": 1426896791333,
+            "size": 7892341,
             "metadata": { ... },
         }
 
@@ -155,6 +157,10 @@ retrieving by work_id is not meaninful or possible.
 
 range_key: the range key used by the time-based and work_id-based indexes. It
 is formed by joining the "where" and the "id" from the metadata.
+
+create_time: the creation time of the file in the datalake
+
+size: the size of the file in bytes
 
 Developer Setup
 ===============

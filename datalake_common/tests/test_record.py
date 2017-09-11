@@ -14,9 +14,10 @@
 
 import pytest
 
-from datalake_common import has_s3, DatalakeRecord
+from datalake_common import has_s3, DatalakeRecord, InvalidDatalakeMetadata
 from datalake_common.errors import InsufficientConfiguration, \
     UnsupportedTimeRange, NoSuchDatalakeFile
+import time
 
 
 @pytest.mark.skipif(not has_s3, reason='requires s3 features')
@@ -35,16 +36,20 @@ def test_from_url_fails_without_boto():
         DatalakeRecord.list_from_url('s3://foo/bar')
 
 
-def test_list_from_metadata(random_metadata):
+@pytest.mark.skipif(not has_s3, reason='requires s3 features')
+def test_list_from_metadata(s3_file_from_metadata, random_metadata):
     url = 's3://foo/baz'
+    s3_file_from_metadata(url, random_metadata)
     records = DatalakeRecord.list_from_metadata(url, random_metadata)
     assert len(records) >= 1
     for r in records:
         assert r['metadata'] == random_metadata
 
 
-def test_timespan_too_big(random_metadata):
+@pytest.mark.skipif(not has_s3, reason='requires s3 features')
+def test_timespan_too_big(s3_file_from_metadata, random_metadata):
     url = 's3://foo/blapp'
+    s3_file_from_metadata(url, random_metadata)
     random_metadata['start'] = 0
     random_metadata['end'] = (DatalakeRecord.MAXIMUM_BUCKET_SPAN + 1) * \
         DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
@@ -67,9 +72,11 @@ def test_no_such_bucket(s3_connection):
         DatalakeRecord.list_from_url(url)
 
 
-def test_no_end(random_metadata):
+@pytest.mark.skipif(not has_s3, reason='requires s3 features')
+def test_no_end(random_metadata, s3_file_from_metadata):
     url = 's3://foo/baz'
     del(random_metadata['end'])
+    s3_file_from_metadata(url, random_metadata)
     records = DatalakeRecord.list_from_metadata(url, random_metadata)
     assert len(records) >= 1
     for r in records:
@@ -83,3 +90,29 @@ def test_get_time_buckets_misaligned():
     end = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS * 11 / 5
     buckets = DatalakeRecord.get_time_buckets(start, end)
     assert buckets == [0, 1, 2]
+
+
+@pytest.mark.skipif(not has_s3, reason='requires s3 features')
+def test_no_metadata(s3_file_maker):
+    url = 's3://foo/bar'
+    s3_file_maker('foo', 'bar', 'the content', None)
+    with pytest.raises(InvalidDatalakeMetadata):
+        DatalakeRecord.list_from_url(url)
+
+
+@pytest.mark.skipif(not has_s3, reason='requires s3 features')
+def test_record_size_and_create_time(s3_file_maker, random_metadata):
+    url = 's3://foo/bar'
+    now = int(time.time() * 1000.0)
+
+    # s3 create times have a 1s resolution. So we just tolerate 2x that to
+    # ensure the test passes reasonably.
+    max_tolerable_delta = 2000
+
+    s3_file_maker('foo', 'bar', 'thissongisjust23byteslong', random_metadata)
+    records = DatalakeRecord.list_from_url(url)
+    assert len(records) >= 1
+    for r in records:
+        assert r['metadata'] == random_metadata
+        assert abs(r['create_time'] - now) <= max_tolerable_delta
+        assert r['size'] == 25
