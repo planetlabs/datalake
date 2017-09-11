@@ -42,6 +42,8 @@
     },
     "expected_datalake_records": [{
       "version": 0,
+      "size": 0,
+      "create_time": 236574060000,
       "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
       "time_index_key": "16552:syslog",
       "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
@@ -60,6 +62,8 @@
     },
     {
       "version": 0,
+      "size": 0,
+      "create_time": 236574060000,
       "url": "s3://datalake-test/9-kentucky/nginx/1430092800000/f9213e49accd52432b3cfea94239c0eaa90f4431-nginx.gz",
       "time_index_key": "16552:nginx",
       "work_id_index_key": "nullf9213e49accd52432b3cfea94239c0eaa90f4431:nginx",
@@ -85,6 +89,8 @@
     "records": [
       {
         "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+        "create_time": 236574060000,
+        "size": 0,
         "metadata": {
           "version": 0,
           "work_id": null,
@@ -99,6 +105,8 @@
       },
       {
         "url": "s3://datalake-test/9-kentucky/nginx/1430092800000/f9213e49accd52432b3cfea94239c0eaa90f4431-nginx.gz",
+        "create_time": 236574060000,
+        "size": 0,
         "metadata": {
           "version": 0,
           "work_id": null,

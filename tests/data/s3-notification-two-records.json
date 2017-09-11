@@ -29,6 +29,8 @@
     "expected_datalake_records": [{
       "version": 0,
       "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+      "size": 0,
+      "create_time": 236574060000,
       "time_index_key": "16552:syslog",
       "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
       "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
@@ -47,6 +49,8 @@
     {
       "version": 0,
       "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+      "size": 0,
+      "create_time": 236574060000,
       "time_index_key": "16553:syslog",
       "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
       "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
@@ -65,6 +69,8 @@
     {
       "version": 0,
       "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+      "size": 0,
+      "create_time": 236574060000,
       "time_index_key": "16554:syslog",
       "work_id_index_key": "null2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b:syslog",
       "range_key": "california:2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b",
@@ -89,6 +95,8 @@
     "records": [
       {
         "url": "s3://datalake-test/2-california/syslog/1430092800000/2544375f44efb2ef5568d8a9ccf8ea9e0c9f122b-syslog-284.txt",
+        "size": 0,
+        "create_time": 236574060000,
         "metadata": {
           "version": 0,
           "work_id": null,

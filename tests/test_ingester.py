@@ -100,7 +100,16 @@ def report_comparator():
         for a, e in zip(actual, expected):
             err = abs(time.time() - a['start']/1000.0)
             assert err < 5.0
-            assert sort(a['records']) == sort(e['records'])
+            for ar, er, in zip(sort(a['records']), sort(e['records'])):
+                # freezing to validate create_time does not work in this
+                # context because we're relying on timeouts to get the tests
+                # done asynchronously. And if we freeze time, we never timeout
+                # :). So do it a different way.
+                delta = ar['create_time'] - time.time() * 1000
+                assert delta < 2000
+                del(ar['create_time'])
+                del(er['create_time'])
+                assert ar == er
             assert type(a['duration']) is float
             assert a['status'] == e['status']
             if e['status'] == 'error':

@@ -1,16 +1,16 @@
 import pytest
 from datalake_ingester import S3Notification
+from freezegun import freeze_time
 
 
 def _import_exception(exception_name):
     mod_name = '.'.join(exception_name.split('.')[0:-1])
     exception_name = exception_name.split('.')[-1]
-    mod = __import__(mod_name, fromlist=[exception_name])
+    mod = __import__(mod_name, fromlist=[str(exception_name)])
     return getattr(mod, exception_name)
 
 
 def _get_records(s3_notification):
-
     n = S3Notification(s3_notification)
     records = []
     for e in n.events:
@@ -18,6 +18,7 @@ def _get_records(s3_notification):
     return records
 
 
+@freeze_time('1977-07-01T03:01:00Z')
 def test_s3_notifications(event_test_driver):
 
     def tester(event):
