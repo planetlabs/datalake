@@ -156,7 +156,15 @@ class QueryResults(list):
         return [unpack(r) for r in records if not _already_seen(r)]
 
     def _unpack(self, result):
-        return dict(url=result['url'], metadata=result['metadata'])
+        r = dict(url=result['url'],
+                 metadata=result['metadata'])
+
+        # some fields were added later. Tolerate their absence to buy migration
+        # time.
+        for extra in ['create_time', 'size']:
+            if extra in result:
+                r[extra] = result[extra]
+        return r
 
 
 class ArchiveQuerier(object):

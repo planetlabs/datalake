@@ -224,6 +224,13 @@ def files_get():
                           http_url:
                             type: string
                             description: http url where the file contents
+                          create_time:
+                            type: integer
+                            description: the creation time of the file in the
+                                         datalake (ms since the epoch)
+                          size:
+                            type: integer
+                            description: the size of the file in bytes
                           metadata:
                             schema:
                               id: DatalakeMetadata
