@@ -147,8 +147,15 @@ def table_maker(request, dynamodb):
     return maker
 
 
-def create_test_records(bucket='datalake-test', **kwargs):
-    m = random_metadata()
-    m.update(**kwargs)
-    url = 's3://' + bucket + '/' + '/'.join([str(v) for v in kwargs.values()])
-    return DatalakeRecord.list_from_metadata(url, m)
+@pytest.fixture
+def record_maker(s3_file_from_metadata):
+
+    def maker(**kwargs):
+        m = random_metadata()
+        m.update(**kwargs)
+        key = '/'.join([str(v) for v in kwargs.values()])
+        url = 's3://datalake-test/' + key
+        s3_file_from_metadata(url, m)
+        return DatalakeRecord.list_from_metadata(url, m)
+
+    return maker

@@ -17,8 +17,8 @@ from StringIO import StringIO
 import simplejson as json
 from datalake_api.fetcher import ArchiveFile
 import time
-from conftest import create_test_records
 from urllib import urlencode
+from datalake_common import DatalakeRecord
 
 
 @pytest.fixture
@@ -184,7 +184,8 @@ def record_maker(table_maker, s3_file_maker):
     def maker(content, metadata):
         path = metadata['id'] + '/data'
         s3_file_maker('datalake-test', path, content, metadata)
-        records = create_test_records(**metadata)
+        url = 's3://datalake-test/' + path
+        records = DatalakeRecord.list_from_metadata(url, metadata)
         table_maker(records)
 
     return maker
