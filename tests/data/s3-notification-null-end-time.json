@@ -29,6 +29,8 @@
     "expected_datalake_records": [{
       "version": 0,
       "url": "s3://datalake-test/3-0a16/commands/1429084800000/34182375d96f460789e9ab4fcb6b4475-commands-655.txt",
+      "size": 0,
+      "create_time": 236574060000,
       "time_index_key": "16552:commands",
       "work_id_index_key": "null34182375d96f460789e9ab4fcb6b4475:commands",
       "range_key": "0a16:34182375d96f460789e9ab4fcb6b4475",
@@ -53,6 +55,8 @@
     "records": [
       {
         "url": "s3://datalake-test/3-0a16/commands/1429084800000/34182375d96f460789e9ab4fcb6b4475-commands-655.txt",
+        "size": 0,
+        "create_time": 236574060000,
         "metadata": {
           "version": 0,
           "work_id": null,

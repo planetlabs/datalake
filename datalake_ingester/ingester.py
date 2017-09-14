@@ -59,6 +59,8 @@ class IngesterReport(dict):
     def _make_record(self, r):
         return {
             'url': r['url'],
+            'size': r['size'],
+            'create_time': r['create_time'],
             'metadata': r['metadata']
         }
 
