@@ -173,7 +173,7 @@ class Archive(object):
     def _upload_file(self, f):
         key = self._s3_key_from_metadata(f)
         key.set_metadata(METADATA_NAME, json.dumps(f.metadata))
-        key.set_contents_from_string(f.read())
+        key.set_contents_from_file(f)
 
     def url_from_file(self, f):
         return self._get_s3_url(f)
