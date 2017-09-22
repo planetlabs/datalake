@@ -14,6 +14,7 @@
 import pytest
 from datalake import InvalidDatalakePath
 import os
+from io import BytesIO
 import responses
 
 
@@ -33,12 +34,91 @@ def test_key_does_not_exist(archive):
         archive.fetch(url)
 
 
-def test_fetch(archive, datalake_url_maker, random_metadata):
+@pytest.mark.parametrize("streaming", [True, False])
+def test_fetch_and_read(archive, datalake_url_maker, random_metadata,
+                        streaming):
     content = 'welcome to the jungle'.encode('utf-8')
     url = datalake_url_maker(metadata=random_metadata,
                              content=content)
-    f = archive.fetch(url)
+    f = archive.fetch(url, stream=streaming)
     assert f.read() == content
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+def test_fetch_and_read_twice(archive, datalake_url_maker, random_metadata,
+                              streaming):
+    content = 'welcome to the jungle'.encode('utf-8')
+    url = datalake_url_maker(metadata=random_metadata,
+                             content=content)
+    f = archive.fetch(url, stream=streaming)
+    assert f.read() == content
+    assert f.read() == b''
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+def test_fetch_and_read_size(archive, datalake_url_maker, random_metadata,
+                             streaming):
+    content = 'welcome to the jungle'.encode('utf-8')
+    url = datalake_url_maker(metadata=random_metadata,
+                             content=content)
+    f = archive.fetch(url, stream=streaming)
+    assert f.read(5) == content[:5]
+
+
+def test_fetch_streaming_iter_content(archive, datalake_url_maker,
+                                      random_metadata):
+    content = 'welcome to the jungle'.encode('utf-8')
+    url = datalake_url_maker(metadata=random_metadata,
+                             content=content)
+    f = archive.fetch(url, stream=True)
+
+    b = BytesIO()
+    for block in f.iter_content():
+        b.write(block)
+    b.seek(0)
+
+    assert b.read() == content
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+def test_fetch_readlines(archive, datalake_url_maker,
+                         random_metadata, streaming):
+    content = ('welcome to the jungle\n' * 125).encode('utf-8')
+
+    url = datalake_url_maker(metadata=random_metadata,
+                             content=content)
+    f = archive.fetch(url, stream=streaming)
+
+    lines = [line for line in f.readlines()]
+    assert lines == content.splitlines(True)
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+def test_fetch_read_closed_file(archive, datalake_url_maker, random_metadata,
+                                streaming):
+    content = ('welcome to the jungle').encode('utf-8')
+
+    url = datalake_url_maker(metadata=random_metadata,
+                             content=content)
+    f = archive.fetch(url, stream=streaming)
+
+    f.close()
+
+    with pytest.raises(ValueError):
+        f.read()
+
+
+@pytest.mark.parametrize("streaming", [True, False])
+def test_fetch_close_twice(archive, datalake_url_maker, random_metadata,
+                           streaming):
+    content = ('welcome to the jungle').encode('utf-8')
+
+    url = datalake_url_maker(metadata=random_metadata,
+                             content=content)
+    f = archive.fetch(url, stream=streaming)
+
+    f.close()
+    f.close()
 
 
 def test_fetch_to_file(monkeypatch, archive, datalake_url_maker,
