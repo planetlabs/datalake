@@ -72,7 +72,7 @@ def test_id_not_overwritten(basic_metadata):
 def test_no_end_allowed(basic_metadata):
     del(basic_metadata['end'])
     m = Metadata(basic_metadata)
-    assert 'end' not in m
+    assert m['end'] is None
 
 
 def test_unallowed_characters(basic_metadata):

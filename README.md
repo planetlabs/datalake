@@ -44,8 +44,9 @@ the epoch. Alternatively, if the file is associated with an instant, this is
 the only relevant time. It is required.
 
 end: This is the time of the last event in the file in milliseconds since the
-epoch. If it is not present, the file represents a snapshot of something like a
-weekly report.
+epoch. If the key is not present or if the value is `None`, the file represents a
+snapshot of something like a weekly report where only one date (`start`) is
+relevant.
 
 path: The absolute path to the file in the originating filesystem.
 

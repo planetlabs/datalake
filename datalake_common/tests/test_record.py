@@ -76,11 +76,13 @@ def test_no_such_bucket(s3_connection):
 def test_no_end(random_metadata, s3_file_from_metadata):
     url = 's3://foo/baz'
     del(random_metadata['end'])
+    expected_metadata = random_metadata.copy()
+    expected_metadata['end'] = None
     s3_file_from_metadata(url, random_metadata)
     records = DatalakeRecord.list_from_metadata(url, random_metadata)
     assert len(records) >= 1
     for r in records:
-        assert r['metadata'] == random_metadata
+        assert r['metadata'] == expected_metadata
 
 
 def test_get_time_buckets_misaligned():

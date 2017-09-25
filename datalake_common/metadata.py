@@ -42,6 +42,7 @@ class InvalidDatalakeMetadata(Exception):
 class UnsupportedDatalakeMetadataVersion(Exception):
     pass
 
+
 _EPOCH = datetime.fromtimestamp(0, utc)
 
 
@@ -160,9 +161,10 @@ class Metadata(dict):
         return _WINDOWS_ABS_PATH.match(path) is not None
 
     def _validate_interval(self):
-        if self.get('end') is None:
+        end_val = self['end']
+        if end_val is None:
             return
-        if self['end'] < self['start']:
+        if end_val < self['start']:
             msg = '"end" must be greater than "start"'
             raise InvalidDatalakeMetadata(msg)
 
@@ -171,10 +173,9 @@ class Metadata(dict):
         self._normalize_end()
 
     def _normalize_end(self):
-        if 'end' not in self:
-            return
-        if self['end'] is not None:
-            self['end'] = self.normalize_date(self['end'])
+        end_val = self.setdefault('end', None)
+        if end_val is not None:
+            self['end'] = self.normalize_date(end_val)
 
     @staticmethod
     def normalize_date(date):
