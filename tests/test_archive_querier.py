@@ -395,6 +395,7 @@ def test_no_end(table_maker, querier, s3_file_from_metadata):
     table_maker(records)
     results = querier.query_by_time(m['start'], m['start'] + 1, m['what'])
     assert len(results) == 1
+    assert results[0]['metadata']['end'] is None
 
 
 def test_no_end_exclusion(table_maker, querier, s3_file_from_metadata):
