@@ -164,6 +164,9 @@ class QueryResults(list):
         for extra in ['create_time', 'size']:
             if extra in result:
                 r[extra] = result[extra]
+
+        # make sure metadata has an 'end' key
+        r['metadata'].setdefault('end', None)
         return r
 
 
