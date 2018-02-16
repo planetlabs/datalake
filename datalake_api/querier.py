@@ -13,7 +13,6 @@
 # the License.
 
 from memoized_property import memoized_property
-from boto3.dynamodb.conditions import Key, And, Not, Attr
 from datalake_common import DatalakeRecord
 import base64
 import simplejson as json
@@ -177,29 +176,35 @@ class ArchiveQuerier(object):
         self.dynamodb = dynamodb
 
     def query_by_work_id(self, work_id, what, where=None, cursor=None):
-        kwargs = self._prepare_work_id_kwargs(work_id, what, cursor)
+        kwargs = self._prepare_work_id_kwargs(work_id, what)
         if where is not None:
             self._add_range_key_condition(kwargs, where)
+        if cursor is not None:
+            self._add_cursor_conditions(kwargs, cursor)
+
         response = self._table.query(**kwargs)
         cursor = self._cursor_for_work_id_query(response)
         return QueryResults(response['Items'], cursor)
 
-    def _prepare_work_id_kwargs(self, work_id, what, cursor):
+    def _prepare_work_id_kwargs(self, work_id, what):
         i = work_id + ':' + what
-        kwargs = dict(
-            IndexName='work-id-index',
-            KeyConditionExpression=Key('work_id_index_key').eq(i),
-            Limit=MAX_RESULTS,
-        )
-        if cursor is not None:
-            self._add_cursor_conditions(kwargs, cursor)
-        return kwargs
+        return {
+            'IndexName': 'work-id-index',
+            'ExpressionAttributeNames': {
+                '#n0': 'work_id_index_key',
+            },
+            'ExpressionAttributeValues': {
+                ':v0': i
+            },
+            'KeyConditionExpression': '#n0 = :v0',
+            'Limit': MAX_RESULTS,
+        }
 
     def _add_range_key_condition(self, kwargs, where):
-        condition = kwargs['KeyConditionExpression']
-        where_condition = Key('range_key').begins_with(where + ':')
-        new_condition = And(condition, where_condition)
-        kwargs['KeyConditionExpression'] = new_condition
+        kwargs['KeyConditionExpression'] = \
+            '(#n0 = :v0 AND begins_with(#n1, :v1))'
+        kwargs['ExpressionAttributeNames']['#n1'] = 'range_key'
+        kwargs['ExpressionAttributeValues'][':v1'] = where + ':'
 
     def _cursor_for_work_id_query(self, response):
         last_evaluated = response.get('LastEvaluatedKey')
@@ -212,8 +217,11 @@ class ArchiveQuerier(object):
         if last_evaluated is not None:
             kwargs['ExclusiveStartKey'] = last_evaluated
         if cursor.last_id is not None:
-            known_duplicate = Attr('metadata.id').eq(cursor.last_id)
-            kwargs['FilterExpression'] = Not(known_duplicate)
+            # here we filter the known probable duplicate
+            kwargs['FilterExpression'] = "(NOT #n2.#n3 = :v2)"
+            kwargs["ExpressionAttributeNames"]["#n2"] = "metadata"
+            kwargs["ExpressionAttributeNames"]["#n3"] = "id"
+            kwargs["ExpressionAttributeValues"][":v2"] = cursor.last_id
 
     def query_by_time(self, start, end, what, where=None, cursor=None):
         results = []
@@ -249,7 +257,6 @@ class ArchiveQuerier(object):
                 self._add_range_key_condition(kwargs, where)
             if cursor is not None:
                 self._add_cursor_conditions(kwargs, cursor)
-
             response = self._table.query(**kwargs)
             new_results = self._exclude_outside(response['Items'], start, end)
             results += new_results
@@ -283,8 +290,15 @@ class ArchiveQuerier(object):
 
     def _prepare_time_bucket_kwargs(self, bucket, what, limit=None):
         i = str(bucket) + ':' + what
+
         kwargs = {
-            'KeyConditionExpression': Key('time_index_key').eq(i)
+            'ExpressionAttributeNames': {
+                '#n0': 'time_index_key',
+            },
+            'ExpressionAttributeValues': {
+                ':v0': i
+            },
+            'KeyConditionExpression': '#n0 = :v0',
         }
         if limit is not None:
             kwargs.update(Limit=limit)
