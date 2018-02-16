@@ -35,6 +35,7 @@ level = app.config.get('DATALAKE_API_LOG_LEVEL')
 if level is not None and not app.debug:
     logging.basicConfig(level=level)
 
+logging.getLogger('boto3.resources.action').setLevel(logging.WARN)
 
 sentry_dsn = app.config.get('SENTRY_DSN')
 if sentry_dsn is not None:
