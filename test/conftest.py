@@ -21,9 +21,13 @@ import os
 from click.testing import CliRunner
 import stat
 import responses
+import logging
 
 from datalake.scripts.cli import cli
 from datalake import Archive
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 @pytest.fixture

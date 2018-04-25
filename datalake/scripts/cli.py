@@ -194,6 +194,7 @@ def _enqueue(file, **kwargs):
 
 @cli.command()
 @click.option('--timeout', type=float)
+@click.option('--workers', type=int, default=1)
 def uploader(**kwargs):
     _uploader(**kwargs)
 

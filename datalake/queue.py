@@ -30,6 +30,9 @@ import os
 from datalake_common.errors import InsufficientConfiguration
 from logging import getLogger
 import time
+from threading import Thread
+from six.moves._thread import interrupt_main
+from six.moves.queue import Queue
 
 from datalake import File, InvalidDatalakeBundle
 
@@ -105,9 +108,16 @@ class Enqueuer(DatalakeQueueBase):
 
 class Uploader(DatalakeQueueBase):
 
-    def __init__(self, archive, queue_dir):
+    def __init__(self, archive, queue_dir, callback=None):
+        '''create an uploader that listens to queue_dir and pushes to archive
+
+        The callback (if any) gets called with the filename after each
+        successful upload. Note that it may be called from a thread. So be safe
+        out there.
+        '''
         super(Uploader, self).__init__(queue_dir)
         self._archive = archive
+        self._callback = callback
 
     class EventHandler(pyinotify.ProcessEvent):
 
@@ -134,6 +144,12 @@ class Uploader(DatalakeQueueBase):
     def _push(self, filename):
         if os.path.basename(filename).startswith('.'):
             return
+        if self._workers == []:
+            self._synchronous_push(filename)
+        else:
+            self._threaded_push(filename)
+
+    def _synchronous_push(self, filename):
         try:
             f = File.from_bundle(filename)
         except InvalidDatalakeBundle as e:
@@ -144,25 +160,64 @@ class Uploader(DatalakeQueueBase):
         msg = 'Pushed {}({}) to {}'.format(filename, f.metadata['path'], url)
         log.info(msg)
         os.unlink(filename)
+        if self._callback is not None:
+            self._callback(filename)
 
-    def listen(self, timeout=None):
+    def _threaded_push(self, filename):
+        self._queue.put(filename)
+
+    def _threaded_worker(self, worker_number):
+        log.info('upload worker {} starting.'.format(worker_number))
         try:
-            self._listen(timeout=timeout)
+            while True:
+                filename = self._queue.get(block=True)
+                msg = 'upload worker {} handling {}'
+                msg = msg.format(worker_number, filename)
+                log.info(msg)
+                self._synchronous_push(filename)
+                self._queue.task_done()
+        except Exception as e:
+            log.exception(e)
+            # when a worker fails, we fail the entire process.
+            interrupt_main()
+
+    def listen(self, timeout=None, workers=1):
+        try:
+            self._listen(timeout=timeout, workers=workers)
         except Exception as e:
             log.exception(e)
             raise
 
-    def _listen(self, timeout=None):
+    def _listen(self, timeout=None, workers=1):
         '''listen for files in the queue directory and push them'''
         from . import __version__
 
         log.info('------------------------------')
         log.info('datalake ' + __version__)
+
+        self._workers = []
+        if workers <= 0:
+            msg = 'number of upload workers cannot be zero or negative'
+            raise InsufficientConfiguration(msg)
+        if workers > 1:
+            # when multipe workers are requested, the main thread monitors the
+            # queue directory and puts the files in a Queue that is serviced by
+            # the worker threads. So the word queue is a bit overloaded in this
+            # module.
+            self._queue = Queue()
+            self._workers = [self._create_worker(i) for i in range(workers)]
+
         for f in os.listdir(self.queue_dir):
             path = os.path.join(self.queue_dir, f)
             self._push(path)
 
         self._run(timeout)
+
+    def _create_worker(self, worker_number):
+        w = Thread(target=self._threaded_worker, args=(worker_number,))
+        w.setDaemon(True)
+        w.start()
+        return w
 
     INFINITY = None
 
