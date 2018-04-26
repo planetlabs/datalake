@@ -17,6 +17,9 @@ deploy:
   user: planet
   password:
     secure: EgEXpqXu2Iyi7nFuZrFmWBavvOil5r8ctqHGQ6BT2J5+qqE/K1OXblt/l0IcVYryoFTOAyB36Dti4+zgeGmcA+UrvKZyyIT8z0zWyIS/iLWhjiXDJdrDU0zVWXRVC5/AsgsxUkJMVVCke/dxUpIbLNuVV2jwUd3k0VGw+q2XR7Q=
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
   on:
+    branch: master
     tags: true
     repo: planetlabs/datalake
