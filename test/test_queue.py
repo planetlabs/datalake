@@ -44,6 +44,15 @@ def uploader(archive, queue_dir):
 
 
 @pytest.fixture
+def faulty_uploader(archive, queue_dir):
+
+    def cb(*args, **kwargs):
+        raise Exception('Boo!')
+
+    return Uploader(archive, queue_dir, callback=cb)
+
+
+@pytest.fixture
 def uploaded_content_validator(s3_key):
 
     def validator(expected_content, expected_metadata=None, compressed=False):
@@ -208,3 +217,36 @@ def test_enqueue_compress_cli(cli_tester, uploader, random_file,
 
     expected_content = open(random_file, 'rb').read()
     uploaded_content_validator(expected_content, compressed=True)
+
+
+@pytest.mark.skipif(not has_queue, reason='requires queuable features')
+def test_threaded_upload(enqueuer, uploader, random_file, random_metadata,
+                         uploaded_file_validator):
+
+    # This test does not actually validate that multiple threads are running.
+    # But it does validate that when the number of workers is greater than 3,
+    # multiple files get uploaded.
+    enqueued_files = []
+
+    def enqueue():
+        f = enqueuer.enqueue(random_file, **random_metadata)
+        enqueued_files.append(f)
+        if len(enqueued_files) < 3:
+            t = Timer(0.1, enqueue)
+            t.start()
+
+    t = Timer(0.5, enqueue)
+    t.start()
+    uploader.listen(timeout=1.0, workers=3)
+
+    assert len(enqueued_files) == 3
+    for f in enqueued_files:
+        uploaded_file_validator(f)
+
+
+@pytest.mark.skipif(not has_queue, reason='requires queuable features')
+def test_threaded_uploader_exits(enqueuer, faulty_uploader, random_file,
+                                 random_metadata, uploaded_file_validator):
+    enqueuer.enqueue(random_file, **random_metadata)
+    with pytest.raises(KeyboardInterrupt):
+        faulty_uploader.listen(timeout=0.1, workers=2)
