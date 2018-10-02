@@ -209,6 +209,9 @@ def _uploader(**kwargs):
 
 
 def _ms_to_iso(ms):
+    if not ms:
+        # Return None if time is null
+        return
     return datetime.fromtimestamp(ms/1000.0, utc).isoformat()
 
 
