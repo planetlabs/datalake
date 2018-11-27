@@ -52,7 +52,7 @@ class S3Event(dict):
             msg = 'No eventVersion: ' + json.dumps(self)
             raise InvalidS3Event(msg)
 
-        if v != '2.0':
+        if not v.startswith('2.'):
             msg = 'Unsupported event version: ' + json.dumps(self)
             raise InvalidS3Event(msg)
 

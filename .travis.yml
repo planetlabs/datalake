@@ -1,5 +1,10 @@
 language: python
 
+env:
+  global:
+    # see https://github.com/travis-ci/travis-ci/issues/7940
+    - BOTO_CONFIG=/dev/null
+
 python:
   - '2.7'
   - pypy
@@ -10,7 +15,7 @@ install:
 before_script:
   - flake8 .
 
-script: 
+script:
   - py.test
 
 deploy:
