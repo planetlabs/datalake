@@ -41,6 +41,9 @@ def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,
     ingester.ingest(url)
     records = [dict(r) for r in dynamodb_records_table.scan()]
     assert len(records) >= 1
+
+    # we expect a null end key to come back when the user leaves it out.
+    random_metadata['end'] = None
     for r in records:
         assert r['metadata'] == random_metadata
 
