@@ -100,6 +100,8 @@ class Enqueuer(DatalakeQueueBase):
             try:
                 f = File.from_filename_compressed(filename, **metadata_fields)
             except OverflowError:
+                log.warning('Compression failed. Falling back to uncompressed '
+                            'uploads')
                 f = File.from_filename(filename, **metadata_fields)
         else:
             f = File.from_filename(filename, **metadata_fields)
