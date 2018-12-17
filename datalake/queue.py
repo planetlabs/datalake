@@ -97,7 +97,12 @@ class Enqueuer(DatalakeQueueBase):
         '''
         log.info('Enqueing ' + filename)
         if compress:
-            f = File.from_filename_compressed(filename, **metadata_fields)
+            try:
+                f = File.from_filename_compressed(filename, **metadata_fields)
+            except OverflowError:
+                log.warning('Compression failed. Falling back to uncompressed '
+                            'uploads')
+                f = File.from_filename(filename, **metadata_fields)
         else:
             f = File.from_filename(filename, **metadata_fields)
         fname = f.metadata['id'] + '.tar'
