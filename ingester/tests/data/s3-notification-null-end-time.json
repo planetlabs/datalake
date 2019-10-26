@@ -1,0 +1,74 @@
+{
+  "event_specifications": [{
+    "s3_files": [{
+      "url": "s3://datalake-test/3-0a16/commands/1429084800000/34182375d96f460789e9ab4fcb6b4475-commands-655.txt",
+      "metadata": {
+        "version": 0,
+        "work_id": null,
+        "id": "34182375d96f460789e9ab4fcb6b4475",
+        "what": "commands",
+        "path": "/var/log/commands.log",
+        "where": "0a16",
+        "start": 1430092800000,
+        "end": null,
+        "hash": "12345"
+      }
+    }],
+    "s3_notification": {
+      "Type" : "Notification",
+      "MessageId" : "52f4b00d-4785-57bc-9596-fe53c2ee64d2",
+      "TopicArn" : "arn:aws-us-gov:sns:us-gov-west-1:111111111111:datalake-v0-DatalakeS3Topic-1SCQLYR01AWJB",
+      "Subject" : "Amazon S3 Notification",
+      "Message" : "{\"Records\":[{\"eventVersion\":\"2.0\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-gov-west-1\",\"eventTime\":\"2015-08-31T16:39:06.827Z\",\"eventName\":\"ObjectCreated:Put\",\"userIdentity\":{\"principalId\":\"AWS:ABCDEFGHIJKLMNOPQRSTU\"},\"requestParameters\":{\"sourceIPAddress\":\"192.168.1.1\"},\"responseElements\":{\"x-amz-request-id\":\"B5B9A37E69ACAEE9\",\"x-amz-id-2\":\"N+pZ2XraHeR7XK03/3QVLtdzalSj6fHpLDjkUvugzhouq86ITvzfbIQB04IxrGvP\"},\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"DatalakeS3Announcement\",\"bucket\":{\"name\":\"datalake-test\",\"ownerIdentity\":{\"principalId\":\"AWS:111111111111\"},\"arn\":\"arn:aws:s3:::datalake-spike\"},\"object\":{\"key\":\"3-0a16/commands/1429084800000/34182375d96f460789e9ab4fcb6b4475-commands-655.txt\",\"size\":670720,\"eTag\":\"fc2c33c51b1d0543e06250aebbc98268\",\"sequencer\":\"0055E4832AB36A04AC\"}}}]}",
+      "Timestamp" : "2015-08-31T16:39:07.207Z",
+      "SignatureVersion" : "1",
+      "Signature" : "mgq2DlYC9KV1SYjeaXAkisM+pHX8ONgxXiWk9wyEchl8BylXIhI+CMp9fJa8CyRqgzHxnSoh3dasTg/9FMalJu5786hDWO0ywrHfD8+CjIbmmMmLPzBLEie25D4MSSPCQjwHemnOANw5cO6g2BoIQs8yHRQwI3ryDmhutSRJt7H53SG7jfbCkdjl09vcQaVLgT3a8Lb5/9srokrt7aqyUYdRpseOylY4YlSf4rozkcJKrGnFTlzmzhfK+ajTHt4AnqTrrgqzzcgAiYco0QgtBjNQ78McFmUxVSH0MizzPeFo9eKhZqX3JPAfg1a5o0xm9G/vx44B7fiDqDAhPpQ7Eg==",
+      "SigningCertURL" : "https://sns.us-gov-west-1.amazonaws.com/SimpleNotificationService-615221360fa38fcacc145ca7e25e3f7c.pem",
+      "UnsubscribeURL" : "https://sns.us-gov-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws-us-gov:sns:us-gov-west-1:111111111111:datalake-v0-DatalakeS3Topic-1SCQLYR01AWJB:8a32cf22-a357-4e79-8d3f-9deeda09ac46"
+    },
+    "expected_datalake_records": [{
+      "version": 0,
+      "url": "s3://datalake-test/3-0a16/commands/1429084800000/34182375d96f460789e9ab4fcb6b4475-commands-655.txt",
+      "size": 0,
+      "create_time": 236574060000,
+      "time_index_key": "16552:commands",
+      "work_id_index_key": "null34182375d96f460789e9ab4fcb6b4475:commands",
+      "range_key": "0a16:34182375d96f460789e9ab4fcb6b4475",
+      "metadata": {
+        "version": 0,
+        "work_id": null,
+        "id": "34182375d96f460789e9ab4fcb6b4475",
+        "what": "commands",
+        "path": "/var/log/commands.log",
+        "where": "0a16",
+        "start": 1430092800000,
+        "end": null,
+        "hash": "12345"
+      }
+    }]
+  }],
+  "expected_reports": [{
+    "version": 0,
+    "status": "success",
+    "start": 123,
+    "duration": 1.0,
+    "records": [
+      {
+        "url": "s3://datalake-test/3-0a16/commands/1429084800000/34182375d96f460789e9ab4fcb6b4475-commands-655.txt",
+        "size": 0,
+        "create_time": 236574060000,
+        "metadata": {
+          "version": 0,
+          "work_id": null,
+          "id": "34182375d96f460789e9ab4fcb6b4475",
+          "what": "commands",
+          "path": "/var/log/commands.log",
+          "where": "0a16",
+          "start": 1430092800000,
+          "end": null,
+          "hash": "12345"
+        }
+      }
+    ]
+  }]
+}
