@@ -1,0 +1,27 @@
+language: python
+
+python:
+- '2.7'
+- '3.5'
+
+env:
+  - EXTRAS='[test]'
+  - EXTRAS='[test,s3,test_s3]'
+
+install:
+- pip install -e .${EXTRAS}
+
+before_script:
+  - flake8 .
+
+script:
+- py.test
+
+deploy:
+  provider: pypi
+  user: planet
+  password:
+    secure: CFIlyylx0ICkStCq6H6ztpbEYrA2u6HM3kPycZJCZpGgdBFJbuNyCzlZKFQVTfJuBw2d195K0YACWutRTaUSjuVvZfBMglvI2Nxs1q6dTJQeFVqEmnYJNjocR4EORO1BC/HmbuN/seOuVcWMu+nz76OKiPiYOsuYA1JbtKaE7HspxmTDaVDYqicKi7aMiwRyeIG+BkHa+ZONenk4NlKiQA0pmsGKLAmlPEmfoLW65Fp5Dz7IrjrW2YM3y8mUAlphBAw1yrMgm/2SlATDkftACpCADZkuCXN+iMyUVz9AnUfJfPF5X6sbYdQZ/r9rSoGzFrYjhxSWPZ/Z/IJ6OT/0oZywRdTL76e83B9l9ZohtrYlrv6xClceb95RTdPP9c62oEoXpu73WJsEsd3ivNIjuW+O4WxUGZuObFnJESvJg80lK914+xLHW7jg2SRHaFJiQXDpZCsw9PtnOm21+WdEzOF2itdv51aCJWcbDqzza7lW1a/57rQvDsCXubkXWu0ffEETN/snMkxGtoAugiOBdyq1lbGNzpvJGidU/pU4QOe8jmPTlEX+YkrLfsiwSm5Ru5KUBwY5enDtmsXzD+Lz3MDRyM7gugeXPIp6griTSFWOQ5hvZcwG3hZaF31nvVR8UxfH2plbefC6VEZ9G9Wvo3buDqoO/B1I7PmZ254XR3c=
+  on:
+    tags: true
+    repo: planetlabs/datalake-common
