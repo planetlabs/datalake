@@ -51,5 +51,8 @@ RUN cd /opt/client && \
         -d /usr/local/lib/python2.7/site-packages/ \
         --no-deps;
 
+ARG VERSION=unspecified
+ENV VERSION=$VERSION
+
 WORKDIR /opt
 ENTRYPOINT ["/usr/local/bin/datalake"]
