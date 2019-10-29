@@ -12,7 +12,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-import pyver
 from storage import DynamoDBStorage
 from reporter import SNSReporter
 from queue import SQSQueue
@@ -21,6 +20,5 @@ from errors import *  # noqa
 from ingester import Ingester
 import log  # noqa
 
-__version__, __version_info__ = pyver.get_version(pkg='datalake_ingester')
 __all__ = ['DynamoDBStorage', 'SNSReporter', 'SQSQueue',
            'S3Notification', 'Ingester']
