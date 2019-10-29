@@ -1,8 +1,20 @@
 language: python
 python:
 - '2.7'
+- '3.5'
+
+env:
+  matrix:
+    - EXTRAS='[test]'
+    - EXTRAS='[test,queuable,sentry,krb]'
+  global:
+    # see https://github.com/travis-ci/travis-ci/issues/7940
+    - BOTO_CONFIG=/dev/null
+
+before_install:
+  - cd client
 install:
-- pip install -e .[test]
+  - pip install -e .${EXTRAS}
 before_script:
   - flake8 .
 script:
@@ -11,7 +23,10 @@ deploy:
   provider: pypi
   user: planet
   password:
-    secure: moVRXcjStPtmCqW9N0057EY20JhhPAwIh7JbFN8wcx6eYCzN6M8NCErTlEL8fkl5Wx7QreRMHuZo91lf5nDPQfaNieDyRFxRfg/s5oQZePve6etRxxDphSwmlldtRI0Q6osB4muuXsnXx/A72G2PgtgV6f3FdSv3phXMZKEKZfXKU26TYcvjzygK3afXSsv8T4m8LjSnv/nONwYENZYwyZNiT6/gzSQ5TGYpIw0zU4bhMe1ZX54CbRPgzudbe3phV4NpEAbhVWPfZOH0d0iYCjNm/VKPG83Kf2jLT5sD0VzsULfxaxdtPycXjGlPHMzoGFQWH8x8FcnEnTgcD9irATRgQgQQQHDyYjkoAFxymDYglZolWZpswlPK6/D624GzZD19MxWBt2s6UvXDSKupDX/yxNxNwZa3VtXU1/ylfC5IHP9+OMhANKgtw0k4pUNnj1fI5TXQae1EDtLkOxqUfCSIeJr+AZmIFGvqUbQG05G5SGloGv9eGEjoamnUfgU9SM06n0fbVJvXJ5aHwYQ3DUOnfkMLXrKtuRn7qfzTT3hpRbPTQZxM53zMmLfgP7XwzhDT2UE+FaNSXVofFhPq4UP26OycVfYE5y2mt8hAAa/88qmmgrUzakmDJ7lVL/GQx43RynrlaoKAJa+zIChbJP8QWZKR3LFaJZPB9+doKXg=
+    secure: EgEXpqXu2Iyi7nFuZrFmWBavvOil5r8ctqHGQ6BT2J5+qqE/K1OXblt/l0IcVYryoFTOAyB36Dti4+zgeGmcA+UrvKZyyIT8z0zWyIS/iLWhjiXDJdrDU0zVWXRVC5/AsgsxUkJMVVCke/dxUpIbLNuVV2jwUd3k0VGw+q2XR7Q=
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
   on:
+    branch: master
     tags: true
-    repo: planetlabs/datalake-api
+    repo: planetlabs/datalake
