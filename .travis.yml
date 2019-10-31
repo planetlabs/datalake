@@ -1,32 +1,42 @@
-language: python
-python:
-- '2.7'
-- '3.5'
+services: docker
 
-env:
-  matrix:
-    - EXTRAS='[test]'
-    - EXTRAS='[test,queuable,sentry,krb]'
-  global:
-    # see https://github.com/travis-ci/travis-ci/issues/7940
-    - BOTO_CONFIG=/dev/null
+_python_template: &_python_template
+  language: python
+  stage: test
+  before_install: cd client/
+  install: pip install -e .[test]
+  script: py.test
+  deploy:
+    provider: pypi
+    user: planet
+    password:
+      secure: EgEXpqXu2Iyi7nFuZrFmWBavvOil5r8ctqHGQ6BT2J5+qqE/K1OXblt/l0IcVYryoFTOAyB36Dti4+zgeGmcA+UrvKZyyIT8z0zWyIS/iLWhjiXDJdrDU0zVWXRVC5/AsgsxUkJMVVCke/dxUpIbLNuVV2jwUd3k0VGw+q2XR7Q=
+    distributions: "sdist bdist_wheel"
+    skip_existing: true
+    on:
+      branch: master
+      tags: true
+      repo: planetlabs/datalake
 
-before_install:
-  - cd client
-install:
-  - pip install -e .${EXTRAS}
-before_script:
-  - flake8 .
-script:
-- py.test
-deploy:
-  provider: pypi
-  user: planet
-  password:
-    secure: EgEXpqXu2Iyi7nFuZrFmWBavvOil5r8ctqHGQ6BT2J5+qqE/K1OXblt/l0IcVYryoFTOAyB36Dti4+zgeGmcA+UrvKZyyIT8z0zWyIS/iLWhjiXDJdrDU0zVWXRVC5/AsgsxUkJMVVCke/dxUpIbLNuVV2jwUd3k0VGw+q2XR7Q=
-  distributions: "sdist bdist_wheel"
-  skip_existing: true
-  on:
-    branch: master
-    tags: true
-    repo: planetlabs/datalake
+jobs:
+  include:
+  - <<: *_python_template
+    name: py27 bare
+    python: 2.7
+    before_script: flake8 .
+  - <<: *_python_template
+    name: py35 bare
+    python: 3.5
+  - <<: *_python_template
+    name: py27 with extras
+    python: 2.7
+    install: pip install -e .[test,queuable,sentry,krb]
+  - <<: *_python_template
+    name: py35 with extras
+    python: 3.5
+    install: pip install -e .[test,queuable,sentry,krb]
+  - dist: bionic
+    name: docker
+    stage: test
+    script:
+      - make test
