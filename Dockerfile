@@ -45,14 +45,16 @@ COPY . /opt/
 # the container and used for development. That is, the python paths and paths
 # to console scripts Just Work (TM)
 ENV PYTHONPATH=/opt/common:/opt/client:/opt/ingester:/opt/api
-RUN cd /opt/client && \
+RUN for d in client ingester api; do \
+    cd /opt/$d && \
     python setup.py develop -s /usr/local/bin \
-        --egg-path ../../../../../opt/client/ \
+        --egg-path ../../../../../opt/$d/ \
         -d /usr/local/lib/python2.7/site-packages/ \
-        --no-deps;
+        --no-deps; \
+    done
 
 ARG VERSION=unspecified
 ENV VERSION=$VERSION
 
 WORKDIR /opt
-ENTRYPOINT ["/usr/local/bin/datalake"]
+ENTRYPOINT ["/opt/docker_entry.sh"]
