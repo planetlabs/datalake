@@ -16,7 +16,7 @@ import pytest
 from moto import mock_s3
 import boto
 from six.moves.urllib.parse import urlparse
-from datalake_common.tests import random_metadata, tmpfile  # noqa
+from datalake.tests import random_metadata, tmpfile  # noqa
 import os
 from click.testing import CliRunner
 import stat

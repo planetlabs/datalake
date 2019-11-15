@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-from datalake_common.errors import InsufficientConfiguration
+from .common.errors import InsufficientConfiguration
 
 
 DEFAULT_CONFIG = '/etc/datalake.env'

@@ -15,7 +15,7 @@
 import pytest
 from dateutil.parser import parse as dateparse
 
-from datalake_common import Metadata, InvalidDatalakeMetadata, \
+from datalake.common import Metadata, InvalidDatalakeMetadata, \
     UnsupportedDatalakeMetadataVersion
 
 

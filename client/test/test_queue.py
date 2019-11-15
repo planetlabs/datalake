@@ -16,8 +16,8 @@ import pytest
 import json
 from threading import Timer
 import os
-from datalake_common.tests import random_word
-from datalake_common.errors import InsufficientConfiguration
+from datalake.tests import random_word
+from datalake.common.errors import InsufficientConfiguration
 from datalake import Enqueuer, Uploader, InvalidDatalakeBundle
 from datalake.queue import has_queue
 from conftest import crtime_setuid

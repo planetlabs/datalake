@@ -6,7 +6,7 @@ sentry accounts may wish to configure it by installing the sentry extras.
 '''
 import os
 import logging
-from datalake_common.errors import InsufficientConfiguration
+from .common.errors import InsufficientConfiguration
 
 
 def sentry_available():

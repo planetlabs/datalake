@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-from datalake_common import Metadata, InvalidDatalakeMetadata
+from . import Metadata, InvalidDatalakeMetadata
 from six.moves.urllib.parse import urlparse
 import simplejson as json
 import os

@@ -2,7 +2,7 @@ import pytest
 import responses
 from datalake import DatalakeHttpError
 from copy import copy
-from datalake_common import Metadata
+from datalake.common import Metadata
 from datetime import datetime, timedelta
 from pytz import utc
 import simplejson as json

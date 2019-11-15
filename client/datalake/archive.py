@@ -23,8 +23,8 @@ from datalake import (
     StreamingFile,
     StreamingHTTPFile,
 )
-from datalake_common.errors import InsufficientConfiguration
-from datalake_common import Metadata
+from .common.errors import InsufficientConfiguration
+from .common import Metadata
 import requests
 from io import BytesIO
 import errno

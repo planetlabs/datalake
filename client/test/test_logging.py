@@ -1,5 +1,5 @@
 import pytest
-from datalake_common.errors import InsufficientConfiguration
+from datalake.common.errors import InsufficientConfiguration
 
 from datalake.logging_helpers import prepare_logging, sentry_available
 

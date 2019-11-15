@@ -18,7 +18,7 @@ from .translator import Translator
 from io import BytesIO
 import tarfile
 import simplejson as json
-from datalake_common import Metadata
+from .common import Metadata
 try:
     from cStringIO import StringIO
 except ImportError:

@@ -27,7 +27,7 @@ reason, the file remains in the queue.
 '''
 from os import environ
 import os
-from datalake_common.errors import InsufficientConfiguration
+from .common.errors import InsufficientConfiguration
 from logging import getLogger
 import time
 from threading import Thread

@@ -1,7 +1,7 @@
 import pytest
-from datalake_common.errors import InsufficientConfiguration
+from datalake.common.errors import InsufficientConfiguration
 from datalake import load_config
-from datalake_common.tests import random_word
+from datalake.tests import random_word
 import os
 
 

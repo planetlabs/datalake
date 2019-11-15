@@ -15,8 +15,8 @@
 import click
 from datalake import *  # noqa
 import os
-from datalake_common.metadata import InvalidDatalakeMetadata
-from datalake_common.errors import InsufficientConfiguration
+from datalake.common.metadata import InvalidDatalakeMetadata
+from datalake.common.errors import InsufficientConfiguration
 import time
 import simplejson as json
 from datalake import Enqueuer, Uploader
