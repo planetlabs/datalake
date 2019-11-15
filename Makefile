@@ -13,7 +13,7 @@ devshell: docker
 .PHONY: test  # Run the tests
 test: docker
 	echo VERSION=$(VERSION)
-	for p in common client ingester api; do \
+	for p in client ingester api; do \
 		docker run --rm -it --entrypoint py.test $(IMAGE) $$p; \
 	done
 

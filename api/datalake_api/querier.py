@@ -13,7 +13,7 @@
 # the License.
 
 from memoized_property import memoized_property
-from datalake_common import DatalakeRecord
+from datalake.common import DatalakeRecord
 import base64
 import simplejson as json
 import time

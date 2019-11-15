@@ -4,7 +4,7 @@ import time
 
 from datalake_ingester import DynamoDBStorage, Ingester, \
     SQSQueue, SNSReporter
-from datalake_common.errors import InsufficientConfiguration
+from datalake.common.errors import InsufficientConfiguration
 
 
 @pytest.fixture

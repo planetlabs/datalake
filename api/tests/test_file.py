@@ -18,7 +18,7 @@ import simplejson as json
 from datalake_api.fetcher import ArchiveFile
 import time
 from urllib import urlencode
-from datalake_common import DatalakeRecord
+from datalake.common import DatalakeRecord
 
 
 @pytest.fixture

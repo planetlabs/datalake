@@ -44,7 +44,7 @@ COPY . /opt/
 # Take care to install clients such that the source code can be mounted into
 # the container and used for development. That is, the python paths and paths
 # to console scripts Just Work (TM)
-ENV PYTHONPATH=/opt/common:/opt/client:/opt/ingester:/opt/api
+ENV PYTHONPATH=/opt/client:/opt/ingester:/opt/api
 RUN for d in client ingester api; do \
     cd /opt/$d && \
     python setup.py develop -s /usr/local/bin \

@@ -13,8 +13,8 @@
 # the License.
 
 import pytest
-from datalake_common import DatalakeRecord
-from datalake_common.tests import random_metadata
+from datalake.common import DatalakeRecord
+from datalake.tests import random_metadata
 import simplejson as json
 from urlparse import urlparse
 import time

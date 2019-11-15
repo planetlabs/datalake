@@ -20,8 +20,8 @@ import boto3
 from querier import ArchiveQuerier, Cursor, InvalidCursor, \
     DEFAULT_LOOKBACK_DAYS
 from fetcher import ArchiveFileFetcher
-from datalake_common.errors import NoSuchDatalakeFile
-from datalake_common.metadata import Metadata, InvalidDatalakeMetadata
+from datalake.common.errors import NoSuchDatalakeFile
+from datalake.common.metadata import Metadata, InvalidDatalakeMetadata
 
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')

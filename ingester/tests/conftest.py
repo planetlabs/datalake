@@ -10,7 +10,7 @@ from boto.dynamodb2.fields import HashKey, RangeKey
 import boto.sns
 import boto.sqs
 
-from datalake_common.tests import *  # noqa
+from datalake.tests import *  # noqa
 
 from datalake_ingester import SQSQueue
 

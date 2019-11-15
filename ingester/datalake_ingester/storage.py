@@ -17,7 +17,7 @@ import boto.dynamodb2
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.exceptions import ConditionalCheckFailedException
 import os
-from datalake_common.errors import InsufficientConfiguration
+from datalake.common.errors import InsufficientConfiguration
 
 
 class DynamoDBStorage(object):
