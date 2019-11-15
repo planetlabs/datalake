@@ -1,5 +1,10 @@
 services: docker
 
+env:
+  global:
+    - DOCKER_USERNAME: planetdatalake
+    - secure: cF1f4bTOi52fyPcsJnaOOr33ghNZUQPnHEOwtXaRX0fZ1X6mRW9XrFOaMScZOhWEIlV7RteuEIoxIaJVN8ZWKHVZIh7/815quUmcOMhTRboHHMnGQPaXDYEmmhbPEg1uxjKTrGBRD5L/KZ2XUFqkobgb17Ju1QAH+K91hJJ6qes=
+
 _python_template: &_python_template
   language: python
   stage: test
@@ -40,3 +45,10 @@ jobs:
     stage: test
     script:
       - make test
+    deploy:
+      provider: script
+      script:
+        - make push
+      on:
+        branch: master
+        repo: planetlabs/datalake
