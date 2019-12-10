@@ -14,8 +14,8 @@
 
 import pytest
 
-from datalake_common import has_s3, DatalakeRecord, InvalidDatalakeMetadata
-from datalake_common.errors import InsufficientConfiguration, \
+from datalake.common import has_s3, DatalakeRecord, InvalidDatalakeMetadata
+from datalake.common.errors import InsufficientConfiguration, \
     UnsupportedTimeRange, NoSuchDatalakeFile
 import time
 

@@ -16,7 +16,7 @@ from memoized_property import memoized_property
 import simplejson as json
 
 from errors import InvalidS3Notification, InvalidS3Event
-from datalake_common import DatalakeRecord
+from datalake.common import DatalakeRecord
 
 
 class S3Notification(dict):

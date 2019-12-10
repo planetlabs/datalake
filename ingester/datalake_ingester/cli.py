@@ -1,5 +1,5 @@
 import click
-from datalake_common.conf import load_config
+from datalake.common.conf import load_config
 from ingester import Ingester
 
 

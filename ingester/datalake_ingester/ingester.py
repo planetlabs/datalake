@@ -1,5 +1,5 @@
-from datalake_common import DatalakeRecord, InvalidDatalakeMetadata
-from datalake_common.errors import InsufficientConfiguration, \
+from datalake.common import DatalakeRecord, InvalidDatalakeMetadata
+from datalake.common.errors import InsufficientConfiguration, \
     UnsupportedTimeRange, NoSuchDatalakeFile
 from s3_notification import S3Notification
 import time

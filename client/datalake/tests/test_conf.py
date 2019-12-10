@@ -1,7 +1,7 @@
 import pytest
 import os
-from datalake_common.conf import load_config
-from datalake_common.errors import InsufficientConfiguration
+from datalake.common.conf import load_config
+from datalake.common.errors import InsufficientConfiguration
 
 
 @pytest.fixture

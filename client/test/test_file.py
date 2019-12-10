@@ -13,8 +13,8 @@
 # the License.
 
 import pytest
-from datalake_common.tests import random_word, random_metadata
-from datalake_common import InvalidDatalakeMetadata
+from datalake.tests import random_word, random_metadata
+from datalake.common import InvalidDatalakeMetadata
 import os
 import json
 import tarfile

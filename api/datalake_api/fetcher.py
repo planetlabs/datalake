@@ -12,8 +12,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 from mimetypes import guess_type
-from datalake_common import Metadata
-from datalake_common.errors import NoSuchDatalakeFile
+from datalake.common import Metadata
+from datalake.common.errors import NoSuchDatalakeFile
 import simplejson as json
 import re
 from memoized_property import memoized_property

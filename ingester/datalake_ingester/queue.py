@@ -17,7 +17,7 @@ import boto.sqs
 import simplejson as json
 import logging
 import os
-from datalake_common.errors import InsufficientConfiguration
+from datalake.common.errors import InsufficientConfiguration
 
 
 class SQSQueue(object):

@@ -18,8 +18,8 @@ from botocore.exceptions import ClientError as BotoClientError
 from moto import mock_dynamodb2
 
 from datalake_api import app as datalake_api
-from datalake_common.tests import *  # noqa
-from datalake_common import DatalakeRecord
+from datalake.tests import *  # noqa
+from datalake.common import DatalakeRecord
 
 
 YEAR_2010 = 1262304000000
