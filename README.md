@@ -1,23 +1,94 @@
-[![Build Status](https://travis-ci.org/planetlabs/datalake-common.svg?branch=master)](https://travis-ci.org/planetlabs/datalake-common)
-
 Introduction
 ============
 
-A datalake is an archive that contains files and metadata records about those
-files. datalake-common is a place for code and specification shared by the
-handful of components that form the datalake. Mostly, datalake-common is about
-defining and validating the schemas that are shared between these components.
+[![Build Status](https://travis-ci.org/planetlabs/datalake.svg)](https://travis-ci.org/planetlabs/datalake)
 
-Installation
+A datalake is an archive that contains files and metadata records about those
+files. The datalake project consists of a number of pieces:
+
+- The ingester that listens for new files pushed to the datalake and ingests
+  their metadata so it can be searched.
+
+- The api to query over the files in the datalake.
+
+- The client, which is a python and command-line interface to the datalake. You
+  can use it to push files to the datalake, list the files available in the
+  datalake, and retrieve files from the datalake.
+
+To use this client, you (or somebody on your behalf) must be operating an
+instance of the datalake-ingester and the datalake-api. You will need some
+configuration information from them.
+
+Why would I use this? Because you just want to get all of the files into one
+place with nice uniform metadata so you can know what is what. Then you can
+pull the files onto your hardrive for your grepping and awking pleasure. Or
+perhaps you can feed them to a compute cluster of some sort for mapping and
+reducing. Or maybe you don't want to set up and maintain a bunch of log
+ingestion infrastructure, or you don't trust that log ingestion infrastructure
+to be your source of truth. Or maybe you just get that warm fuzzy feeling when
+things are archived somewhere.
+
+Client Usage
 ============
 
-For basic metadata handling, just:
+Install
+-------
 
-        pip install datalake-common
+        pip install datalake
 
-If you require s3-based features, be sure to ask for them:
+If you plan to use the queuing feature, you must install some extra
+dependencies:
 
-        pip install datalake-common[s3]
+        apt-get install libffi-dev # or equivalent
+        pip install datalake[queuable]
+
+Configure
+---------
+
+datalake needs a bit of configuration. Every configuration variable can either
+be set in /etc/datalake.conf, set as an environment variable, or passed in as
+an argument. For documentation on the configuration variables, invoke `datalake
+--help`.
+
+Usage
+-----
+
+datalake has a python API and a command-line client. What you can do with one,
+you can do with the other. Here's how it works:
+
+Push a log file:
+
+        datalake push --start 2015-03-20T00:05:32.345Z
+            --end 2015-03-20T23:59.114Z \
+            --where webserver01 --what nginx /path/to/nginx.log
+
+Push a log file with a specific work-id:
+
+        datalake push --start 2015-03-20T00:00:05:32.345Z \
+            --end 2015-03-20T00:00:34.114Z \
+            --what blappo-etl --where backend01 \
+            --work-id blappo-14321359
+
+The work-id is convenient for tracking processing jobs or other entities that
+may pass through many log-generating machines as they proceed through life. It
+must be unique within the datalake. So usually some kind of domain-specific
+prefix is recommended here.
+
+List the syslog and foobar files available from webserver01 since the specified
+start date.
+
+        datalake list --where webserver01 --start 2015-03-20 --end `date -u` \
+            --what syslog,foobar
+
+Fetch the blappo gather, etl, and cleanup log files with work id
+blappo-14321359:
+
+        datalake fetch --what gather,etl,cleanup --work-id blappo-14321359
+
+Developer Setup
+===============
+
+        make docker test
 
 Datalake Metadata
 =================
@@ -163,12 +234,65 @@ create_time: the creation time of the file in the datalake
 
 size: the size of the file in bytes
 
-Developer Setup
-===============
+Ingester
+========
 
-        mkvirtualenv datalake # Or however you like to manage virtualenvs
-        pip install -e .[test]
-        py.test
+The datalake-ingester ingests datalake metadata records into a database so that
+they may be queried by other datalake components.
 
-Do `pip install -e .[test,s3,test_s3]` instead to work on the s3-enabled
-features.
+The ingester looks something like this:
+
+                                               +----------+     +---------+
+           +-------+    +-----------------+    |          |---->| storage |
+        -->| queue |--->| s3_notification |--->| ingester |     +---------+
+           +-------+    +-----------------+    |          |--+
+                                               +----------+  |  +----------+
+                                                             +->| reporter |
+                                                                +----------+
+
+
+A queue receives notice that an event has occured in the datalake's s3
+bucket. An s3_notification object translates the event from the queue's format
+to the datalake record format (see above). Next the ingester updates the
+storage (i.e., dynamodb) and reports the ingestion status to the reporter
+(i.e., SNS).
+
+Datalake Ingester Report Format
+===============================
+
+The datalake ingester emits a Datalake Ingester Report for each file that it
+ingests. The report has the following format:
+
+        {
+            "version": 0,
+            "status": "success",
+            "start": 1437375854967,
+            "duration": 0.738383,
+			"records": [
+                {
+                    "url": "s3://datalake/d-nebraska/nginx/1437375600000/91dd2525a5924c6c972e3d67fee8cda9-nginx-523.txt",
+                    "metadata": { ... }
+                }
+            ]
+        }
+
+version: the version of the datalake ingester report format. What we describe
+here is version 0.
+
+status: Either "success", "warning", or "error" depending on how successful
+ingestion was. If status is not "success" expect "message" to be set with a
+human-readable explanation.
+
+start: ms since the epoch when the ingestion started.
+
+duration: time in seconds that it took to ingest the record.
+
+records: a list of records that were ingested. Note that this is typically a
+list with one element. However, some underlying protocols (e.g., s3
+notifications) may carry information about multiple records. Under these
+circumstances multiple records may appear.
+
+API
+===
+
+The datalake-api offers and HTTP interface to the datalake.
