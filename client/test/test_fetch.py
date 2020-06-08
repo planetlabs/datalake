@@ -184,6 +184,31 @@ def test_fetch_http_url(archive, random_metadata):
     assert f.read() == content
 
 
+@responses.activate
+def test_cli_fetch_to_file_http_url(
+        monkeypatch, cli_tester, random_metadata, tmpdir):
+    monkeypatch.chdir(str(tmpdir))
+    base_url = 'http://datalake.example.com/v0/archive/files/1234/'
+    content = 'foobar'.encode('utf-8')
+    responses.add(responses.GET, base_url + 'data', body=content,
+                  content_type='text/plain', status=200)
+    responses.add(responses.GET, base_url + 'metadata', json=random_metadata,
+                  content_type='application/json', status=200)
+
+    cmd = 'fetch {}data'.format(base_url)
+    output = cli_tester(cmd)
+
+    assert output == random_metadata['id'] + '\n'
+    assert os.path.exists(random_metadata['id'])
+    contents = open(random_metadata['id']).read()
+    assert contents == 'look ma, CLI'
+
+
+    # f = archive.fetch(base_url + 'data')
+    # assert f.metadata == random_metadata
+    # assert f.read() == content
+
+
 def test_invalid_url(archive, random_metadata):
     url = 'http://datalake.example.com/v0/archive/files/1234/'
     with pytest.raises(InvalidDatalakePath):
