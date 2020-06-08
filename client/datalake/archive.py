@@ -309,13 +309,7 @@ class Archive(object):
             msg = '{} is not a valid datalake url'.format(url)
             raise InvalidDatalakePath(msg)
 
-        path = parts.path
-        if parts.scheme != 's3':
-            # assume to be http url
-            # parts.path expected to be like '/v0/archive/files/{id}/data'
-            path = '/' + '/'.join(path.split('/')[-2:])
-        # path expected like '/{id}/data'
-        return path
+        return parts.path
 
     def _validate_fetch_url(self, url):
         valid_base_urls = (self.storage_url, self.http_url)
