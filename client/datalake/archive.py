@@ -249,6 +249,7 @@ class Archive(object):
 
         Returns the filename written.
         '''
+        k = None
         if url.startswith('s3://'):
             k = self._get_key_from_url(url)
             m = self._get_metadata_from_key(k)
@@ -257,8 +258,12 @@ class Archive(object):
         fname = self._get_filename_from_template(filename_template, m)
         dname = os.path.dirname(fname)
         self._mkdirs(dname)
-        with open(fname, 'wb') as fh:
-            fh.write(self.fetch(url).read())
+        if k:
+            k.get_contents_to_filename(fname)
+        else:
+            with open(fname, 'wb') as fh:
+                for buf in self.fetch(url, stream=True).iter_content():
+                    fh.write(buf)
         return fname
 
     def _mkdirs(self, path):
