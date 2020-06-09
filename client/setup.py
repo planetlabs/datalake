@@ -50,6 +50,9 @@ setup(name='datalake',
           'sentry': [
               'raven>=5.0.0',
           ],
+          'krb': [
+            'requests-kerberos>=0.10.0',
+          ]
       },
       classifiers=[
           'Programming Language :: Python :: 2.7',

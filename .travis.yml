@@ -35,11 +35,11 @@ jobs:
   - <<: *_python_template
     name: py27 with extras
     python: 2.7
-    install: pip install -e .[test,queuable,sentry]
+    install: pip install -e .[test,queuable,sentry,krb]
   - <<: *_python_template
     name: py35 with extras
     python: 3.5
-    install: pip install -e .[test,queuable,sentry]
+    install: pip install -e .[test,queuable,sentry,krb]
   - dist: bionic
     name: docker
     stage: test

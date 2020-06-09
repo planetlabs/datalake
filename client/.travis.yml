@@ -6,7 +6,7 @@ python:
 env:
   matrix:
     - EXTRAS='[test]'
-    - EXTRAS='[test,queuable,sentry]'
+    - EXTRAS='[test,queuable,sentry,krb]'
   global:
     # see https://github.com/travis-ci/travis-ci/issues/7940
     - BOTO_CONFIG=/dev/null
