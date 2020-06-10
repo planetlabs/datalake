@@ -225,6 +225,7 @@ class Archive(object):
         return response
 
     def _get_metadata_from_http_url(self, url):
+        self._validate_fetch_url(url)
         p = re.compile('/data$')
         url = p.sub('/metadata', url)
         response = self._requests_get(url, stream=True)
@@ -248,12 +249,21 @@ class Archive(object):
 
         Returns the filename written.
         '''
-        k = self._get_key_from_url(url)
-        m = self._get_metadata_from_key(k)
+        k = None
+        if url.startswith('s3://'):
+            k = self._get_key_from_url(url)
+            m = self._get_metadata_from_key(k)
+        else:
+            m = self._get_metadata_from_http_url(url)
         fname = self._get_filename_from_template(filename_template, m)
         dname = os.path.dirname(fname)
         self._mkdirs(dname)
-        k.get_contents_to_filename(fname)
+        if k:
+            k.get_contents_to_filename(fname)
+        else:
+            with open(fname, 'wb') as fh:
+                for buf in self.fetch(url, stream=True).iter_content():
+                    fh.write(buf)
         return fname
 
     def _mkdirs(self, path):
@@ -297,12 +307,14 @@ class Archive(object):
         if not parts.path:
             msg = '{} is not a valid datalake url'.format(url)
             raise InvalidDatalakePath(msg)
+
         return parts.path
 
     def _validate_fetch_url(self, url):
-        if not url.startswith(self.storage_url):
-            msg = 'url {} does not start with the configured storage url {}.'
-            msg = msg.format(url, self.storage_url)
+        valid_base_urls = (self.storage_url, self.http_url)
+        if not [u for u in valid_base_urls if url.startswith(u)]:
+            msg = 'url {} does not start with the configured storage urls {}.'
+            msg = msg.format(url, valid_base_urls)
             raise InvalidDatalakePath(msg)
 
     def _get_s3_url(self, f):
