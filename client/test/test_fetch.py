@@ -200,8 +200,8 @@ def test_cli_fetch_to_file_http_url(
 
     assert output == random_metadata['id'] + '\n'
     assert os.path.exists(random_metadata['id'])
-    contents = open(random_metadata['id']).read()
-    assert contents == content.decode()
+    contents = open(random_metadata['id'], 'rb').read()
+    assert contents == content
 
 
 def test_invalid_url(archive, random_metadata):
