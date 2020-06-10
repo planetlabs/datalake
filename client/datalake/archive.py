@@ -33,12 +33,6 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from boto.s3.connection import NoHostProvided
 
-try:
-    from requests_kerberos import HTTPKerberosAuth, DISABLED
-    REQUESTS_AUTH = HTTPKerberosAuth(mutual_authentication=DISABLED)
-except ImportError:
-    REQUESTS_AUTH = None
-
 # The name in s3 of the datalake metadata document
 METADATA_NAME = 'datalake'
 
@@ -356,7 +350,7 @@ class Archive(object):
         return self._conn
 
     def _requests_get(self, url, **kwargs):
-        return self._session.get(url, auth=REQUESTS_AUTH, **kwargs)
+        return self._session.get(url, **kwargs)
 
     @memoized_property
     def _session(self):
