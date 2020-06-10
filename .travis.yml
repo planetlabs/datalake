@@ -4,6 +4,9 @@ env:
   global:
     - DOCKER_USERNAME: planetdatalake
     - secure: cF1f4bTOi52fyPcsJnaOOr33ghNZUQPnHEOwtXaRX0fZ1X6mRW9XrFOaMScZOhWEIlV7RteuEIoxIaJVN8ZWKHVZIh7/815quUmcOMhTRboHHMnGQPaXDYEmmhbPEg1uxjKTrGBRD5L/KZ2XUFqkobgb17Ju1QAH+K91hJJ6qes=
+    # Pypi tokens are too long for a single value, so this uses two variables named PYPI_TOKEN1 and PYPI_TOKEN2
+    - secure: "IjQo1V9ebdL9SNRtkt/3e83CIr8e/J8IfscGro8S+2ntrWY4/uaukL75sTq9YcfGW/2Rimp/nluHet/l/JXHWMM7hOsWjuqlnO8Rf559NlxRCHrb0GX9TLnwm7wcz1Zv838YPFHAXzljXrnoC5MeZ9/nhrB2ui0tzGpq5LzEY+Y="
+    - secure: "UStKQvWEgPybT0pj1B2VE63ClN2CZ1n4d349RdehNfuaU0ng8s3l2GF76zQY9NbW+8x7NjZwmzkfoXhc+eMQhWu54z0GN7nF2AVvQGCpU6nztOu9gHWVCkHjL+v8tDnV5qRrK69nuZwLyGQ6RfjnlmzarAYQjIIAdvukEHHY16U="
 
 _python_template: &_python_template
   language: python
@@ -13,9 +16,8 @@ _python_template: &_python_template
   script: py.test
   deploy:
     provider: pypi
-    user: planet
-    password:
-      secure: EgEXpqXu2Iyi7nFuZrFmWBavvOil5r8ctqHGQ6BT2J5+qqE/K1OXblt/l0IcVYryoFTOAyB36Dti4+zgeGmcA+UrvKZyyIT8z0zWyIS/iLWhjiXDJdrDU0zVWXRVC5/AsgsxUkJMVVCke/dxUpIbLNuVV2jwUd3k0VGw+q2XR7Q=
+    username: "__token__"
+    password: $PYPI_TOKEN1$PYPI_TOKEN2
     distributions: "sdist bdist_wheel"
     skip_existing: true
     skip_cleanup: true
