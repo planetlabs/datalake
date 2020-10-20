@@ -36,6 +36,13 @@ from boto.s3.connection import NoHostProvided
 # The name in s3 of the datalake metadata document
 METADATA_NAME = 'datalake'
 
+MB_B = 1024 ** 2
+
+
+# S3 limit for PUT request is 5GB
+def CHUNK_SIZE():
+    return int(float(os.getenv('DATALAKE_CHUNK_SIZE_MB', 100)) * MB_B)
+
 
 class UnsupportedStorageError(Exception):
     pass
@@ -170,8 +177,26 @@ class Archive(object):
 
     def _upload_file(self, f):
         key = self._s3_key_from_metadata(f)
-        key.set_metadata(METADATA_NAME, json.dumps(f.metadata))
-        key.set_contents_from_file(f)
+        # key.set_metadata(METADATA_NAME, json.dumps(f.metadata))
+        # key.set_contents_from_file(f)
+        mp = key.bucket.initiate_multipart_upload(
+            key.name, metadata=dict(
+                METADATA_NAME, json.dumps(f.metadata)))
+        chunk = 0
+        chunk_leftover_b = 0
+        try:
+            while chunk_leftover_b <= 0:
+                part = mp.upload_part_from_file(f, chunk, size=CHUNK_SIZE())
+                chunk_leftover_b = CHUNK_SIZE() - part.size
+                chunk += 1
+        except:  # NOQA
+            # Any exception we want to attempt to cancel_upload, otherwise
+            # AWS will bill us every month indefnitely for storing the
+            # partial-uploaded chunks.
+            mp.cancel_upload()
+            raise
+        else:
+            mp.complete_upload()
 
     def url_from_file(self, f):
         return self._get_s3_url(f)
