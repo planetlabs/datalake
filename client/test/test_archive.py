@@ -32,7 +32,7 @@ def test_push_file(archive, random_metadata, tmpfile, s3_key):
 def test_push_large_file(
         monkeypatch, archive, random_metadata, tmpfile, s3_key):
     monkeypatch.setenv('DATALAKE_CHUNK_SIZE_MB', 5)
-    expected_content = ('abcde' * 1024 * 1024 * 2).encode('utf-8')
+    expected_content = ('big data' * 1024 * 1024).encode('utf-8')
     f = tmpfile(expected_content)
     url = archive.prepare_metadata_and_push(f, **random_metadata)
     from_s3 = s3_key(url)
@@ -42,6 +42,8 @@ def test_push_large_file(
     metadata = json.loads(metadata)
     common_keys = set(metadata.keys()).intersection(random_metadata.keys())
     assert common_keys == set(random_metadata.keys())
+    for k in common_keys:
+        assert metadata[k] == random_metadata[k]
 
 
 def test_file_url(archive, random_metadata, tmpfile):
