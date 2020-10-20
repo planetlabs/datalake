@@ -31,8 +31,8 @@ def test_push_file(archive, random_metadata, tmpfile, s3_key):
 
 def test_push_large_file(
         monkeypatch, archive, random_metadata, tmpfile, s3_key):
-    monkeypatch.setenv('DATALAKE_CHUNK_SIZE_MB', 1)
-    expected_content = ('mwahaha' * 1024 * 1024).encode('utf-8')
+    monkeypatch.setenv('DATALAKE_CHUNK_SIZE_MB', 5)
+    expected_content = ('abcde' * 1024 * 1024 * 2).encode('utf-8')
     f = tmpfile(expected_content)
     url = archive.prepare_metadata_and_push(f, **random_metadata)
     from_s3 = s3_key(url)
