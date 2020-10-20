@@ -32,9 +32,20 @@ import errno
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from boto.s3.connection import NoHostProvided
+import math
+from logging import getLogger
+log = getLogger('datalake-archive')
 
 # The name in s3 of the datalake metadata document
 METADATA_NAME = 'datalake'
+
+MB_B = 1024 ** 2
+
+
+# S3 limit for PUT request is 5GB
+# S3 limit for minimum multipart upload size is 5MB
+def CHUNK_SIZE():
+    return int(float(os.getenv('DATALAKE_CHUNK_SIZE_MB', 100)) * MB_B)
 
 
 class UnsupportedStorageError(Exception):
@@ -170,8 +181,47 @@ class Archive(object):
 
     def _upload_file(self, f):
         key = self._s3_key_from_metadata(f)
-        key.set_metadata(METADATA_NAME, json.dumps(f.metadata))
-        key.set_contents_from_file(f)
+
+        spos = f.tell()
+        f.seek(0, os.SEEK_END)
+        f_size = f.tell()
+        # seek back to the correct position.
+        f.seek(spos)
+
+        num_chunks = int(math.ceil(f_size / float(CHUNK_SIZE())))
+        log.info("Uploading {} ({} B / {} chunks)".format(
+            key.name, f_size, num_chunks))
+        if num_chunks == 1:
+            key.set_metadata(METADATA_NAME, json.dumps(f.metadata))
+            completed_size = key.set_contents_from_file(f)
+            log.info("Upload of {} complete (1 part / {} B).".format(
+                key.name, completed_size))
+            return
+        completed_size = 0
+        chunk = 0
+        mp = key.bucket.initiate_multipart_upload(
+            key.name, metadata={
+                METADATA_NAME: json.dumps(f.metadata)
+            })
+        try:
+            for chunk in range(1, num_chunks + 1):
+                part = mp.upload_part_from_file(
+                    f, chunk, size=CHUNK_SIZE())
+                completed_size += part.size
+                log.debug("Uploaded chunk {}/{} ({}B)".format(
+                    chunk, num_chunks, part.size))
+        except:  # NOQA
+            # Any exception we want to attempt to cancel_upload, otherwise
+            # AWS will bill us every month indefnitely for storing the
+            # partial-uploaded chunks.
+            log.exception("Upload of {} failed on chunk {}".format(
+                key.name, chunk))
+            mp.cancel_upload()
+            raise
+        else:
+            completed = mp.complete_upload()
+            log.info("Upload of {} complete ({} parts / {} B).".format(
+                completed.key_name, chunk, completed_size))
 
     def url_from_file(self, f):
         return self._get_s3_url(f)
