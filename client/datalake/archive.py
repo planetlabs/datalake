@@ -191,7 +191,7 @@ class Archive(object):
         num_chunks = int(math.ceil(f_size / float(CHUNK_SIZE())))
         log.info("Uploading {} ({} B / {} chunks)".format(
             key.name, f_size, num_chunks))
-        if num_chunks == 1:
+        if num_chunks <= 1:
             key.set_metadata(METADATA_NAME, json.dumps(f.metadata))
             completed_size = key.set_contents_from_file(f)
             log.info("Upload of {} complete (1 part / {} B).".format(
