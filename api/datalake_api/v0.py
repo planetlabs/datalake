@@ -12,11 +12,12 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+import boto3
 import flask
 from flask import jsonify, Response, url_for
-import simplejson as json
 from flask import current_app as app
-import boto3
+import os
+import simplejson as json
 from querier import ArchiveQuerier, Cursor, InvalidCursor, \
     DEFAULT_LOOKBACK_DAYS
 from fetcher import ArchiveFileFetcher
@@ -574,3 +575,37 @@ def latest_get_contents(what, where):
     f = _get_file(f['metadata']['id'])
     headers = _get_headers_for_file(f)
     return f.read(), 200, headers
+
+
+@v0.route('/environment/')
+def environment():
+    '''
+    Get information about the environment (eg. build version).
+
+    ---
+    tags:
+      - version
+    responses:
+      200:
+        description: success
+        schema:
+          type: object
+          properties:
+            data:
+                type: object
+                properties:
+                    build:
+                        type: object
+                        properties:
+                            version:
+                                type: string
+
+
+    '''
+    return Response(json.dumps({
+        'data': {
+            'build': {
+                'version': os.environ.get('VERSION', 'UNKNOWN')
+                }
+        }
+    }), content_type='application/json')
