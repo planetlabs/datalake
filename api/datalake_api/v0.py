@@ -577,15 +577,10 @@ def latest_get_contents(what, where):
     return f.read(), 200, headers
 
 
-def get_sha_path():
-    return '/version.txt'
-
-
 def get_build_version():
     build_sha = 'UNKNOWN'
-    sha_path = get_sha_path()
-    if os.path.exists(sha_path):
-        with open(sha_path, 'r') as f:
+    if os.path.exists('/version.txt'):
+        with open('/version.txt', 'r') as f:
             build_sha = f.read().strip()
     return build_sha
 
@@ -597,7 +592,7 @@ def environment():
 
     ---
     tags:
-      - version
+      - environment
     responses:
       200:
         description: success
