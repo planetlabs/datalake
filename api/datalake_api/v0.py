@@ -578,7 +578,7 @@ def latest_get_contents(what, where):
 
 
 def get_sha_path():
-    return '/sha.txt'
+    return '/version.txt'
 
 
 def get_build_version():

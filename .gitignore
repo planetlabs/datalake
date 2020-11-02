@@ -57,4 +57,4 @@ target/
 .vagrant
 
 # build artifacts
-sha.txt
+version.txt

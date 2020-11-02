@@ -31,12 +31,12 @@ endif
 	docker push $(IMAGE)
 
 clean:
-	rm -rf sha.txt
+	rm -rf version.txt
 
 .PHONY: version
 version:
-	@test -f sha.txt \
-		|| echo $(VERSION) | tee sha.txt
+	@test -f version.txt \
+		|| echo $(VERSION) | tee version.txt
 
 .PHONY: help  # Generate list of targets with descriptions
 help:

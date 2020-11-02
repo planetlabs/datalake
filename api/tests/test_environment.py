@@ -17,7 +17,7 @@ from datalake_api import v0
 
 def test_health(client, monkeypatch, tmpdir):
     uri = '/v0/environment/'
-    p = tmpdir.join("test_sha.txt")
+    p = tmpdir.join("test_version.txt")
     p.write('\nfake_version\n\n')
     monkeypatch.setattr(v0, "get_sha_path", lambda: p.strpath)
 
