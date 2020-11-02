@@ -577,6 +577,19 @@ def latest_get_contents(what, where):
     return f.read(), 200, headers
 
 
+def get_sha_path():
+    return '/sha.txt'
+
+
+def get_build_version():
+    build_sha = 'UNKNOWN'
+    sha_path = get_sha_path()
+    if os.path.exists(sha_path):
+        with open(sha_path, 'r') as f:
+            build_sha = f.read().strip()
+    return build_sha
+
+
 @v0.route('/environment/')
 def environment():
     '''
@@ -605,7 +618,7 @@ def environment():
     return Response(json.dumps({
         'data': {
             'build': {
-                'version': os.environ.get('VERSION', 'UNKNOWN')
+                'version': get_build_version()
                 }
         }
     }), content_type='application/json')

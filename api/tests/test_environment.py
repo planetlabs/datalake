@@ -11,9 +11,19 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
+import simplejson as json
+from datalake_api import v0
 
 
-def test_health(client):
+def test_health(client, monkeypatch, tmpdir):
     uri = '/v0/environment/'
+    p = tmpdir.join("test_sha.txt")
+    p.write('\nfake_version\n\n')
+    monkeypatch.setattr(v0, "get_sha_path", lambda: p.strpath)
+
     res = client.get(uri)
     assert res.status_code == 200
+    response = json.loads(res.get_data())
+    assert response['data'] == {
+        'build': {'version': 'fake_version'}
+    }

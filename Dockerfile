@@ -56,5 +56,7 @@ RUN for d in client ingester api; do \
 ARG VERSION=unspecified
 ENV VERSION=$VERSION
 
+COPY sha.txt /
+
 WORKDIR /opt
 ENTRYPOINT ["/opt/docker_entry.sh"]
