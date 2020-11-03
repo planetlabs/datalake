@@ -3,7 +3,7 @@ REPO=planetlabs
 IMAGE="$(REPO)/datalake:$(VERSION)"
 
 .PHONY: docker # build the docker container
-docker:
+docker: version
 	docker build --build-arg VERSION=$(VERSION) -t $(IMAGE) .
 
 .PHONY: devshell  # Open a developer shell in the docker env
@@ -29,6 +29,14 @@ ifeq ($(DOCKER_PASSWORD),)
 endif
 	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin && \
 	docker push $(IMAGE)
+
+clean:
+	rm -rf version.txt
+
+.PHONY: version
+version:
+	@test -f version.txt \
+		|| echo $(VERSION) | tee version.txt
 
 .PHONY: help  # Generate list of targets with descriptions
 help:
