@@ -27,7 +27,7 @@ RUN pip install \
     python-dateutil>=2.4.2 \
     python-dotenv>=0.1.3 \
     pytz>=2015.4 \
-    raven[flask]>=5.6.0 \
+    sentry-sdk[flask]>=0.19.5 \
     requests>=2.5 \
     simplejson>=3.3.1 \
     six>=1.10.0 \

@@ -57,7 +57,7 @@ setup(name='datalake_api',
           'Flask>=0.10.1',
           'flask-swagger==0.2.8',
           'boto3==1.1.3',
-          'raven[flask]>=5.6.0',
+          'sentry-sdk[flask]>=0.19.5',
           'blinker>=1.4',
       ],
       extras_require={
