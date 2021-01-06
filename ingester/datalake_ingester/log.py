@@ -1,5 +1,6 @@
 import logging
 import os
+import sentry_sdk
 
 
 conf = {
@@ -24,12 +25,8 @@ conf = {
     }
 }
 
-if os.environ.get('SENTRY_APP_URL'):
-    conf['handlers']['sentry'] = {
-        'level': 'ERROR',
-        'class': 'raven.handlers.logging.SentryHandler',
-        'dsn': os.environ.get('SENTRY_APP_URL')
-    }
-    conf['root']['handlers'].append('sentry')
+
+sentry_sdk.init()
+
 
 logging.config.dictConfig(conf)

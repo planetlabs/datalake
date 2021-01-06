@@ -16,6 +16,8 @@ import logging
 from flask import Flask, jsonify, redirect
 from flask_swagger import swagger
 import os
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 from datalake_api.v0 import v0
 from datalake_api import settings
@@ -36,11 +38,7 @@ if level is not None and not app.debug:
     logging.basicConfig(level=level)
 
 logging.getLogger('boto3.resources.action').setLevel(logging.WARN)
-
-sentry_dsn = app.config.get('SENTRY_DSN')
-if sentry_dsn is not None:
-    from raven.contrib.flask import Sentry
-    sentry = Sentry(app, dsn=sentry_dsn)
+sentry_sdk.init(integrations=[FlaskIntegration()])
 
 
 @app.route('/')

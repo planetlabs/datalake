@@ -54,7 +54,7 @@ setup(name='datalake_ingester',
           'boto>=2.38.0',
           'memoized_property>=1.0.2',
           'simplejson>=3.3.1',
-          'raven>=5.6.0',
+          'sentry-sdk>=0.19.5',
           'click>=5.1',
       ],
       extras_require={
