@@ -219,13 +219,17 @@ def _human_format(result):
             s += _human_format(v)
             continue
         if k in ['start', 'end']:
-            v = _ms_to_iso(v)
+            if v:
+                v = _ms_to_iso(v)
+            else:
+                v = 'null'
         s += '{}: {}\n'.format(k, v)
     return s
 
 
 _list_result_formatters = {
     'url': lambda result: result['url'],
+    'http': lambda result: result['http_url'],
     'json': lambda result: json.dumps(result),
     'json-pretty': lambda result: json.dumps(result,
                                              sort_keys=True,
