@@ -232,3 +232,109 @@ def test_list_cli_json_format(cli_tester, random_metadata):
     output_jsons = [json.loads(l) for l in output_lines]
     for record in r['records']:
         assert record in output_jsons
+
+
+@responses.activate
+def test_list_cli_http_format(cli_tester, random_metadata):
+    m1 = copy(random_metadata)
+    m1['id'] = '1'
+    m1['work_id'] = 'foo1234'
+    m2 = copy(random_metadata)
+    m2['id'] = '2'
+    m2['work_id'] = 'foo1234'
+    r = {
+        'records': [
+            {
+                'url': 's3://url1',
+                'http_url': 'https://foo.com/url1',
+                'metadata': m1,
+            },
+            {
+                'url': 's3://url2',
+                'http_url': 'https://foo.com/url2',
+                'metadata': m2,
+            }
+        ],
+        'next': None,
+    }
+    prepare_response(r, what=m1['what'], work_id=m1['work_id'])
+    cmd = 'list {what} --work-id={work_id} --format=http'
+    cmd = cmd.format(**m1)
+    output = cli_tester(cmd).rstrip('\n').split('\n')
+    assert output == ['https://foo.com/url1', 'https://foo.com/url2']
+
+
+@responses.activate
+def test_list_cli_human_format(cli_tester, random_metadata):
+    m1 = copy(random_metadata)
+    m1['id'] = '1'
+    m1['work_id'] = 'foo1234'
+    m1['start'] = 1612548642000
+    m1['end'] = 1612548643000
+    m2 = copy(random_metadata)
+    m2['id'] = '2'
+    m2['work_id'] = 'foo1234'
+    m2['start'] = 1612548642000
+    m2['end'] = 1612548643000
+    r = {
+        'records': [
+            {
+                'url': 's3://url1',
+                'metadata': m1,
+            },
+            {
+                'url': 's3://url2',
+                'metadata': m2,
+            }
+        ],
+        'next': None,
+    }
+    prepare_response(r, what=m1['what'], work_id=m1['work_id'])
+    cmd = 'list {what} --work-id={work_id} --format=human'
+    cmd = cmd.format(**m1)
+    stanzas = [s for s in cli_tester(cmd).split('\n\n') if s]
+
+    for s in stanzas:
+        lines = [l for l in s.split('\n')]
+        # just check for the start/end
+        assert 'start: 2021-02-05T18:10:42+00:00' in lines
+        assert 'end: 2021-02-05T18:10:43+00:00' in lines
+    print(stanzas)
+    assert len(stanzas) == 2
+
+
+@responses.activate
+def test_list_cli_human_format_no_end_time(cli_tester, random_metadata):
+    m1 = copy(random_metadata)
+    m1['id'] = '1'
+    m1['work_id'] = 'foo1234'
+    m1['start'] = 1612548642000
+    m1['end'] = None
+    m2 = copy(random_metadata)
+    m2['id'] = '2'
+    m2['work_id'] = 'foo1234'
+    m2['start'] = 1612548642000
+    m2['end'] = None
+    r = {
+        'records': [
+            {
+                'url': 's3://url1',
+                'metadata': m1,
+            },
+            {
+                'url': 's3://url2',
+                'metadata': m2,
+            }
+        ],
+        'next': None,
+    }
+    prepare_response(r, what=m1['what'], work_id=m1['work_id'])
+    cmd = 'list {what} --work-id={work_id} --format=human'
+    cmd = cmd.format(**m1)
+    stanzas = [s for s in cli_tester(cmd).split('\n\n') if s]
+    for s in stanzas:
+        lines = [l for l in s.split('\n')]
+        # just check for the start/end
+        assert 'start: 2021-02-05T18:10:42+00:00' in lines
+        assert 'end: null' in lines
+    assert len(stanzas) == 2
