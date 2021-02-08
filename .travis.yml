@@ -16,6 +16,7 @@ _python_template: &_python_template
   script: py.test
   deploy:
     provider: pypi
+    edge: true
     username: "__token__"
     password: $PYPI_TOKEN1$PYPI_TOKEN2
     distributions: "sdist bdist_wheel"
