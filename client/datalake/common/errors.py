@@ -23,3 +23,7 @@ class UnsupportedTimeRange(Exception):
 
 class NoSuchDatalakeFile(Exception):
     pass
+
+
+class UnsupportedS3Event(Exception):
+    pass

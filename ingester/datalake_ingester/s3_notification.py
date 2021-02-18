@@ -37,7 +37,11 @@ class S3Notification(dict):
 
 class S3Event(dict):
 
-    EVENTS_WITH_RECORDS = ['ObjectCreated:Put', 'ObjectCreated:Copy']
+    EVENTS_WITH_RECORDS = [
+        'ObjectCreated:Put',
+        'ObjectCreated:Copy',
+        'ObjectCreated:CompleteMultipartUpload'
+    ]
 
     def __init__(self, event):
         super(S3Event, self).__init__(event)
