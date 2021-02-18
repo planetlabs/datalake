@@ -15,6 +15,8 @@ _python_template: &_python_template
   before_install: cd client/
   install: pip install -e .[test]
   script: py.test
+  # NB: the following is a deplorable work-around for eroding python2 support:
+  # https://github.com/travis-ci/dpl/issues/1232
   before_deploy: sudo cp /usr/bin/wget /usr/bin/_wget && echo -e '#!/bin/bash\n/usr/bin/_wget -nv -O - https://bootstrap.pypa.io/2.7/get-pip.py' | sudo tee /usr/bin/wget
   after_deploy: sudo mv /usr/bin/_wget /usr/bin/wget
   deploy:
