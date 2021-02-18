@@ -1,6 +1,6 @@
 from datalake.common import DatalakeRecord, InvalidDatalakeMetadata
 from datalake.common.errors import InsufficientConfiguration, \
-    UnsupportedTimeRange, NoSuchDatalakeFile
+    UnsupportedTimeRange, NoSuchDatalakeFile, UnsupportedS3Event
 from s3_notification import S3Notification
 import time
 import logging
@@ -21,6 +21,7 @@ SAFE_EXCEPTIONS = [
     UnsupportedTimeRange,
     NoSuchDatalakeFile,
     InvalidDatalakeMetadata,
+    UnsupportedS3Event
 ]
 
 
@@ -106,6 +107,12 @@ class Ingester(object):
                 self._add_records(e.datalake_records, ir)
             elif e.event_name == 'ObjectCreated:Copy':
                 self._update_records(e.datalake_records, ir)
+            elif e.event_name == 'ObjectCreated:CompleteMultipartUpload':
+                self._add_records(e.datalake_records, ir)
+            else:
+                msg = 'Datalake does not support S3 publish event type {}.'
+                msg = msg.format(e.event_name)
+                raise UnsupportedS3Event(msg)
 
     def _add_records(self, datalake_records, ir):
         for r in datalake_records:

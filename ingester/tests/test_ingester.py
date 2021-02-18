@@ -101,6 +101,7 @@ def report_comparator():
             return
         assert len(actual) == len(expected)
         for a, e in zip(actual, expected):
+            assert len(a['records']) == len(e['records'])
             err = abs(time.time() - a['start']/1000.0)
             assert err < 5.0
             for ar, er, in zip(sort(a['records']), sort(e['records'])):
