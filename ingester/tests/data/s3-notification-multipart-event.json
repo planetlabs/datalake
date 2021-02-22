@@ -32,7 +32,7 @@
       "url": "s3://datalake-test/2-california/syslog/1612876178000/9fd061c46d004031b2ceafbb729a0ea3-syslog-284.txt",
       "size": 0,
       "create_time": 236574060000,
-      "time_index_key": "16552:syslog",
+      "time_index_key": "18667:syslog",
       "work_id_index_key": "null9fd061c46d004031b2ceafbb729a0ea3:syslog",
       "range_key": "california:9fd061c46d004031b2ceafbb729a0ea3",
       "metadata": {
