@@ -48,6 +48,35 @@ def CHUNK_SIZE():
     return int(float(os.getenv('DATALAKE_CHUNK_SIZE_MB', 100)) * MB_B)
 
 
+_connect_timeout = None
+_read_timeout = None
+
+
+def TIMEOUT():
+    """
+    A tuple of the connect and read timeout, with defaults using the
+    recommendations from the requests docs:
+     https://requests.readthedocs.io/en/master/user/advanced/#timeouts
+
+    :return: tuple of floats
+    """
+    return CONNECT_TIMEOUT(), READ_TIMEOUT(),
+
+
+def CONNECT_TIMEOUT():
+    global _connect_timeout
+    if _connect_timeout is None:
+        _connect_timeout = float(os.getenv('DATALAKE_CONNECT_TIMEOUT_S', 3.05))
+    return _connect_timeout
+
+
+def READ_TIMEOUT():
+    global _read_timeout
+    if _read_timeout is None:
+        _read_timeout = float(os.getenv('DATALAKE_READ_TIMEOUT_S', 31))
+    return _read_timeout
+
+
 class UnsupportedStorageError(Exception):
     pass
 
@@ -412,7 +441,7 @@ class Archive(object):
         return self._conn
 
     def _requests_get(self, url, **kwargs):
-        return self._session.get(url, **kwargs)
+        return self._session.get(url, timeout=TIMEOUT(), **kwargs)
 
     @memoized_property
     def _session(self):
