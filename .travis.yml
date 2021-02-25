@@ -53,6 +53,7 @@ jobs:
     name: docker
     stage: test
     script:
+      - echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin
       - make test
     deploy:
       provider: script
