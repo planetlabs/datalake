@@ -51,10 +51,21 @@ def s3_bucket(s3_conn):
 
 
 @pytest.fixture
-def archive(s3_bucket):
-    bucket_url = 's3://' + s3_bucket.name + '/'
-    http_url = 'http://datalake.example.com'
-    return Archive(storage_url=bucket_url, http_url=http_url)
+def archive_maker(s3_bucket):
+
+    def maker(**kwargs):
+        kwargs.update(
+            storage_url='s3://' + s3_bucket.name + '/',
+            http_url='http://datalake.example.com'
+        )
+        return Archive(**kwargs)
+
+    return maker
+
+
+@pytest.fixture
+def archive(archive_maker):
+    return archive_maker()
 
 
 @pytest.fixture

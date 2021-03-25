@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from pytz import utc
 import simplejson as json
 from conftest import prepare_response
+import requests
 
 
 @responses.activate
@@ -338,3 +339,73 @@ def test_list_cli_human_format_no_end_time(cli_tester, random_metadata):
         assert 'start: 2021-02-05T18:10:42+00:00' in lines
         assert 'end: null' in lines
     assert len(stanzas) == 2
+
+
+TEST_REQUESTS = []
+
+
+class SessionWrapper(requests.Session):
+
+    def __init__(self, *args, **kwargs):
+        global TEST_REQUESTS
+        TEST_REQUESTS = []
+        return super(SessionWrapper, self).__init__(*args, **kwargs)
+
+    def request(self, method, url, **kwargs):
+        global TEST_REQUESTS
+        TEST_REQUESTS.append((method, url))
+        return super(SessionWrapper, self).request(method, url, **kwargs)
+
+
+@responses.activate
+def test_list_with_injected_session(archive_maker, random_metadata):
+    r = {
+        'records': [
+            {
+                'url': 's3://bucket/file',
+                'metadata': random_metadata,
+            }
+        ],
+        'next': None,
+    }
+    prepare_response(r, what=random_metadata['what'],
+                     start=random_metadata['start'],
+                     end=random_metadata['end'])
+
+    s = SessionWrapper()
+    a = archive_maker(session=s)
+    l = list(a.list(random_metadata['what'],
+                    start=random_metadata['start'],
+                    end=random_metadata['end']))
+    assert len(TEST_REQUESTS) > 0
+    assert len(l) > 0
+    assert l[0]['url'] == 's3://bucket/file'
+    assert l[0]['metadata'] == random_metadata
+
+
+@responses.activate
+def test_list_with_session_class(monkeypatch,
+                                 archive_maker,
+                                 random_metadata):
+    r = {
+        'records': [
+            {
+                'url': 's3://bucket/file',
+                'metadata': random_metadata,
+            }
+        ],
+        'next': None,
+    }
+    prepare_response(r, what=random_metadata['what'],
+                     start=random_metadata['start'],
+                     end=random_metadata['end'])
+
+    monkeypatch.setenv('DATALAKE_SESSION_CLASS', 'test_list.SessionWrapper')
+    a = archive_maker()
+    l = list(a.list(random_metadata['what'],
+                    start=random_metadata['start'],
+                    end=random_metadata['end']))
+    assert len(TEST_REQUESTS) > 0
+    assert len(l) > 0
+    assert l[0]['url'] == 's3://bucket/file'
+    assert l[0]['metadata'] == random_metadata
