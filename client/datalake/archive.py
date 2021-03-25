@@ -91,10 +91,11 @@ class InvalidDatalakePath(Exception):
 
 class Archive(object):
 
-    def __init__(self, storage_url=None, http_url=None):
+    def __init__(self, storage_url=None, http_url=None, session=None):
         self.storage_url = storage_url or environ.get('DATALAKE_STORAGE_URL')
         self._validate_storage_url()
         self._http_url = http_url
+        self.__session = session
 
     def _validate_storage_url(self):
         if not self.storage_url:
@@ -443,6 +444,20 @@ class Archive(object):
     def _requests_get(self, url, **kwargs):
         return self._session.get(url, timeout=TIMEOUT(), **kwargs)
 
-    @memoized_property
+    @property
     def _session(self):
-        return requests.Session()
+        if self.__session:
+            return self.__session
+
+        session_class = os.environ.get('DATALAKE_SESSION_CLASS')
+        if session_class is not None:
+            import importlib
+            parts = session_class.split('.')
+            module_name = '.'.join(parts[:-1])
+            class_name = parts[-1]
+            module = importlib.import_module(module_name)
+            session_class = getattr(module, class_name)
+            self.__session = session_class()
+        else:
+            self.__session = requests.Session()
+        return self.__session
