@@ -36,7 +36,9 @@ RUN pip install \
     freezegun==0.3.9 \
     moto==0.4.27 \
     pytest==3.0.2 \
-    responses==0.5.0
+    responses==0.5.0 \
+    pyinotify>=0.9.4, \
+    raven>=5.0.0
 
 RUN mkdir -p /opt/
 COPY . /opt/
