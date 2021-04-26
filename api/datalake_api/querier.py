@@ -349,7 +349,9 @@ class ArchiveQuerier(object):
         if not records:
             return None
 
-        records = sorted(records, key=lambda r: r['metadata']['start'])
+        records = sorted(records,
+                         key=lambda r: (r['metadata']['start'],
+                                        r['create_time']))
         result = records[-1]
         return dict(url=result['url'], metadata=result['metadata'])
 

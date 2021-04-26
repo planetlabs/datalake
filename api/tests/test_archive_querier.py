@@ -456,6 +456,31 @@ def test_latest_many_records_single_time_bucket(table_maker, querier,
                             start=last_start)
 
 
+def test_latest_creation_time_breaks_tie(table_maker, querier,
+                                         record_maker):
+    now = int(time.time() * 1000)
+    records = []
+    bucket = now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150
+    end = start + interval
+    table = table_maker([])
+
+    for i in range(3):
+        record = record_maker(start=start,
+                              end=end,
+                              what='meow',
+                              where='tree',
+                              path='/{}'.format(i))
+        table.put_item(Item=record[0])
+        # unfortunately moto only keeps 1-sec resolution on create times.
+        time.sleep(1.01)
+    result = querier.query_latest('meow', 'tree')
+    _validate_latest_result(result, what='meow', where='tree',
+                            start=start)
+    assert result['metadata']['path'] == '/2'
+
+
 def test_max_results_in_one_bucket(table_maker, querier, record_maker):
     now = int(time.time() * 1000)
     records = []
