@@ -29,6 +29,7 @@ setup(name='datalake',
           'python-dotenv>=0.1.3',
           'requests>=2.5',
           'six>=1.10.0',
+          'python-dateutil>=2.4.2',
       ],
       extras_require={
           'test': [
