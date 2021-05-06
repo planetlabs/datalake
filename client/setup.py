@@ -30,6 +30,7 @@ setup(name='datalake',
           'requests>=2.5',
           'six>=1.10.0',
           'python-dateutil>=2.4.2',
+          'pytz>=2015.4',
       ],
       extras_require={
           'test': [
@@ -40,7 +41,6 @@ setup(name='datalake',
               'wheel==0.24.0',
               'flake8==2.5.0',
               'responses==0.5.0',
-              'pytz>=2015.4',
           ],
           # the queuable feature allows users to offload their datalake pushes
           # to a separate uploader process.
