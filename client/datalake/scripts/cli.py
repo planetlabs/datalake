@@ -296,7 +296,7 @@ def cat(**kwargs):
 def _cat(url):
     _prepare_archive_or_fail()
     urls = url or click.get_text_stream('stdin')
-    out = click.open_file('-', 'w')
+    out = click.open_file('-', 'wb')
     for url in urls:
         url = url.rstrip('\n')
         f = archive.fetch(url)
