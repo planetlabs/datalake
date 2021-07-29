@@ -23,7 +23,7 @@ from datalake import Enqueuer, Uploader
 from datetime import datetime
 from pytz import utc
 from six import iteritems
-
+import sys
 
 archive = None
 
@@ -296,12 +296,14 @@ def cat(**kwargs):
 def _cat(url):
     _prepare_archive_or_fail()
     urls = url or click.get_text_stream('stdin')
-    out = click.open_file('-', 'wb')
+    #out = click.open_file('-', 'wb')
     for url in urls:
         url = url.rstrip('\n')
         f = archive.fetch(url)
-        out.write(f.read())
-    out.close()
+        sys.stderr.write(f.read())
+        #out.write(f.read())
+        click.echo(f.read())
+    #out.close()
 
 
 @cli.command()
