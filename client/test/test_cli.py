@@ -62,7 +62,7 @@ def test_translate_with_good_args_succceeds(cli_tester):
     cli_tester(cmd)
 
 
-@pytest.mark.parametrize("content", [['text'], ['0001 1110'], ['multiple', 'things']])  
+@pytest.mark.parametrize("content", [['text'], ['multiple', 'things']])  
 def test_cat(cli_tester, datalake_url_maker, random_metadata, content):
     metadata1 = random_metadata
     metadata2 = random_metadata.copy()
