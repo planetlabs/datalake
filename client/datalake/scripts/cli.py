@@ -24,7 +24,6 @@ from datetime import datetime
 from pytz import utc
 from six import iteritems
 
-
 archive = None
 
 
@@ -296,12 +295,10 @@ def cat(**kwargs):
 def _cat(url):
     _prepare_archive_or_fail()
     urls = url or click.get_text_stream('stdin')
-    out = click.open_file('-', 'w')
     for url in urls:
         url = url.rstrip('\n')
         f = archive.fetch(url)
-        out.write(f.read())
-    out.close()
+        click.echo(f.read())
 
 
 @cli.command()
