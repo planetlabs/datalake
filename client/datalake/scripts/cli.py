@@ -299,7 +299,6 @@ def _cat(url):
     for url in urls:
         url = url.rstrip('\n')
         f = archive.fetch(url)
-        sys.stderr.write(f.read())
         click.echo(f.read())
 
 
