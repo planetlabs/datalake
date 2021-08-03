@@ -23,7 +23,6 @@ from datalake import Enqueuer, Uploader
 from datetime import datetime
 from pytz import utc
 from six import iteritems
-import sys
 
 archive = None
 
