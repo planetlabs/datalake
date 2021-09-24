@@ -1,3 +1,6 @@
+## DEPRECIATED ##
+## Use GitHub actions under ./.github/workflows/actions.yml ##
+
 services: docker
 dist: focal
 
