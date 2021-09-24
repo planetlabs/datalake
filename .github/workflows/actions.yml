@@ -1,0 +1,69 @@
+name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+on:
+  [push]
+  # push:
+  #   branches:
+  #     - master
+env:
+  PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+  TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+  PYPI_USER: __token__
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+jobs:
+  test-multiple-python-versions-and-extras:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 4 jobs total with all permutations
+        python: [2.7, 3.5]
+        extras: ["test", "test,queable,sentry"]
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Testing
+        working-directory: ./client
+        run: |
+          pip install -e .[${{ matrix.extras }}]
+          py.test
+  test-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Testing
+        run: |
+          echo ${{ env.DOCKER_PASSWORD }} | docker login --username $DOCKER_USERNAME --password-stdin
+          make test
+  publish-to-pypi:
+    needs: [test-multiple-python-versions-and-extras, test-docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: 3.5 # 2.7 does not work to publish
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Create distribution
+        working-directory: ./client
+        run: |
+          pip install twine
+          pip install build
+          python -m build --sdist
+          python -m build --wheel
+      - name: Publish to PyPI
+        working-directory: ./client
+        run: |
+          twine upload -r testpypi -u ${{ env.PYPI_USER }} \
+          -p ${{ env.TEST_PYPI_TOKEN }} dist/*
+
+
+## TODO remove test tags before making a PR
+## TODO update when to run
