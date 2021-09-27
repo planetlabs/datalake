@@ -8,7 +8,7 @@ docker: version
 
 .PHONY: devshell  # Open a developer shell in the docker env
 devshell: docker
-	docker run --rm -v $$PWD:/opt --entrypoint /bin/bash $(IMAGE)
+	docker run --rm -it -v $$PWD:/opt --entrypoint /bin/bash $(IMAGE)
 
 test-client: docker
 	docker run --rm --entrypoint py.test $(IMAGE) client
