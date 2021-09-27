@@ -62,6 +62,6 @@ jobs:
         working-directory: ./client
         run: |
           twine upload -r testpypi -u ${{ env.PYPI_USER }} \
-          -p ${{ env.PYPI_TOKEN }} dist/*
+          -p ${{ env.TEST_PYPI_TOKEN }} dist/*
         # twine upload -r pypi -u ${{ env.PYPI_USER }} \
         # -p ${{ env.PYPI_TOKEN }} dist/*
