@@ -5,8 +5,7 @@ on:
       - '*'
 env:
   PYPI_USER: __token__
-  PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
-  # PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+  PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 jobs:
@@ -61,7 +60,5 @@ jobs:
       - name: Publish to PyPI
         working-directory: ./client
         run: |
-          twine upload -r testpypi -u ${{ env.PYPI_USER }} \
-          -p ${{ env.TEST_PYPI_TOKEN }} dist/*
-        # twine upload -r pypi -u ${{ env.PYPI_USER }} \
-        # -p ${{ env.PYPI_TOKEN }} dist/*
+          twine upload -r pypi -u ${{ env.PYPI_USER }} \
+          -p ${{ env.PYPI_TOKEN }} dist/*
