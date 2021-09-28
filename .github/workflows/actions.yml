@@ -62,3 +62,15 @@ jobs:
         run: |
           twine upload -r pypi -u ${{ env.PYPI_USER }} \
           -p ${{ env.PYPI_TOKEN }} dist/*
+  save-docker:
+    needs: [test-multiple-python-versions-and-extras, test-docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Upload
+        run: |
+          echo ${{ env.DOCKER_PASSWORD }} | docker login --username $DOCKER_USERNAME --password-stdin
+          make push
