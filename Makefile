@@ -11,13 +11,13 @@ devshell: docker
 	docker run --rm -it -v $$PWD:/opt --entrypoint /bin/bash $(IMAGE)
 
 test-client: docker
-	docker run --rm -it --entrypoint py.test $(IMAGE) client
+	docker run --rm --entrypoint py.test $(IMAGE) client
 
 test-ingester: docker
-	docker run --rm -it --entrypoint py.test $(IMAGE) ingester
+	docker run --rm --entrypoint py.test $(IMAGE) ingester
 
 test-api: docker
-	docker run --rm -it --entrypoint py.test $(IMAGE) api
+	docker run --rm --entrypoint py.test $(IMAGE) api
 
 .PHONY: test  # Run the tests
 test:
