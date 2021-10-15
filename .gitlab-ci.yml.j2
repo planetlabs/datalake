@@ -1,0 +1,36 @@
+services:
+  - docker:18-dind
+
+stages:
+  - build
+  - publish
+
+build-docker:
+  stage: build
+  image: {{PLANET_CI_IMAGE}}
+  variables:
+    REPO: $CI_REGISTRY
+    REPO_PATH: $CI_PROJECT_PATH
+  script:
+    - rm -f version.txt
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY/$CI_PROJECT_PATH
+    - make docker test push
+  tags:
+    - {{PLANET_RUNNER_TAG}}
+  artifacts:
+    paths:
+      - version.txt
+
+publish-pypi:
+  stage: publish
+  image: {{PLANET_CI_IMAGE}}
+  script:
+    - cd client
+    - rm -rf dist
+    - python3 setup.py sdist bdist_wheel
+    - twine upload -r pypi --skip-existing dist/*
+  tags:
+    - {{PLANET_RUNNER_TAG}}
+  only:
+    - tags
+    - /^v[0-9]+(\.[0-9]+)*$/
