@@ -1,0 +1,24 @@
+stages:
+  - prep
+  - trigger
+
+prep:
+  stage: prep
+  image: python:3.9-alpine
+  script:
+    - pip install jinja-cli==1.2.1
+    - jinja
+      -D PLANET_CI_IMAGE $PLANET_CI_IMAGE
+      -D PLANET_RUNNER_TAG $PLANET_RUNNER_TAG
+      ./.gitlab-ci.yml.j2 > generated-gitlab-ci.yml
+  artifacts:
+    paths:
+      - generated-gitlab-ci.yml
+
+trigger:
+  stage: trigger
+  trigger:
+    include:
+      - artifact: generated-gitlab-ci.yml
+        job: prep
+    strategy: depend
