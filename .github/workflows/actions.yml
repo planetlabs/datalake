@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         # 4 jobs total with all permutations
-        python: [2.7, 3.5]
+        python: [2.7, 3.10]
         extras: ["test", "test,queable,sentry"]
     steps:
       - name: Setup Python
