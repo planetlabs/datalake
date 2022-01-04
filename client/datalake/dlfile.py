@@ -13,17 +13,26 @@
 # the License.
 
 import os
-from pyblake2 import blake2b
-from .translator import Translator
-from io import BytesIO
 import tarfile
+from gzip import GzipFile
+from io import BytesIO
+
 import simplejson as json
-from .common import Metadata
+
+try:
+    from hashlib import blake2b  # Available >= 3.4
+except ImportError:
+    from pyblake2 import blake2b
+
 try:
     from cStringIO import StringIO
 except ImportError:
     from io import BytesIO as StringIO
-from gzip import GzipFile
+
+from .common import Metadata
+from .translator import Translator
+
+
 
 ITER_SIZE = 1024 * 8
 
