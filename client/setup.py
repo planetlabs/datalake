@@ -35,7 +35,8 @@ setup(name='datalake',
       extras_require={
           'test': [
               'pytest',
-              'moto',
+              'moto<1',
+              'httpretty==0.9.5',
               'twine',
               'pip',
               'wheel',

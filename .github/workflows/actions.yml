@@ -18,6 +18,9 @@ jobs:
         uses: actions/checkout@v2
       - name: Test
         working-directory: ./client
+        env:
+          AWS_ACCESS_KEY_ID: foo
+          AWS_SECRET_ACCESS_KEY: bar
         run: |
           pip install -e .[${{ matrix.extras }}]
           py.test
