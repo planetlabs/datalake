@@ -14,9 +14,11 @@
 
 import simplejson as json
 
+from moto import mock_sns
+
 from datalake_ingester import SNSReporter
 
-
+@mock_sns
 def test_snsreporter_sends(sns_connection, sns_topic_arn, bare_sqs_queue):
     sns_connection.subscribe_sqs_queue(sns_topic_arn, bare_sqs_queue)
     r = SNSReporter(sns_topic_arn)

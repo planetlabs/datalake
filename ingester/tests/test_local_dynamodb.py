@@ -17,8 +17,10 @@
 Just a basic test to validate the dev environment.
 '''
 
+from moto import mock_dynamodb2
 
-def test_list_table(dynamodb_users_table, dynamodb_connection):
+@mock_dynamodb2
+def test_list_table(dynamodb_users_table):
     table_list = dynamodb_connection.list_tables()
     assert 'TableNames' in table_list
     table_list = table_list['TableNames']

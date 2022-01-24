@@ -1,4 +1,5 @@
 import pytest
+from moto import mock_dynamodb2, mock_s3
 import time
 
 
@@ -8,9 +9,8 @@ from datalake.common.errors import InsufficientConfiguration
 
 
 @pytest.fixture
-def storage(dynamodb_records_table, dynamodb_connection):
-    return DynamoDBStorage(table_name='records',
-                           connection=dynamodb_connection)
+def storage(dynamodb_records_table):
+    return DynamoDBStorage(table_name='records')
 
 
 @pytest.fixture
@@ -22,6 +22,7 @@ def random_s3_file_maker(s3_file_from_metadata, random_metadata):
     return maker
 
 
+@mock_dynamodb2
 def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker):
     url, metadata = random_s3_file_maker()
     ingester = Ingester(storage)
@@ -32,6 +33,7 @@ def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker):
         assert r['metadata'] == metadata
 
 
+@mock_dynamodb2
 def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,
                        random_metadata):
     del(random_metadata['end'])
@@ -48,6 +50,7 @@ def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,
         assert r['metadata'] == random_metadata
 
 
+@mock_dynamodb2
 def test_listen_no_queue(storage):
     ingester = Ingester(storage)
     with pytest.raises(InsufficientConfiguration):
@@ -121,6 +124,9 @@ def report_comparator():
     return comparator
 
 
+@mock_dynamodb2
+@mock_sns
+@mock_sqs
 def test_listener_reports(event_test_driver, ingester, report_listener,
                           sqs_sender, report_comparator):
 

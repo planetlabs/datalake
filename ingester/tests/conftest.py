@@ -4,46 +4,37 @@ import os
 import simplejson as json
 from glob import glob
 
-from boto.dynamodb2.table import Table
-from boto.exception import JSONResponseError
-from boto.dynamodb2.fields import HashKey, RangeKey
-import boto.sns
-import boto.sqs
+import boto3
 
-from datalake.tests import *  # noqa
+#from datalake.tests import *  # noqa
 
 from datalake_ingester import SQSQueue
 
 
-@pytest.fixture
-def dynamodb_connection(aws_connector):
-    return aws_connector(mock_dynamodb2,
-                         lambda: boto.dynamodb2.connect_to_region('us-west-1'))
-
-
-def _delete_table_if_exists(conn, name):
+def _delete_table_if_exists(dynamodb, name):
     try:
-        table = Table(name, connection=conn)
-        table.delete()
-    except JSONResponseError as e:
-        if e.status == 400 and e.error_code == 'ResourceNotFoundException':
-            return
-        raise e
+        dynamodb.Table(name).delete()
+    except dynamodb_client.exceptions.ResourceNotFoundException:
+        return
 
 
 @pytest.fixture
-def dynamodb_table_maker(request, dynamodb_connection):
+def dynamodb_table_maker(request):
 
     def table_maker(name, schema):
-        _delete_table_if_exists(dynamodb_connection, name)
-        throughput = {'read': 5, 'write': 5}
-        table = Table.create(name,
-                             schema=schema,
-                             throughput=throughput,
-                             connection=dynamodb_connection)
+        dynamodb = boto3.resource('dynamodb', region='us-west-1')
+        _delete_table_if_exists(dynamodb, name)
+        table = dynamodb.create_table(
+                  TableName=name,
+                  KeySchema=schema,
+                  ProvisionedThroughput={
+                      'ReadCapacityUnits': 5,
+                      'WriteCapacityUnits': 5
+                  }
+                )
 
         def tear_down():
-            _delete_table_if_exists(dynamodb_connection, name)
+            _delete_table_if_exists(dynamodb, name)
         request.addfinalizer(tear_down)
 
         return table
@@ -53,38 +44,52 @@ def dynamodb_table_maker(request, dynamodb_connection):
 
 @pytest.fixture
 def dynamodb_users_table(dynamodb_table_maker):
-    schema = [HashKey('name'), RangeKey('last_name')]
+    schema = [
+        {
+            'AttributeName': 'name',
+            'KeyType': 'HASH'
+        },
+        {
+            'AttributeName': 'last_name',
+            'KeyType': 'RANGE'
+        }
+    ]
     return dynamodb_table_maker('users', schema)
 
 
 @pytest.fixture
 def dynamodb_records_table(dynamodb_table_maker):
-    schema = [HashKey('time_index_key'), RangeKey('range_key')]
+    schema = [
+        {
+            'AttributeName': 'time_index_key',
+            'KeyType': 'HASH'
+        },
+        {
+            'AttributeName': 'range_key',
+            'KeyType': 'RANGE'
+        }
+    ]
     return dynamodb_table_maker('records', schema)
 
 
-@pytest.fixture
-def sns_connection(aws_connector):
-    return aws_connector(mock_sns, boto.connect_sns)
-
 
 @pytest.fixture
-def sns_topic_arn(sns_connection):
-    topic = sns_connection.create_topic('foo')
-    return topic['CreateTopicResponse']['CreateTopicResult']['TopicArn']
+def sns_topic_arn():
+    sns = boto3.client('sns')
+    topic = sns.create_topic(Name='foo')
+    return topic.TopicArn
+
 
 
 @pytest.fixture
-def sqs_connection(aws_connector):
-    return aws_connector(mock_sqs, boto.connect_sqs)
-
-
-@pytest.fixture
-def bare_sqs_queue_maker(sqs_connection):
+def bare_sqs_queue_maker():
 
     def maker(queue_name):
-        return sqs_connection.get_queue(queue_name) or \
-            sqs_connection.create_queue(queue_name)
+        sqs = boto3.resource('sqs')
+        try:
+            return sqs.get_queue_by_name(QueueName=queue_name)
+        except sqs.meta.client.exceptions.QueueDoesNotExist:
+            return sqs.create_queue(QueueName=queue_name)
 
     return maker
 
@@ -114,8 +119,7 @@ def sqs_sender(bare_sqs_queue_maker):
 
     def sender(msg, queue_name='test-queue'):
         q = bare_sqs_queue_maker(queue_name)
-        msg = q.new_message(json.dumps(msg))
-        q.write(msg)
+        q.send_message(MessageBody=json.dumps(msg))
 
     return sender
 
