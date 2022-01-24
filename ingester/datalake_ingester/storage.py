@@ -47,7 +47,3 @@ class DynamoDBStorage(object):
     def store(self, record):
         # Will overwrite item if it exists
         self._table.put_item(Item=record)
-
-    def update(self, record):
-        # Note this is a replacement, not a partial update
-        self._table.put_item(Item=record)

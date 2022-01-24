@@ -122,7 +122,7 @@ class Ingester(object):
     def _update_records(self, datalake_records, ir):
         for r in datalake_records:
             ir.add_record(r)
-            self.storage.update(r)
+            self.storage.store(r)
 
     def _report(self, r):
         if self.reporter is None:
