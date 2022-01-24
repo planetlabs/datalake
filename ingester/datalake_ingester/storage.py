@@ -13,17 +13,15 @@
 # the License.
 
 from memoized_property import memoized_property
-import boto.dynamodb2
-from boto.dynamodb2.table import Table
-from boto.dynamodb2.exceptions import ConditionalCheckFailedException
 import os
+import boto3
 from datalake.common.errors import InsufficientConfiguration
 
 
 class DynamoDBStorage(object):
     '''store datalake records in a dynamoDB table'''
 
-    def __init__(self, table_name, connection=None):
+    def __init__(self, table_name):
         self.table_name = table_name
         self._prepare_connection(connection)
 
@@ -34,26 +32,22 @@ class DynamoDBStorage(object):
             raise InsufficientConfiguration('Please specify a dynamodb table')
         return cls(table_name)
 
-    def _prepare_connection(self, connection):
+    @memoized_property
+    def _dynamodb(self):
         region = os.environ.get('AWS_REGION')
-        if connection:
-            self._connection = connection
-        elif region:
-            self._connection = boto.dynamodb2.connect_to_region(region)
+        if region:
+            return boto3.resource('dynamodb', region_name=region)
         else:
-            msg = 'Please provide a connection or configure a region'
-            raise InsufficientConfiguration(msg)
+            return boto3.resource('dynamodb')
 
     @memoized_property
     def _table(self):
-        return Table(self.table_name, connection=self._connection)
+        return self._dynamodb.Table(self.table_name)
 
     def store(self, record):
-        try:
-            self._table.put_item(data=record)
-        except ConditionalCheckFailedException:
-            # Tolerate duplicate stores
-            pass
+        # Will overwrite item if it exists
+        self._table.put_item(Item=record)
 
     def update(self, record):
-        self._table.put_item(data=record, overwrite=True)
+        # Note this is a replacement, not a partial update
+        self._table.put_item(Item=record)
