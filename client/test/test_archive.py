@@ -15,14 +15,13 @@
 import simplejson as json
 import re
 
-
-def test_push_file(archive, random_metadata, tmpfile, s3_key):
+def test_push_file(archive, random_metadata, tmpfile, s3_obj):
     expected_content = 'mwahaha'.encode('utf-8')
     f = tmpfile(expected_content)
     url = archive.prepare_metadata_and_push(f, **random_metadata)
-    from_s3 = s3_key(url)
-    assert from_s3.get_contents_as_string() == expected_content
-    metadata = from_s3.get_metadata('datalake')
+    from_s3 = s3_obj(url)
+    assert from_s3.get()['Body'].read() == expected_content
+    metadata = from_s3.metadata.get('datalake')
     assert metadata is not None
     metadata = json.loads(metadata)
     common_keys = set(metadata.keys()).intersection(random_metadata.keys())
@@ -30,14 +29,14 @@ def test_push_file(archive, random_metadata, tmpfile, s3_key):
 
 
 def test_push_large_file(
-        monkeypatch, archive, random_metadata, tmpfile, s3_key):
+        monkeypatch, archive, random_metadata, tmpfile, s3_obj):
     monkeypatch.setenv('DATALAKE_CHUNK_SIZE_MB', 5)
     expected_content = ('big data' * 1024 * 1024).encode('utf-8')
     f = tmpfile(expected_content)
     url = archive.prepare_metadata_and_push(f, **random_metadata)
-    from_s3 = s3_key(url)
-    assert from_s3.get_contents_as_string() == expected_content
-    metadata = from_s3.get_metadata('datalake')
+    from_s3 = s3_obj(url)
+    assert from_s3.get()['Body'].read() == expected_content
+    metadata = from_s3.metadata.get('datalake')
     assert metadata is not None
     metadata = json.loads(metadata)
     common_keys = set(metadata.keys()).intersection(random_metadata.keys())

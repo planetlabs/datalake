@@ -29,9 +29,9 @@ import requests
 from io import BytesIO
 import errno
 
-from boto.s3.connection import S3Connection
-from boto.s3.key import Key
-from boto.s3.connection import NoHostProvided
+import boto3
+import botocore.exceptions
+
 import math
 from logging import getLogger
 log = getLogger('datalake-archive')
@@ -44,7 +44,7 @@ MB_B = 1024 ** 2
 
 # S3 limit for PUT request is 5GB
 # S3 limit for minimum multipart upload size is 5MB
-def CHUNK_SIZE():
+def CHUNK_SIZE_BYTES():
     return int(float(os.getenv('DATALAKE_CHUNK_SIZE_MB', 100)) * MB_B)
 
 
@@ -198,6 +198,7 @@ class Archive(object):
         f = File.from_filename(filename, **metadata_fields)
         return self.push(f)
 
+
     def push(self, f):
         '''push a file f to the archive
 
@@ -206,57 +207,35 @@ class Archive(object):
 
         returns the url to which the file was pushed.
         '''
-        self._upload_file(f)
-        return self.url_from_file(f)
+        s3obj = self._s3_object_from_metadata(f)
 
-    def _upload_file(self, f):
-        key = self._s3_key_from_metadata(f)
+        config = boto3.s3.transfer.TransferConfig(
+                # All sizes are bytes
+                multipart_threshold = max(8 * MB_B, CHUNK_SIZE_BYTES()),
+                use_threads = True,
+                max_concurrency = 10,
+                multipart_chunksize = CHUNK_SIZE_BYTES(),
+        )
 
-        spos = f.tell()
-        f.seek(0, os.SEEK_END)
-        f_size = f.tell()
-        # seek back to the correct position.
-        f.seek(spos)
+        extra = {
+                'Metadata': {
+                    METADATA_NAME: json.dumps(f.metadata)
+                }
+        }
 
-        num_chunks = int(math.ceil(f_size / float(CHUNK_SIZE())))
-        log.info("Uploading {} ({} B / {} chunks)".format(
-            key.name, f_size, num_chunks))
-        if num_chunks <= 1:
-            key.set_metadata(METADATA_NAME, json.dumps(f.metadata))
-            completed_size = key.set_contents_from_file(f)
-            log.info("Upload of {} complete (1 part / {} B).".format(
-                key.name, completed_size))
-            return
-        completed_size = 0
-        chunk = 0
-        mp = key.bucket.initiate_multipart_upload(
-            key.name, metadata={
-                METADATA_NAME: json.dumps(f.metadata)
-            })
-        try:
-            for chunk in range(1, num_chunks + 1):
-                part = mp.upload_part_from_file(
-                    f, chunk, size=CHUNK_SIZE())
-                completed_size += part.size
-                log.debug("Uploaded chunk {}/{} ({}B)".format(
-                    chunk, num_chunks, part.size))
-        except:  # NOQA
-            # Any exception we want to attempt to cancel_upload, otherwise
-            # AWS will bill us every month indefnitely for storing the
-            # partial-uploaded chunks.
-            log.exception("Upload of {} failed on chunk {}".format(
-                key.name, chunk))
-            mp.cancel_upload()
-            raise
-        else:
-            completed = mp.complete_upload()
-            log.info("Upload of {} complete ({} parts / {} B).".format(
-                completed.key_name, chunk, completed_size))
+        s3obj.upload_fileobj(f, ExtraArgs=extra, Config=config)
+        # TODO: Need to check partial transfer behaviour, ensure we clean up
+
+        return self._s3_object_to_s3_url(s3obj)
+
+
+    @staticmethod
+    def _s3_object_to_s3_url(s3obj):
+        return "s3://{}/{}".format(s3obj.bucket_name, s3obj.key)
 
     def url_from_file(self, f):
-        return self._get_s3_url(f)
-
-    _URL_FORMAT = 's3://{bucket}/{key}'
+        s3obj = self._s3_object_from_metadata(f)
+        return self._s3_object_to_s3_url(s3obj)
 
     def fetch(self, url, stream=False):
         '''fetch the specified url and return it as a datalake.File
@@ -264,40 +243,55 @@ class Archive(object):
         Args:
 
         url: the url to fetch. Both s3 and http(s) are supported.
+             the http URL should point to a datalake API server address
         stream: if true, return a StreamingFile
         '''
-        if url.startswith('s3://'):
-            return self._fetch_s3_url(url, stream=stream)
-        elif self._is_valid_http_url(url):
-            return self._fetch_http_url(url, stream=stream)
+        if url.lower().startswith('s3://'):
+            try:
+                return self._file_from_s3_url(url, stream=stream)
+            except botocore.exceptions.ClientError as e:
+                # Captures a variety of boto errors, so we pick and choose
+                if e.response['Error']['Code'] == '404':
+                    raise InvalidDatalakePath(url)
+                else:
+                    raise
+        elif url.startswith('http') and url.endswith('/data'):
+            return self._file_from_http_url(url, stream=stream)
         else:
             msg = '{} does not appear to be a fetchable url'
             msg = msg.format(url)
             raise InvalidDatalakePath(msg)
 
-    def _is_valid_http_url(self, url):
-        return url.startswith('http') and url.endswith('/data')
+    def _file_from_s3_url(self, url, stream=False):
+        s3_obj = self._s3_object_from_s3_url(url)
+        return self._file_from_s3_object(s3_obj, stream)
 
-    def _fetch_s3_url(self, url, stream=False):
-        k = self._get_key_from_url(url)
-        m = self._get_metadata_from_key(k)
+    def _file_from_s3_object(self, s3_obj, stream=False):
+        metadata = self._get_metadata_from_s3_object(s3_obj)
         if stream:
-            return StreamingFile(k, **m)
+            return StreamingFile(s3_obj.get()['Body'], **metadata)
         fd = BytesIO()
-        k.get_contents_to_file(fd)
+        s3_obj.download_fileobj(fd)
         fd.seek(0)
-        return File(fd, **m)
+        return File(fd, **metadata)
 
-    def _fetch_http_url(self, url, stream=False):
-        m = self._get_metadata_from_http_url(url)
-        k = self._stream_http_url(url)
+    def _file_from_http_url(self, url, stream=False):
+        # Hitting the datalake api server
+        # Data URL like https://datalake.earth.planet.com/v0/archive/files/{fileid}/data
+        # Metadata is retrieved from the same, but /data is /metadata
+
+        data_response = self._stream_http_url(url)
+        metadata = self._get_metadata_from_http_url(url)
+
         if stream:
-            return StreamingHTTPFile(k, **m)
+            return StreamingHTTPFile(data_response, **metadata)
+
         fd = BytesIO()
-        for block in k.iter_content(1024):
+        for block in data_response.iter_content(1024):
             fd.write(block)
+
         fd.seek(0)
-        return File(fd, **m)
+        return File(fd, **metadata)
 
     def _stream_http_url(self, url):
         response = self._requests_get(url, stream=True)
@@ -305,12 +299,35 @@ class Archive(object):
         return response
 
     def _get_metadata_from_http_url(self, url):
-        self._validate_fetch_url(url)
+        self._validate_http_url(url)
         p = re.compile('/data$')
         url = p.sub('/metadata', url)
         response = self._requests_get(url, stream=True)
         self._check_http_response(response)
         return response.json()
+
+    def _http_url_to_disk(self, url, filename_template=None):
+        metadata = self._get_metadata_from_http_url(url)
+
+        fname = self._get_filename_from_template(filename_template, metadata)
+        self._mkdirs(os.path.dirname(fname))
+
+        with open(fname, 'wb') as fh:
+            for buf in self.fetch(url, stream=True).iter_content():
+                fh.write(buf)
+
+        return fname
+
+    def _s3_url_to_disk(self, url, filename_template=None):
+        s3obj = self._s3_object_from_s3_url(url)
+        metadata = self._get_metadata_from_s3_object(s3obj)
+
+        fname = self._get_filename_from_template(filename_template, metadata)
+        self._mkdirs(os.path.dirname(fname))
+
+        s3obj.download_file(fname)
+
+        return fname
 
     def fetch_to_filename(self, url, filename_template=None):
         '''fetch the specified url and write it to a file
@@ -329,22 +346,12 @@ class Archive(object):
 
         Returns the filename written.
         '''
-        k = None
+
         if url.startswith('s3://'):
-            k = self._get_key_from_url(url)
-            m = self._get_metadata_from_key(k)
+            return self._s3_url_to_disk(url, filename_template)
         else:
-            m = self._get_metadata_from_http_url(url)
-        fname = self._get_filename_from_template(filename_template, m)
-        dname = os.path.dirname(fname)
-        self._mkdirs(dname)
-        if k:
-            k.get_contents_to_filename(fname)
-        else:
-            with open(fname, 'wb') as fh:
-                for buf in self.fetch(url, stream=True).iter_content():
-                    fh.write(buf)
-        return fname
+            return self._http_url_to_disk(url, filename_template)
+
 
     def _mkdirs(self, path):
         if path == '':
@@ -357,18 +364,36 @@ class Archive(object):
             else:
                 raise
 
-    def _get_key_from_url(self, url):
-        self._validate_fetch_url(url)
-        key_name = self._get_key_name_from_url(url)
-        k = self._s3_bucket.get_key(key_name)
-        if k is None:
-            msg = 'Failed to find {} in the datalake.'.format(url)
-            raise InvalidDatalakePath(msg)
-        return k
+    @staticmethod
+    def split_s3_url(url):
+        # Returns tuple ('bucketname', 'keyname')
+        if url.startswith('s3://'):
+            url = url[5:]
+        else:
+            raise InvalidDatalakePath(url)
+        if '/' not in url:
+            raise InvalidDatalakePath(url)
 
-    def _get_metadata_from_key(self, key):
-        m = key.get_metadata(METADATA_NAME)
-        return Metadata.from_json(m)
+        return url.split('/', maxsplit=1)
+
+
+    def _s3_object_from_s3_url(self, url):
+        # URL must be s3://...
+        bucket_name, key_name = self.split_s3_url(url)
+        return self._s3.Object(bucket_name, key_name)
+        # NOTE: object may not exist, exception will be raised on access
+
+    _KEY_FORMAT = '{id}/data'
+    def _s3_object_from_metadata(self, f):
+        # For performance reasons, s3 keys should start with a short random
+        # sequence:
+        # https://aws.amazon.com/blogs/aws/amazon-s3-performance-tips-tricks-seattle-hiring-event/
+        # http://docs.aws.amazon.com/AmazonS3/latest/dev/request-rate-perf-considerations.html
+        key_name = self._KEY_FORMAT.format(**f.metadata)
+        return self._s3_bucket.Object(key_name)
+
+    def _get_metadata_from_s3_object(self, s3_obj):
+        return Metadata.from_json(s3_obj.metadata.get(METADATA_NAME))
 
     def _get_filename_from_template(self, template, metadata):
         if template is None:
@@ -390,17 +415,12 @@ class Archive(object):
 
         return parts.path
 
-    def _validate_fetch_url(self, url):
-        valid_base_urls = (self.storage_url, self.http_url)
-        if not [u for u in valid_base_urls if url.startswith(u)]:
-            msg = 'url {} does not start with the configured storage urls {}.'
-            msg = msg.format(url, valid_base_urls)
+    def _validate_http_url(self, url):
+        if not url.startswith(self.http_url):
+            msg = 'url {} does not start with the configured storage url {}.'
+            msg = msg.format(url, self.http_url)
             raise InvalidDatalakePath(msg)
 
-    def _get_s3_url(self, f):
-        key = self._s3_key_from_metadata(f)
-        return self._URL_FORMAT.format(bucket=self._s3_bucket_name,
-                                       key=key.name)
 
     @property
     def _s3_bucket_name(self):
@@ -408,38 +428,15 @@ class Archive(object):
 
     @memoized_property
     def _s3_bucket(self):
-        # Note: we pass validate=False because we may just have push
-        # permissions. If validate is not False, boto tries to list the
-        # bucket. And this will 403.
-        return self._s3_conn.get_bucket(self._s3_bucket_name, validate=False)
+        # TODO: Ensure we can push without list permissions
+        return self._s3.Bucket(self._s3_bucket_name)
 
-    _KEY_FORMAT = '{id}/data'
 
-    def _s3_key_from_metadata(self, f):
-        # For performance reasons, s3 keys should start with a short random
-        # sequence:
-        # https://aws.amazon.com/blogs/aws/amazon-s3-performance-tips-tricks-seattle-hiring-event/
-        # http://docs.aws.amazon.com/AmazonS3/latest/dev/request-rate-perf-considerations.html
-        key_name = self._KEY_FORMAT.format(**f.metadata)
-        return Key(self._s3_bucket, name=key_name)
-
-    @property
-    def _s3_host(self):
-        r = environ.get('AWS_REGION') or environ.get('AWS_DEFAULT_REGION')
-        if r is not None:
-            return 's3-' + r + '.amazonaws.com'
-        else:
-            return NoHostProvided
-
-    @property
-    def _s3_conn(self):
-        if not hasattr(self, '_conn'):
-            k = environ.get('AWS_ACCESS_KEY_ID')
-            s = environ.get('AWS_SECRET_ACCESS_KEY')
-            self._conn = S3Connection(aws_access_key_id=k,
-                                      aws_secret_access_key=s,
-                                      host=self._s3_host)
-        return self._conn
+    @memoized_property
+    def _s3(self):
+        # boto3 uses AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+        # boto3 will use AWS_DEFAULT_REGION if AWS_REGION is not set
+        return boto3.resource('s3', region_name=environ.get('AWS_REGION'))
 
     def _requests_get(self, url, **kwargs):
         return self._session.get(url, timeout=TIMEOUT(), **kwargs)

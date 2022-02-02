@@ -14,7 +14,7 @@
 
 import pytest
 from moto import mock_s3
-import boto
+import boto3
 from six.moves.urllib.parse import urlparse
 from datalake.tests import random_metadata, tmpfile  # noqa
 import os
@@ -30,25 +30,20 @@ from datalake import Archive
 logging.basicConfig(level=logging.INFO)
 
 
-@pytest.fixture
-def s3_conn(request):
-    mock = mock_s3()
-    mock.start()
-    conn = boto.connect_s3()
 
-    def tear_down():
-        mock.stop()
-    request.addfinalizer(tear_down)
-
-    return conn
+@pytest.yield_fixture(scope="function")
+def s3_conn():
+    with mock_s3():
+        resource = boto3.resource('s3')
+        yield resource
 
 BUCKET_NAME = 'datalake-test'
 
-
 @pytest.fixture
 def s3_bucket(s3_conn):
-    return s3_conn.create_bucket(BUCKET_NAME)
-
+    b = s3_conn.Bucket(BUCKET_NAME)
+    b.create()
+    return b
 
 @pytest.fixture
 def archive_maker(s3_bucket):
@@ -69,23 +64,24 @@ def archive(archive_maker):
 
 
 @pytest.fixture
-def s3_key(s3_conn, s3_bucket):
+def s3_obj(s3_conn, s3_bucket):
 
-    def get_s3_key(url=None):
+    def get_s3_obj(url=None):
         if url is None:
             # if no url is specified, assume there is just one key in the
             # bucket. This is the common case for tests that only push one
             # item.
-            keys = [k for k in s3_bucket.list()]
-            assert len(keys) == 1
-            return keys[0]
+            objs = s3_bucket.objects.all()
+            assert len(objs) == 1
+            return objs[0].Object()
         else:
+            print("A1", url)
             url = urlparse(url)
+            print("A2", url)
             assert url.scheme == 's3'
-            bucket = s3_conn.get_bucket(url.netloc)
-            return bucket.get_key(url.path)
+            return s3_conn.Object(url.netloc, url.path[1:])
 
-    return get_s3_key
+    return get_s3_obj
 
 
 @pytest.fixture

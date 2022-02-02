@@ -37,9 +37,10 @@ def test_from_url_fails_without_boto():
 
 
 @pytest.mark.skipif(not has_s3, reason='requires s3 features')
-def test_list_from_metadata(s3_file_from_metadata, random_metadata):
+def test_list_from_metadata(s3_file_from_metadata, random_metadata, s3_dump):
     url = 's3://foo/baz'
     s3_file_from_metadata(url, random_metadata)
+    s3_dump()
     records = DatalakeRecord.list_from_metadata(url, random_metadata)
     assert len(records) >= 1
     for r in records:
@@ -66,7 +67,7 @@ def test_no_such_datalake_file_in_bucket(s3_bucket_maker):
 
 
 @pytest.mark.skipif(not has_s3, reason='requires s3 features')
-def test_no_such_bucket(s3_connection):
+def test_no_such_bucket(s3_conn):
     url = 's3://no/such/file'
     with pytest.raises(NoSuchDatalakeFile):
         DatalakeRecord.list_from_url(url)
@@ -112,6 +113,7 @@ def test_record_size_and_create_time(s3_file_maker, random_metadata):
     max_tolerable_delta = 2000
 
     s3_file_maker('foo', 'bar', 'thissongisjust23byteslong', random_metadata)
+
     records = DatalakeRecord.list_from_url(url)
     assert len(records) >= 1
     for r in records:

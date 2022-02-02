@@ -13,7 +13,7 @@
 # the License.
 
 import pytest
-from datalake.tests import random_word, random_metadata
+from datalake.tests import random_word, random_metadata, random_metadata_func
 from datalake.common import InvalidDatalakeMetadata
 import os
 import json
@@ -29,7 +29,7 @@ def random_file(tmpdir, metadata=None):
     f = tmpdir.join(name)
     f.write(content)
     if metadata is None:
-        metadata = random_metadata()
+        metadata = random_metadata_func()
     return File.from_filename(f.strpath, **metadata)
 
 
@@ -42,6 +42,9 @@ def random_files(tmpdir):
 
 def test_file_hash_different(random_files):
     files = random_files(2)
+    print(files[0])
+    print(files[1])
+
     assert files[0].metadata['hash'] != files[1].metadata['hash']
 
 

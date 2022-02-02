@@ -53,18 +53,18 @@ def faulty_uploader(archive, queue_dir):
 
 
 @pytest.fixture
-def uploaded_content_validator(s3_key):
+def uploaded_content_validator(s3_obj):
 
     def validator(expected_content, expected_metadata=None, compressed=False):
 
-        from_s3 = s3_key()
+        from_s3 = s3_obj()
         assert from_s3 is not None
-        content = from_s3.get_contents_as_string()
+        content = from_s3.get()['Body'].read()
         if compressed:
             content = zlib.decompress(content, 16 + zlib.MAX_WBITS)
         assert content == expected_content
         if expected_metadata is not None:
-            metadata = json.loads(from_s3.get_metadata('datalake'))
+            metadata = json.loads(from_s3.metadata.get('datalake'))
             assert metadata == expected_metadata
 
     return validator

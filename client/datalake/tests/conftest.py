@@ -18,11 +18,9 @@ import string
 import os
 import six
 
-
 try:
     from moto import mock_s3
-    import boto.s3
-    from boto.s3.key import Key
+    import boto3
     from six.moves.urllib.parse import urlparse
     import simplejson as json
 except ImportError:
@@ -80,8 +78,7 @@ def random_abs_dir():
     return '/' + '/'.join(dirs)
 
 
-@pytest.fixture
-def random_metadata():
+def random_metadata_func():
     start, end = random_interval()
     what = random_word(10)
     return {
@@ -95,6 +92,11 @@ def random_metadata():
         'id': random_hex(40),
         'hash': random_hex(40),
     }
+
+# Normal function + fixture to allow direct calling
+@pytest.fixture
+def random_metadata():
+    return random_metadata_func()
 
 
 @pytest.fixture
@@ -124,18 +126,19 @@ def aws_connector(request):
 
     return create_connection
 
+# TODO: Duplicate code with datalake/client/test/conftest.py
+@pytest.fixture(scope="function")
+def s3_conn():
+    with mock_s3():
+        resource = boto3.resource('s3')
+        yield resource
 
 @pytest.fixture
-def s3_connection(aws_connector):
-    return aws_connector(mock_s3, boto.connect_s3)
-
-
-@pytest.fixture
-def s3_bucket_maker(s3_connection):
-
+def s3_bucket_maker(s3_conn):
     def maker(bucket_name):
-        return s3_connection.create_bucket(bucket_name)
-
+        b = s3_conn.Bucket(bucket_name)
+        b.create()
+        return b
     return maker
 
 
@@ -144,13 +147,23 @@ def s3_file_maker(s3_bucket_maker):
 
     def maker(bucket, key, content, metadata):
         b = s3_bucket_maker(bucket)
-        k = Key(b)
-        k.key = key
-        if metadata:
-            k.set_metadata('datalake', json.dumps(metadata))
-        k.set_contents_from_string(content)
+        br = b.Object(key).put(
+            Body = content,
+            Metadata = {'datalake': json.dumps(metadata)} if metadata else {}
+        )
+        print("PUT", bucket, key, br)
 
     return maker
+
+# Not a standard feature of tests, can be added for diagnostics
+@pytest.fixture
+def s3_dump(s3_conn):
+    def dump():
+        for bucket in s3_conn.buckets.all():
+            print(bucket.name)
+            for obj in bucket.objects.all():
+                print(bucket.name, obj.key)
+    return dump
 
 
 @pytest.fixture
@@ -159,6 +172,6 @@ def s3_file_from_metadata(s3_file_maker):
     def maker(url, metadata):
         url = urlparse(url)
         assert url.scheme == 's3'
-        s3_file_maker(url.netloc, url.path, '', metadata)
+        s3_file_maker(url.netloc, url.path[1:], '', metadata)  # Drop leading /
 
     return maker
