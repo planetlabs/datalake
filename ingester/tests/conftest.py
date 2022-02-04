@@ -45,8 +45,6 @@ def dynamodb_table_maker(request, dynamodb):
             _delete_table_if_exists(dynamodb, name)
         request.addfinalizer(tear_down)
 
-        print("TT", type(table), table)
-
         return table
 
     return table_maker

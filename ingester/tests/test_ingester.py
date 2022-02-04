@@ -84,7 +84,6 @@ def records_comparator(dynamodb_records_table):
         got = [{k: v for k, v in d.items() if k != 'create_time'} for d in records]
         expected = [{k: v for k, v in d.items() if k != 'create_time'} for d in expected_records]
 
-        print(list(expected))
         assert sorted(replace_decimals(got), key=lambda x: x['time_index_key']) == sorted(expected, key=lambda x: x['time_index_key'])
 
     return comparator
