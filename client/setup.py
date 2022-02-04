@@ -9,13 +9,14 @@ def get_version():
         metadata = distutils.dist.DistributionMetadata("PKG-INFO")
         return metadata.version
     else:
-        return versioneer.get_version()
+        return 1
+        #return versioneer.get_version()
 
 
 setup(name='datalake',
       url='https://github.com/planetlabs/datalake',
       version=get_version(),
-      cmdclass=versioneer.get_cmdclass(),
+      #cmdclass=versioneer.get_cmdclass(),
       description='datalake: a metadata-aware archive',
       author='Brian Cavagnolo',
       author_email='brian@planet.com',
@@ -34,13 +35,13 @@ setup(name='datalake',
       ],
       extras_require={
           'test': [
-              'pytest==3.0.2',
-              'moto==0.4.27',
-              'twine==1.5.0',
-              'pip==7.1.0',
-              'wheel==0.24.0',
-              'flake8==2.5.0',
-              'responses==0.5.0',
+              'pytest',
+              'moto>=3.0.0',
+              'twine',
+              'pip',
+              'wheel',
+              'flake8>=4.0.0',
+              'responses',
           ],
           # the queuable feature allows users to offload their datalake pushes
           # to a separate uploader process.
@@ -52,8 +53,10 @@ setup(name='datalake',
           ],
       },
       classifiers=[
-          'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10',
       ],
       entry_points="""
       [console_scripts]

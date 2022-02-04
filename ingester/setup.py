@@ -59,7 +59,7 @@ setup(name='datalake_ingester',
       ],
       extras_require={
           'test': [
-              'pytest==2.7.2',
+              'pytest',
               'pip',
               'wheel',
               'moto>=3.0.0',
@@ -67,6 +67,12 @@ setup(name='datalake_ingester',
               'freezegun>=1.1.0',
           ]
       },
+      classifiers=[
+          'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10',
+      ],
       entry_points="""
       [console_scripts]
       datalake_tool=datalake_ingester.cli:cli

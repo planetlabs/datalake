@@ -1,44 +1,19 @@
-FROM python:2.7-slim-buster
+FROM python:3.9-slim
 
 MAINTAINER brian <brian@planet.com>
 
 ENV LANG C.UTF-8
 ENV	LC_ALL C.UTF-8
 
-# NB: gcc is only required to build the pyblake package, which does not ship as
-# a wheel for linux. Once we move to python3 we can eliminate this dependency
-# because hashlib supports blake2.
-RUN apt-get update && \
-    apt-get install --quiet --yes \
-	gcc \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
 
-# TODO: keep requirements in one place
-RUN pip install \
-    blinker>=1.4 \
-    boto>=2.38.0 \
-    boto3>=1.1.3 \
-    click>=5.1 \
-    Flask>=0.10.1 \
-    flask-swagger==0.2.8 \
-    memoized_property>=1.0.1 \
-    pyblake2>=0.9.3 \
-    python-dateutil>=2.4.2 \
-    python-dotenv>=0.1.3 \
-    pytz>=2015.4 \
-    sentry-sdk[flask]>=0.19.5 \
-    requests>=2.5 \
-    simplejson>=3.3.1 \
-    six>=1.10.0 \
-    # test requirements
-    flake8==2.5.0 \
-    freezegun==0.3.9 \
-    moto==0.4.27 \
-    pytest==3.0.2 \
-    responses==0.5.0 \
-    pyinotify>=0.9.4, \
-    raven>=5.0.0
+# To generate the pip requirements list
+# import re
+# import distutils.core
+# s = [distutils.core.run_setup(f+"/setup.py") for f in ("ingester","api","client")]
+# reqs = [[i for k,v in s1.extras_require.items() for i in v] + s1.install_requires for s1 in s]
+# print(" ".join(set([re.split(r'[<>=]', req)[0] for i in reqs for req in i])))
+
+RUN pip install memoized_property flask-swagger boto pyver moto click flake8 sentry-sdk[flask] twine raven pip boto3 six python-dotenv pytest requests pytz freezegun wheel python-dateutil blinker pyinotify sentry-sdk Flask responses simplejson
 
 RUN mkdir -p /opt/
 COPY . /opt/
@@ -51,7 +26,6 @@ RUN for d in client ingester api; do \
     cd /opt/$d && \
     python setup.py develop -s /usr/local/bin \
         --egg-path ../../../../../opt/$d/ \
-        -d /usr/local/lib/python2.7/site-packages/ \
         --no-deps; \
     done
 
