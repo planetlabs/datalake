@@ -13,7 +13,7 @@ ENV	LC_ALL C.UTF-8
 # reqs = [[i for k,v in s1.extras_require.items() for i in v] + s1.install_requires for s1 in s]
 # print(" ".join(set([re.split(r'[<>=]', req)[0] for i in reqs for req in i])))
 
-RUN pip install memoized_property flask-swagger boto pyver moto click flake8 sentry-sdk[flask] twine raven pip boto3 six python-dotenv pytest requests pytz freezegun wheel python-dateutil blinker pyinotify sentry-sdk Flask responses simplejson
+RUN pip install memoized_property flask-swagger boto moto click flake8 sentry-sdk[flask] twine raven pip boto3 six python-dotenv pytest requests pytz freezegun wheel python-dateutil blinker pyinotify sentry-sdk Flask responses simplejson
 
 RUN mkdir -p /opt/
 COPY . /opt/

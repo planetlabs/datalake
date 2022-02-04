@@ -16,6 +16,7 @@ from setuptools import setup
 from setuptools import distutils
 import os
 import sys
+import versioneer
 
 
 def get_version_from_pkg_info():
@@ -23,24 +24,11 @@ def get_version_from_pkg_info():
     return metadata.version
 
 
-def get_version_from_pyver():
-    try:
-        import pyver
-    except ImportError:
-        if 'sdist' in sys.argv or 'bdist_wheel' in sys.argv:
-            raise ImportError('You must install pyver to create a package')
-        else:
-            return 'noversion'
-    version, version_info = pyver.get_version(pkg="datalake_ingester",
-                                              public=True)
-    return version
-
-
 def get_version():
     if os.path.exists("PKG-INFO"):
         return get_version_from_pkg_info()
     else:
-        return get_version_from_pyver()
+        return versioneer.get_version()
 
 
 setup(name='datalake_ingester',

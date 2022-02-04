@@ -1,1 +1,3 @@
 recursive-include datalake_api/static *
+include versioneer.py
+include datalake_api/_version.py

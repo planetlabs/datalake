@@ -1,0 +1,2 @@
+include versioneer.py
+include datalake_ingester/_version.py
