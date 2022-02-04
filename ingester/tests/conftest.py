@@ -4,9 +4,11 @@ import os
 import simplejson as json
 from glob import glob
 
-import boto3
+from datalake.tests import *  # noqa
 
-#from datalake.tests import *  # noqa
+import boto3
+import botocore.exceptions
+
 
 from datalake_ingester import SQSQueue
 
@@ -14,19 +16,25 @@ from datalake_ingester import SQSQueue
 def _delete_table_if_exists(dynamodb, name):
     try:
         dynamodb.Table(name).delete()
-    except dynamodb_client.exceptions.ResourceNotFoundException:
-        return
+    except botocore.exceptions.ClientError as ce:
+        if ce.response['Error']['Code'] != 'ResourceNotFoundException':
+            raise
 
+@pytest.fixture(scope="function")
+def dynamodb():
+    with mock_dynamodb2():
+        d2 = boto3.resource('dynamodb', region_name='us-east-1')  # must also be set in tests
+        yield d2
 
 @pytest.fixture
-def dynamodb_table_maker(request):
+def dynamodb_table_maker(request, dynamodb):
 
-    def table_maker(name, schema):
-        dynamodb = boto3.resource('dynamodb', region='us-west-1')
+    def table_maker(name, key_schema, attribute_definitions):
         _delete_table_if_exists(dynamodb, name)
         table = dynamodb.create_table(
                   TableName=name,
-                  KeySchema=schema,
+                  KeySchema=key_schema,
+                  AttributeDefinitions=attribute_definitions,
                   ProvisionedThroughput={
                       'ReadCapacityUnits': 5,
                       'WriteCapacityUnits': 5
@@ -36,6 +44,8 @@ def dynamodb_table_maker(request):
         def tear_down():
             _delete_table_if_exists(dynamodb, name)
         request.addfinalizer(tear_down)
+
+        print("TT", type(table), table)
 
         return table
 
@@ -54,7 +64,17 @@ def dynamodb_users_table(dynamodb_table_maker):
             'KeyType': 'RANGE'
         }
     ]
-    return dynamodb_table_maker('users', schema)
+    definitions = [
+        {
+            'AttributeName': 'name',
+            'AttributeType': 'S'
+        },
+        {
+            'AttributeName': 'last_name',
+            'AttributeType': 'S'
+        }
+    ]
+    return dynamodb_table_maker('users', schema, definitions)
 
 
 @pytest.fixture
@@ -69,23 +89,41 @@ def dynamodb_records_table(dynamodb_table_maker):
             'KeyType': 'RANGE'
         }
     ]
-    return dynamodb_table_maker('records', schema)
+    definitions = [
+        {
+            'AttributeName': 'time_index_key',
+            'AttributeType': 'S'
+        },
+        {
+            'AttributeName': 'range_key',
+            'AttributeType': 'S'
+        }
+    ]
+    return dynamodb_table_maker('records', schema, definitions)
 
+@pytest.fixture(scope="function")
+def sns():
+    with mock_sns():
+        sns = boto3.resource('sns', region_name='us-east-1')  # must also be set in tests
+        yield sns
 
 
 @pytest.fixture
-def sns_topic_arn():
-    sns = boto3.client('sns')
+def sns_topic_arn(sns):
     topic = sns.create_topic(Name='foo')
-    return topic.TopicArn
+    return topic.arn
 
 
+@pytest.fixture(scope="function")
+def sqs():
+    with mock_sqs():
+        sqs = boto3.resource('sqs', region_name='us-east-1')  # must also be set in tests
+        yield sqs
 
 @pytest.fixture
-def bare_sqs_queue_maker():
+def bare_sqs_queue_maker(sqs):
 
     def maker(queue_name):
-        sqs = boto3.resource('sqs')
         try:
             return sqs.get_queue_by_name(QueueName=queue_name)
         except sqs.meta.client.exceptions.QueueDoesNotExist:
@@ -99,13 +137,13 @@ def sqs_queue_maker(bare_sqs_queue_maker):
 
     def maker(queue_name):
         q = bare_sqs_queue_maker(queue_name)
-        return SQSQueue(q.name)
+        return SQSQueue(queue_name)
 
     return maker
 
 
 @pytest.fixture
-def bare_sqs_queue(bare_sqs_queue_maker):
+def bare_sqs_test_queue(bare_sqs_queue_maker):
     return bare_sqs_queue_maker('test-queue')
 
 

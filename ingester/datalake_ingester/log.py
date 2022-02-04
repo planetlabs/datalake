@@ -1,4 +1,5 @@
 import logging
+import logging.config
 import os
 import sentry_sdk
 

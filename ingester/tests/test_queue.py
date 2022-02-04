@@ -13,6 +13,8 @@
 # the License.
 
 import pytest
+import os
+from unittest import mock
 import time
 import simplejson as json
 
@@ -31,8 +33,9 @@ def handler():
     return Handler()
 
 
-def test_sqs_queue_timeout(bare_sqs_queue, handler):
-    q = SQSQueue(bare_sqs_queue.name, handler)
+@mock.patch.dict(os.environ, {"AWS_REGION":"us-east-1"})
+def test_sqs_queue_timeout(bare_sqs_test_queue, handler):
+    q = SQSQueue('test-queue', handler)
     start = time.time()
     q.drain(timeout=1)
     duration = time.time() - start
@@ -41,11 +44,11 @@ def test_sqs_queue_timeout(bare_sqs_queue, handler):
     assert handler.messages == []
 
 
-def test_sqs_queue_drain(bare_sqs_queue, handler):
-    q = SQSQueue(bare_sqs_queue.name, handler)
+@mock.patch.dict(os.environ, {"AWS_REGION":"us-east-1"})
+def test_sqs_queue_drain(bare_sqs_test_queue, handler):
+    q = SQSQueue('test-queue', handler)
     expected_msg = {'foo': 'bar'}
-    msg = bare_sqs_queue.new_message(json.dumps(expected_msg))
-    bare_sqs_queue.write(msg)
+    bare_sqs_test_queue.send_message(MessageBody=json.dumps(expected_msg))
     q.drain(timeout=1)
     assert handler.messages == [expected_msg]
     handler.messages = []

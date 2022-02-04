@@ -23,7 +23,6 @@ class DynamoDBStorage(object):
 
     def __init__(self, table_name):
         self.table_name = table_name
-        self._prepare_connection(connection)
 
     @classmethod
     def from_config(cls):
@@ -38,6 +37,7 @@ class DynamoDBStorage(object):
         if region:
             return boto3.resource('dynamodb', region_name=region)
         else:
+            # Region must be set somewhere, this falls back on the default aws config search
             return boto3.resource('dynamodb')
 
     @memoized_property

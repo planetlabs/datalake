@@ -51,20 +51,20 @@ setup(name='datalake_ingester',
       author_email='brian@planet.com',
       packages=['datalake_ingester'],
       install_requires=[
-          'boto>=2.38.0',
+          'boto3>=1.20',
           'memoized_property>=1.0.2',
           'simplejson>=3.3.1',
-          'sentry-sdk>=0.19.5',
-          'click>=5.1',
+          'sentry-sdk>=1.5.0',
+          'click>=8.0',
       ],
       extras_require={
           'test': [
               'pytest==2.7.2',
-              'pip==7.1.0',
-              'wheel==0.24.0',
-              'moto==0.4.22',
-              'flake8==2.5.0',
-              'freezegun==0.3.9',
+              'pip',
+              'wheel',
+              'moto>=3.0.0',
+              'flake8>=4.0.0',
+              'freezegun>=1.1.0',
           ]
       },
       entry_points="""

@@ -19,7 +19,6 @@ import logging
 import os
 from datalake.common.errors import InsufficientConfiguration
 
-
 class SQSQueue(object):
     '''A queue that hears events on an SQS queue and translates them'''
 
@@ -40,16 +39,16 @@ class SQSQueue(object):
 
     @memoized_property
     def _queue(self):
-        return self._client.get_queue_by_name(QueueName=self.queue_name)
+        return self._sqs.get_queue_by_name(QueueName=self.queue_name)
 
     @memoized_property
-    def _client(self):
+    def _sqs(self):
         # TODO: Migrate to AWS_DEFAULT_REGION and let the library handle it
         region = os.environ.get('AWS_REGION')
         if region:
-            return boto3.client('sqs', region_name=region)
+            return boto3.resource('sqs', region_name=region)
         else:
-            return boto3.client('sqs')
+            return boto3.resource('sqs')
 
     _LONG_POLL_TIMEOUT = 20
 
@@ -58,8 +57,7 @@ class SQSQueue(object):
         '''
         long_poll_timeout = timeout or self._LONG_POLL_TIMEOUT
         while True:
-            messages = sqs.receive_message(
-                    QueueUrl = self.queue_url,
+            messages = self._queue.receive_messages(
                     WaitTimeSeconds = long_poll_timeout,
                     MaxNumberOfMessages = 10
             )
