@@ -9,14 +9,13 @@ def get_version():
         metadata = distutils.dist.DistributionMetadata("PKG-INFO")
         return metadata.version
     else:
-        return 1
-        #return versioneer.get_version()
+        return versioneer.get_version()
 
 
 setup(name='datalake',
       url='https://github.com/planetlabs/datalake',
       version=get_version(),
-      #cmdclass=versioneer.get_cmdclass(),
+      cmdclass=versioneer.get_cmdclass(),
       description='datalake: a metadata-aware archive',
       author='Brian Cavagnolo',
       author_email='brian@planet.com',
