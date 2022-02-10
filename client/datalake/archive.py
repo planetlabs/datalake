@@ -157,6 +157,18 @@ class Archive(object):
                 break
 
     def latest(self, what, where, lookback=None):
+        """ provide metadata of latest file
+
+        Args:
+          what: what kind of file to retrieve
+
+          where: host to retrieve from
+
+          lookback: by default we only look at the last 14 days, this
+          can be used to look back further.
+
+        returns a dict of data from the server
+        """
         url = self.http_url + '/v0/archive/latest/{}/{}'.format(what, where)
         params = dict(
             lookback=lookback,
@@ -234,6 +246,8 @@ class Archive(object):
         return "s3://{}/{}".format(s3obj.bucket_name, s3obj.key)
 
     def url_from_file(self, f):
+        """return the url of this file object
+        """
         s3obj = self._s3_object_from_metadata(f)
         return self._s3_object_to_s3_url(s3obj)
 
