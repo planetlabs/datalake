@@ -365,7 +365,7 @@ class Archive(object):
                 raise
 
     @staticmethod
-    def split_s3_url(url):
+    def _split_s3_url(url):
         # Returns tuple ('bucketname', 'keyname')
         if url.startswith('s3://'):
             url = url[5:]
@@ -379,7 +379,7 @@ class Archive(object):
 
     def _s3_object_from_s3_url(self, url):
         # URL must be s3://...
-        bucket_name, key_name = self.split_s3_url(url)
+        bucket_name, key_name = self._split_s3_url(url)
         return self._s3.Object(bucket_name, key_name)
         # NOTE: object may not exist, exception will be raised on access
 
