@@ -298,9 +298,8 @@ def test_list_cli_human_format(cli_tester, random_metadata):
     for s in stanzas:
         lines = [l for l in s.split('\n')]
         # just check for the start/end
-        assert 'start: 2021-02-05T18:10:42+00:00' in lines
-        assert 'end: 2021-02-05T18:10:43+00:00' in lines
-    print(stanzas)
+        assert "start: 2021-02-05T18:10:42+00:00" in lines
+        assert "end: 2021-02-05T18:10:43+00:00" in lines
     assert len(stanzas) == 2
 
 

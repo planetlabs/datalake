@@ -75,9 +75,7 @@ def s3_obj(s3_conn, s3_bucket):
             assert len(objs) == 1
             return objs[0].Object()
         else:
-            print("A1", url)
             url = urlparse(url)
-            print("A2", url)
             assert url.scheme == 's3'
             return s3_conn.Object(url.netloc, url.path[1:])
 

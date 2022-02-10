@@ -42,8 +42,6 @@ def random_files(tmpdir):
 
 def test_file_hash_different(random_files):
     files = random_files(2)
-    print(files[0])
-    print(files[1])
 
     assert files[0].metadata['hash'] != files[1].metadata['hash']
 

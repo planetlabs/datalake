@@ -56,9 +56,7 @@ def test_translate_with_bad_expression_fails(cli_tester):
 
 
 def test_translate_with_good_args_succceeds(cli_tester):
-    cmd = ("translate .*job-(?P<job_id>[0-9]+).log$~job{job_id} "
-           "/var/log/job-456.log")
-    print(cmd)
+    cmd = "translate .*job-(?P<job_id>[0-9]+).log$~job{job_id} " "/var/log/job-456.log"
     cli_tester(cmd)
 
 
@@ -71,8 +69,7 @@ def test_cat(cli_tester, datalake_url_maker, random_metadata, content):
     if content[0] == 'multiple':
         for i in range (1, len(content)):
             url = url + " " + datalake_url_maker(metadata=metadata2, content=content[i])
-    cmd = ("cat "+url)
-    print(cmd)
+    cmd = "cat " + url
     output = cli_tester(cmd)
     output = output.split('\n')
     for i in range(len(content)):

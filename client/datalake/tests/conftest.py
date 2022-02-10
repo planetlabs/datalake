@@ -151,7 +151,6 @@ def s3_file_maker(s3_bucket_maker):
             Body = content,
             Metadata = {'datalake': json.dumps(metadata)} if metadata else {}
         )
-        print("PUT", bucket, key, br)
 
     return maker
 
