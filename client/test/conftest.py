@@ -15,6 +15,7 @@
 import pytest
 from moto import mock_s3
 import boto3
+import botocore.exceptions
 from six.moves.urllib.parse import urlparse
 from datalake.tests import random_metadata, tmpfile  # noqa
 import os
@@ -29,6 +30,17 @@ from datalake import Archive
 
 logging.basicConfig(level=logging.INFO)
 
+
+# If we run with proper AWS credentials they will be used
+# This will cause moto to fail
+# But more critically, may impact production systems
+# So we test for real credentials and fail hard if they exist
+sts = boto3.client('sts')
+try:
+    sts.get_caller_identity()
+    pytest.exit("Real AWS credentials detected, aborting", 3)
+except botocore.exceptions.NoCredentialsError:
+    pass  # no credentials are good
 
 
 @pytest.yield_fixture(scope="function")

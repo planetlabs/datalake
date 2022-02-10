@@ -13,6 +13,18 @@ import botocore.exceptions
 from datalake_ingester import SQSQueue
 
 
+# If we run with proper AWS credentials they will be used
+# This will cause moto to fail
+# But more critically, may impact production systems
+# So we test for real credentials and fail hard if they exist
+sts = boto3.client('sts')
+try:
+    sts.get_caller_identity()
+    pytest.exit("Real AWS credentials detected, aborting", 3)
+except botocore.exceptions.NoCredentialsError:
+    pass  # no credentials are good
+
+
 def _delete_table_if_exists(dynamodb, name):
     try:
         dynamodb.Table(name).delete()
