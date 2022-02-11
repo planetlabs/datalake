@@ -2,7 +2,6 @@ import pytest
 import time
 import logging
 
-import os
 import decimal
 from unittest import mock
 
@@ -25,8 +24,7 @@ def random_s3_file_maker(s3_file_from_metadata, random_metadata):
     return maker
 
 
-@mock.patch.dict(os.environ, {"AWS_REGION":"us-east-1"})
-def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker):
+def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker, mock_region_environ):
     url, metadata = random_s3_file_maker()
     ingester = Ingester(storage)
     ingester.ingest(url)
@@ -36,9 +34,8 @@ def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker):
         assert r['metadata'] == metadata
 
 
-@mock.patch.dict(os.environ, {"AWS_REGION":"us-east-1"})
 def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,
-                       random_metadata):
+                       random_metadata, mock_region_environ):
     del(random_metadata['end'])
     url = 's3://foo/' + random_metadata['id']
     s3_file_from_metadata(url, random_metadata)
@@ -54,8 +51,7 @@ def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,
         assert r['metadata'] == random_metadata
 
 
-@mock.patch.dict(os.environ, {"AWS_REGION":"us-east-1"})
-def test_listen_no_queue(storage):
+def test_listen_no_queue(storage, mock_region_environ):
     ingester = Ingester(storage)
     with pytest.raises(InsufficientConfiguration):
         ingester.listen(timeout=1)
@@ -95,8 +91,7 @@ def ingester(storage, sqs_queue, sns_topic_arn):
     return Ingester(storage, queue=sqs_queue, reporter=reporter)
 
 
-@mock.patch.dict(os.environ, {"AWS_REGION":"us-east-1"})
-def test_listener_reports(event_test_driver, ingester, sqs_sender, records_comparator):
+def test_listener_reports(event_test_driver, ingester, sqs_sender, records_comparator, mock_region_environ):
 
     def tester(event):
         sqs_sender(event['s3_notification'])

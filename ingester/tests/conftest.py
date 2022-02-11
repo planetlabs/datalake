@@ -200,3 +200,7 @@ def event_test_driver(request, s3_file_from_metadata):
         return spec.get('expected_reports')
 
     return driver
+
+@pytest.fixture
+def mock_region_environ(monkeypatch):
+    monkeypatch.setenv("AWS_REGION", "us-east-1")
