@@ -41,7 +41,7 @@ setup(name='datalake_api',
       install_requires=[
           'memoized_property>=1.0.2',
           'simplejson>=3.3.1',
-          'Flask>=2.02',
+          'Flask>=2.0.2',
           'flask-swagger>=0.2.14',
           'boto3',
           'sentry-sdk[flask]>=0.19.5',
