@@ -2,13 +2,14 @@ name: Run tests
 on: [push, pull_request]
 
 jobs:
-  test-client:
+  test-python:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: False  # Always run all tests
       matrix:
         python: [3.7.10, 3.8.10, 3.9.9, 3.10.1]
         extras: ["test", "test,queable,sentry"]
+        section: ["client", "api", "ingester"]
     steps:
       - name: Setup Python
         uses: actions/setup-python@v2.2.2
@@ -17,7 +18,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v2
       - name: Test
-        working-directory: ./client
+        working-directory: ./${{ matrix.section }}
         run: |
           pip install -e .[${{ matrix.extras }}]
           py.test
