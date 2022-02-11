@@ -19,10 +19,15 @@ from moto import mock_sns
 from datalake_ingester import SNSReporter
 
 @mock_sns
-def test_snsreporter_sends(sns_connection, sns_topic_arn, bare_sqs_queue):
-    sns_connection.subscribe_sqs_queue(sns_topic_arn, bare_sqs_queue)
-    r = SNSReporter(sns_topic_arn)
+def test_snsreporter_sends(sns, sns_topic_arn, bare_sqs_test_queue, mock_region_environ):
+    topic = sns.create_topic(Name='foo')
+    topic.subscribe(
+        Protocol="sqs",
+        Endpoint=bare_sqs_test_queue.attributes["QueueArn"]
+    )
+
+    r = SNSReporter(topic.arn)
     expected_msg = {'message': 'foo'}
     r.report(expected_msg)
-    msg = json.loads(bare_sqs_queue.read(1).get_body())
+    msg = json.loads(json.loads(bare_sqs_test_queue.receive_messages()[0].body)['Message'])
     assert expected_msg == msg

@@ -17,12 +17,7 @@
 Just a basic test to validate the dev environment.
 '''
 
-from moto import mock_dynamodb2
-
-@mock_dynamodb2
-def test_list_table(dynamodb_users_table):
-    table_list = dynamodb_connection.list_tables()
-    assert 'TableNames' in table_list
-    table_list = table_list['TableNames']
-    assert len(table_list) == 1
-    assert table_list[0] == 'users'
+def test_list_table(dynamodb, dynamodb_users_table):
+    all_tables = list(dynamodb.tables.all())  # all is an iterator
+    assert len(all_tables) == 1
+    assert all_tables[0].name == 'users'
