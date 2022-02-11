@@ -21,6 +21,7 @@ jobs:
         working-directory: ./${{ matrix.section }}
         run: |
           pip install -e .[${{ matrix.extras }}]
+          pip install -e ../client/[${{ matrix.extras }}]
           PYTHONPATH=".:../client" py.test
   test-docker:
     runs-on: ubuntu-latest
