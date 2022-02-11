@@ -28,9 +28,8 @@ def test_push_file(archive, random_metadata, tmpfile, s3_obj):
     assert common_keys == set(random_metadata.keys())
 
 
-def test_push_large_file(
-        monkeypatch, archive, random_metadata, tmpfile, s3_obj):
-    monkeypatch.setenv('DATALAKE_CHUNK_SIZE_MB', 5)
+def test_push_large_file(monkeypatch, archive, random_metadata, tmpfile, s3_obj):
+    monkeypatch.setenv('DATALAKE_CHUNK_SIZE_MB', '5')
     expected_content = ('big data' * 1024 * 1024).encode('utf-8')
     f = tmpfile(expected_content)
     url = archive.prepare_metadata_and_push(f, **random_metadata)

@@ -43,7 +43,7 @@ except botocore.exceptions.NoCredentialsError:
     pass  # no credentials are good
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def s3_conn():
     with mock_s3():
         resource = boto3.resource('s3')
