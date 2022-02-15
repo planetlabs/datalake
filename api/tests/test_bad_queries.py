@@ -18,7 +18,7 @@ import base64
 
 def get_bad_request(client, params):
     uri = '/v0/archive/files/'
-    q = '&'.join(['{}={}'.format(k, v) for k, v in params.iteritems()])
+    q = '&'.join(['{}={}'.format(k, v) for k, v in params.items()])
     if q:
         uri += '?' + q
     res = client.get(uri)

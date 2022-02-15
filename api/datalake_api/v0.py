@@ -140,7 +140,7 @@ def _get_cursor(params):
 
 
 def _copy_immutable_dict(d):
-    return {k: v for k, v in d.iteritems()}
+    return {k: v for k, v in d.items()}
 
 
 @v0.route('/archive/files/')

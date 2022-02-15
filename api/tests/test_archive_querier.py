@@ -98,7 +98,7 @@ class HttpQuerier(object):
 
     def _do_query(self, params):
         uri = '/v0/archive/files/'
-        params = ['{}={}'.format(k, v) for k, v in params.iteritems()
+        params = ['{}={}'.format(k, v) for k, v in params.items()
                   if v is not None]
         q = '&'.join(params)
         if q:
@@ -411,7 +411,7 @@ def test_no_end_exclusion(table_maker, querier, s3_file_from_metadata):
 
 def _validate_latest_result(result, **kwargs):
     assert result is not None
-    for k, v in kwargs.iteritems():
+    for k, v in kwargs.items():
         assert result['metadata'][k] == v
 
 
@@ -504,8 +504,7 @@ def test_2x_max_results_in_one_bucket(table_maker, querier, record_maker):
     bucket = now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     end = start
-    for i in [0,1]:
-    #for i in range(MAX_RESULTS * 2):
+    for i in range(MAX_RESULTS * 2):
         records += record_maker(start=start,
                                 end=end,
                                 what='boo',
