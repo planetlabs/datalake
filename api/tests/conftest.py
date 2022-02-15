@@ -13,9 +13,10 @@
 # the License.
 
 import pytest
-import boto3
-from botocore.exceptions import ClientError as BotoClientError
+
 from moto import mock_dynamodb2
+import boto3
+import botocore.exceptions
 
 from datalake_api import app as datalake_api
 from datalake.tests import *  # noqa
@@ -25,7 +26,18 @@ from datalake.common import DatalakeRecord
 YEAR_2010 = 1262304000000
 
 
-@pytest.fixture
+# If we run with proper AWS credentials they will be used
+# This will cause moto to fail
+# But more critically, may impact production systems
+# So we test for real credentials and fail hard if they exist
+sts = boto3.client('sts')
+try:
+    sts.get_caller_identity()
+    pytest.exit("Real AWS credentials detected, aborting", 3)
+except botocore.exceptions.NoCredentialsError:
+    pass  # no credentials are good
+
+
 def client():
     datalake_api.app.config['TESTING'] = True
     datalake_api.app.config['AWS_ACCESS_KEY_ID'] = 'abc'
@@ -99,7 +111,7 @@ global_secondary = [{
 def _delete_table(table):
     try:
         table.delete()
-    except BotoClientError as e:
+    except botocore.exceptions.ClientError as e:
         stat = e.response.get('ResponseMetadata').get('HTTPStatusCode')
         code = e.response.get('Error').get('Code')
         if stat == 400 and code == 'ResourceNotFoundException':
@@ -151,7 +163,7 @@ def table_maker(request, dynamodb):
 def record_maker(s3_file_from_metadata):
 
     def maker(**kwargs):
-        m = random_metadata()
+        m = random_metadata_func()
         m.update(**kwargs)
         key = '/'.join([str(v) for v in kwargs.values()])
         url = 's3://datalake-test/' + key

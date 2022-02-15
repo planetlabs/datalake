@@ -13,11 +13,11 @@
 # the License.
 import pytest
 import gzip
-from StringIO import StringIO
+from io import StringIO
 import simplejson as json
 from datalake_api.fetcher import ArchiveFile
 import time
-from urllib import urlencode
+from urllib.parse import urlencode
 from datalake.common import DatalakeRecord
 
 
