@@ -18,9 +18,9 @@ from flask import jsonify, Response, url_for
 from flask import current_app as app
 import os
 import simplejson as json
-from querier import ArchiveQuerier, Cursor, InvalidCursor, \
+from .querier import ArchiveQuerier, Cursor, InvalidCursor, \
     DEFAULT_LOOKBACK_DAYS
-from fetcher import ArchiveFileFetcher
+from .fetcher import ArchiveFileFetcher
 from datalake.common.errors import NoSuchDatalakeFile
 from datalake.common.metadata import Metadata, InvalidDatalakeMetadata
 
