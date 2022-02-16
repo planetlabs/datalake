@@ -294,7 +294,7 @@ class ArchiveQuerier(object):
         return True
 
     def _prepare_time_bucket_kwargs(self, bucket, what, limit=None):
-        i = str(bucket) + ':' + what
+        i = str(int(bucket)) + ':' + what
 
         kwargs = {
             'ExpressionAttributeNames': {
