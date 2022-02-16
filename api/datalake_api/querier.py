@@ -218,10 +218,15 @@ class ArchiveQuerier(object):
             kwargs['ExclusiveStartKey'] = last_evaluated
         if cursor.last_id is not None:
             # here we filter the known probable duplicate
-            kwargs['FilterExpression'] = "(NOT #n2.#n3 = :v2)"
-            kwargs["ExpressionAttributeNames"]["#n2"] = "metadata"
-            kwargs["ExpressionAttributeNames"]["#n3"] = "id"
-            kwargs["ExpressionAttributeValues"][":v2"] = cursor.last_id
+            # kwargs['FilterExpression'] = "(NOT #n2.#n3 = :v2)"
+            # kwargs["ExpressionAttributeNames"]["#n2"] = "metadata"
+            # kwargs["ExpressionAttributeNames"]["#n3"] = "id"
+            # kwargs["ExpressionAttributeValues"][":v2"] = cursor.last_id
+            pass
+            # During testing the python 2 -> 3 transition the above statements
+            # created an infinite loop. Boto3 was returning alternating start
+            # keys with each call.
+            # TODO: Consider reintroducing extra filtering
 
     def query_by_time(self, start, end, what, where=None, cursor=None):
         results = []
