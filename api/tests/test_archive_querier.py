@@ -297,7 +297,7 @@ def evaluate_time_based_results(results, num_expected):
 
 def test_paginate_time_records(table_maker, querier, record_maker):
     records = []
-    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    interval = int(DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150)
     very_end = YEAR_2010 + 150 * interval
     for start in range(YEAR_2010, very_end, interval):
         end = start + interval
@@ -312,7 +312,7 @@ def test_paginate_time_records(table_maker, querier, record_maker):
 def test_paginate_many_records_single_time_bucket(table_maker, querier,
                                                   record_maker):
     records = []
-    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150
+    interval = int(DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150)
     very_end = YEAR_2010 + DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     for start in range(YEAR_2010, very_end, interval):
         end = start + interval
@@ -330,7 +330,7 @@ def test_paginate_few_records_single_bucket_no_empty_page(table_maker,
     records = []
     # Fill one bucket with 2x MAX_RESULTS,
     # but we only want the last record.
-    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS / MAX_RESULTS / 2
+    interval = int(DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150)
     very_end = YEAR_2010 + DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     for start in range(YEAR_2010, very_end, interval):
         end = start + interval
@@ -442,9 +442,9 @@ def test_latest_many_records_single_time_bucket(table_maker, querier,
                                                 record_maker):
     now = int(time.time() * 1000)
     records = []
-    bucket = now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    bucket = int(now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
     start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
-    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150
+    interval = int(DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150)
     very_end = start + DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     last_start = very_end - interval
     for t in range(start, very_end, interval):
@@ -460,9 +460,9 @@ def test_latest_creation_time_breaks_tie(table_maker, querier,
                                          record_maker):
     now = int(time.time() * 1000)
     records = []
-    bucket = now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    bucket = int(now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
     start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
-    interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150
+    interval = int(DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150)
     end = start + interval
     table = table_maker([])
 
