@@ -124,7 +124,7 @@ def test_invalid_cursor(client):
 
 
 def test_bad_cursor_valid_json(client):
-    cursor = base64.b64encode('{"valid": "json", "invalid": "cursor"}')
+    cursor = base64.b64encode(b'{"valid": "json", "invalid": "cursor"}')
     params = {
         'what': 'syslog',
         'start': 100,

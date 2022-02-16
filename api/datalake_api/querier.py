@@ -103,15 +103,15 @@ class Cursor(dict):
     @staticmethod
     def _apply_padding(b64):
         padding_length = len(b64) % 4
-        return b64 + '=' * padding_length
+        return b64 + b'=' * padding_length
 
     @memoized_property
     def serialized(self):
         # the serialized representation of the cursor is a base64-encoded json
         # with the padding '=' stripped off the end. This makes it cleaner for
         # urls.
-        b64 = base64.b64encode(self._json)
-        return b64.rstrip('=')
+        b64 = base64.b64encode(self._json.encode('ascii'))
+        return b64.rstrip(b'=')
 
     @memoized_property
     def _json(self):
