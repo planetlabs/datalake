@@ -484,9 +484,10 @@ def test_latest_creation_time_breaks_tie(table_maker, querier,
 def test_max_results_in_one_bucket(table_maker, querier, record_maker):
     now = int(time.time() * 1000)
     records = []
-    bucket = now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
-    start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    bucket = int(now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
+    start = int(bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
     end = start
+    print(bucket, start, end)
     for i in range(MAX_RESULTS):
         records += record_maker(start=start,
                                 end=end,
@@ -501,8 +502,8 @@ def test_max_results_in_one_bucket(table_maker, querier, record_maker):
 def test_2x_max_results_in_one_bucket(table_maker, querier, record_maker):
     now = int(time.time() * 1000)
     records = []
-    bucket = now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
-    start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    bucket = int(now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
+    start = int(bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
     end = start
     for i in range(MAX_RESULTS * 2):
         records += record_maker(start=start,
