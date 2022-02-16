@@ -136,7 +136,7 @@ def _get_cursor(params):
     c = params.get('cursor')
     if c is None:
         return None
-    return Cursor.from_serialized(c)
+    return Cursor.from_serialized(c.encode('utf8'))
 
 
 def _copy_immutable_dict(d):
