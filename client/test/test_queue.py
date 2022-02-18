@@ -84,7 +84,8 @@ def uploaded_file_validator(archive, uploaded_content_validator):
 def assert_s3_bucket_empty(s3_bucket):
 
     def asserter():
-        assert len([k for k in s3_bucket.list()]) == 0
+        count = sum(1 for _ in s3_bucket.objects.all())  # without retrieving all
+        assert count == 0
 
     return asserter
 

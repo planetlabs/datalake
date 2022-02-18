@@ -30,7 +30,7 @@ def test_list_from_s3_url(s3_file_from_metadata, random_metadata):
         assert r['metadata'] == random_metadata
 
 
-@pytest.mark.skipif(has_s3, reason='')
+@pytest.mark.skipif(has_s3, reason='requires boto3 to be not installed')
 def test_from_url_fails_without_boto():
     with pytest.raises(InsufficientConfiguration):
         DatalakeRecord.list_from_url('s3://foo/bar')

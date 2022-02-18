@@ -84,8 +84,10 @@ def s3_obj(s3_conn, s3_bucket):
             # bucket. This is the common case for tests that only push one
             # item.
             objs = s3_bucket.objects.all()
-            assert len(objs) == 1
-            return objs[0].Object()
+            count = sum(1 for _ in objs)  # without retrieving all
+            assert count == 1
+            iter_objs = iter(objs)
+            return next(iter_objs).Object()
         else:
             url = urlparse(url)
             assert url.scheme == 's3'
