@@ -19,7 +19,7 @@ import simplejson as json
 from urllib.parse import urlparse
 import time
 from datalake_api.querier import ArchiveQuerier, MAX_RESULTS
-from conftest import client, YEAR_2010
+from conftest import client_func, YEAR_2010
 
 
 _ONE_DAY_MS = 24 * 60 * 60 * 1000
@@ -70,7 +70,7 @@ class HttpRecord(dict):
 class HttpQuerier(object):
 
     def __init__(self, *args, **kwargs):
-        self.client = client()
+        self.client = client_func()
 
     def query_by_work_id(self, work_id, what, where=None, cursor=None):
         params = dict(

@@ -38,12 +38,15 @@ except botocore.exceptions.NoCredentialsError:
     pass  # no credentials are good
 
 
-def client():
+def client_func():
     datalake_api.app.config['TESTING'] = True
     datalake_api.app.config['AWS_ACCESS_KEY_ID'] = 'abc'
     datalake_api.app.config['AWS_SECRET_ACCESS_KEY'] = '123'
     return datalake_api.app.test_client()
 
+@pytest.fixture
+def client():
+    return client_func()
 
 @pytest.fixture
 def dynamodb(request):

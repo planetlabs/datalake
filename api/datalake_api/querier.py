@@ -15,7 +15,7 @@
 from memoized_property import memoized_property
 from datalake.common import DatalakeRecord
 import base64
-import simplejson as json
+import json
 import time
 
 
@@ -97,8 +97,8 @@ class Cursor(dict):
             j = base64.b64decode(b64)
             d = json.loads(j)
             return cls(**d)
-        except json.JSONDecodeError:
-            raise InvalidCursor('Failed to decode cursor ' + serialized)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            raise InvalidCursor('Failed to decode cursor ' + serialized.decode('utf8'))
 
     @staticmethod
     def _apply_padding(b64):

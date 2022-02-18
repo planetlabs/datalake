@@ -129,7 +129,7 @@ def _validate_cursor(params):
     try:
         params['cursor'] = _get_cursor(params)
     except InvalidCursor as e:
-        flask.abort(400, 'InvalidCursor', e.message)
+        flask.abort(400, 'InvalidCursor', str(e))
 
 
 def _get_cursor(params):
@@ -376,7 +376,7 @@ def _get_file(file_id):
         aff = get_archive_fetcher()
         return aff.get_file(file_id)
     except NoSuchDatalakeFile as e:
-        flask.abort(404, 'NoSuchFile', e.message)
+        flask.abort(404, 'NoSuchFile', str(e))
 
 
 def _get_headers_for_file(f):
