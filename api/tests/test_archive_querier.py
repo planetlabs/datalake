@@ -487,7 +487,6 @@ def test_max_results_in_one_bucket(table_maker, querier, record_maker):
     bucket = int(now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
     start = int(bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
     end = start
-    print(bucket, start, end)
     for i in range(MAX_RESULTS):
         records += record_maker(start=start,
                                 end=end,
