@@ -24,9 +24,7 @@ COPY . /opt/
 ENV PYTHONPATH=/opt/client:/opt/ingester:/opt/api
 RUN for d in client ingester api; do \
     cd /opt/$d && \
-    python setup.py develop -s /usr/local/bin \
-        --egg-path ../../../../../opt/$d/ \
-        --no-deps; \
+	python -m pip install -e . --no-deps ; \
     done
 
 ARG VERSION=unspecified
