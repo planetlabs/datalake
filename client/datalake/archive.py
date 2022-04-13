@@ -17,7 +17,7 @@ import re
 from os import environ
 from six.moves.urllib.parse import urlparse
 from memoized_property import memoized_property
-import simplejson as json
+import json
 from datalake import (
     File,
     StreamingFile,

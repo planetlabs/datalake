@@ -20,11 +20,11 @@ import six
 
 
 try:
-    from moto import mock_s3
+    from moto import mock_s3_deprecated
     import boto.s3
     from boto.s3.key import Key
     from six.moves.urllib.parse import urlparse
-    import simplejson as json
+    import json
 except ImportError:
     # if developers use s3-test features without having installed s3 stuff,
     # things will fail. So it goes.
@@ -82,6 +82,10 @@ def random_abs_dir():
 
 @pytest.fixture
 def random_metadata():
+    return generate_random_metadata()
+
+
+def generate_random_metadata():
     start, end = random_interval()
     what = random_word(10)
     return {
@@ -127,7 +131,7 @@ def aws_connector(request):
 
 @pytest.fixture
 def s3_connection(aws_connector):
-    return aws_connector(mock_s3, boto.connect_s3)
+    return aws_connector(mock_s3_deprecated, boto.connect_s3)
 
 
 @pytest.fixture
