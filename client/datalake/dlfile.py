@@ -13,11 +13,14 @@
 # the License.
 
 import os
-from pyblake2 import blake2b
+try:
+    from hashlib import blake2b
+except ImportError:
+    from pyblake2 import blake2b
 from .translator import Translator
 from io import BytesIO
 import tarfile
-import simplejson as json
+import json
 from .common import Metadata
 try:
     from cStringIO import StringIO

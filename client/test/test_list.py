@@ -5,7 +5,7 @@ from copy import copy
 from datalake.common import Metadata
 from datetime import datetime, timedelta
 from pytz import utc
-import simplejson as json
+import json
 from conftest import prepare_response
 import requests
 

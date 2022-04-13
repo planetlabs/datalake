@@ -13,7 +13,7 @@
 # the License.
 
 import pytest
-from moto import mock_s3
+from moto import mock_s3_deprecated
 import boto
 from six.moves.urllib.parse import urlparse
 from datalake.tests import random_metadata, tmpfile  # noqa
@@ -32,7 +32,7 @@ logging.basicConfig(level=logging.INFO)
 
 @pytest.fixture
 def s3_conn(request):
-    mock = mock_s3()
+    mock = mock_s3_deprecated()
     mock.start()
     conn = boto.connect_s3()
 

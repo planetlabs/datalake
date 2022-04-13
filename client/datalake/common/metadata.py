@@ -18,8 +18,8 @@ from datetime import datetime
 from pytz import utc
 from uuid import uuid4
 import re
-import simplejson as json
-from simplejson.scanner import JSONDecodeError
+import json
+from json import JSONDecodeError
 import os
 import pytz
 

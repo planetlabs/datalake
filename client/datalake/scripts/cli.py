@@ -18,7 +18,7 @@ import os
 from datalake.common.metadata import InvalidDatalakeMetadata
 from datalake.common.errors import InsufficientConfiguration
 import time
-import simplejson as json
+import json
 from datalake import Enqueuer, Uploader
 from datetime import datetime
 from pytz import utc

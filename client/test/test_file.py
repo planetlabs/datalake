@@ -13,7 +13,7 @@
 # the License.
 
 import pytest
-from datalake.tests import random_word, random_metadata
+from datalake.tests import random_word, generate_random_metadata
 from datalake.common import InvalidDatalakeMetadata
 import os
 import json
@@ -29,7 +29,7 @@ def random_file(tmpdir, metadata=None):
     f = tmpdir.join(name)
     f.write(content)
     if metadata is None:
-        metadata = random_metadata()
+        metadata = generate_random_metadata()
     return File.from_filename(f.strpath, **metadata)
 
 

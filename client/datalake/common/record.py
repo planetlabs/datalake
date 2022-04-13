@@ -14,7 +14,7 @@
 
 from . import Metadata, InvalidDatalakeMetadata
 from six.moves.urllib.parse import urlparse
-import simplejson as json
+import json
 import os
 
 
