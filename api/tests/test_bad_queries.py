@@ -18,7 +18,7 @@ import base64
 
 def get_bad_request(client, params):
     uri = '/v0/archive/files/'
-    q = '&'.join(['{}={}'.format(k, v) for k, v in params.iteritems()])
+    q = '&'.join(['{}={}'.format(k, v) for k, v in params.items()])
     if q:
         uri += '?' + q
     res = client.get(uri)
@@ -124,12 +124,12 @@ def test_invalid_cursor(client):
 
 
 def test_bad_cursor_valid_json(client):
-    cursor = base64.b64encode('{"valid": "json", "invalid": "cursor"}')
+    cursor = base64.b64encode(b'{"valid": "json", "invalid": "cursor"}')
     params = {
         'what': 'syslog',
         'start': 100,
         'end': 200,
-        'cursor': cursor,
+        'cursor': cursor.decode('utf8'),
     }
     res = get_bad_request(client, params)
     assert res['code'] == 'InvalidCursor'

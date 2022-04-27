@@ -23,4 +23,4 @@ def test_snsreporter_sends(sns_connection, sns_topic_arn, bare_sqs_queue):
     expected_msg = {'message': 'foo'}
     r.report(expected_msg)
     msg = json.loads(bare_sqs_queue.read(1).get_body())
-    assert expected_msg == msg
+    assert expected_msg == json.loads(msg['Message'])

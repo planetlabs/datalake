@@ -14,23 +14,56 @@
 
 import pytest
 import boto3
-from botocore.exceptions import ClientError as BotoClientError
+from botocore.exceptions import (
+    ClientError as BotoClientError,
+    NoCredentialsError
+)
 from moto import mock_dynamodb2
 
 from datalake_api import app as datalake_api
 from datalake.tests import *  # noqa
 from datalake.common import DatalakeRecord
+from datalake.tests import generate_random_metadata
 
 
 YEAR_2010 = 1262304000000
 
 
-@pytest.fixture
-def client():
+# If we run with proper AWS credentials they will be used
+# This will cause moto to fail
+# But more critically, may impact production systems
+# So we test for real credentials and fail hard if they exist
+sts = boto3.client('sts')
+try:
+    sts.get_caller_identity()
+    pytest.exit("Real AWS credentials detected, aborting", 3)
+except NoCredentialsError:
+    pass  # no credentials are good
+
+
+def get_client():
     datalake_api.app.config['TESTING'] = True
     datalake_api.app.config['AWS_ACCESS_KEY_ID'] = 'abc'
     datalake_api.app.config['AWS_SECRET_ACCESS_KEY'] = '123'
+
+    # TODO: Sigh. The api caches the archive_fetcher and s3_bucket, which is
+    # the right thing. However, because moto<3 still uses httpretty, and
+    # because httpretty wreaks havoc on the python socket code, these cached
+    # parts end up in a bad state after their first use. The right thing to do
+    # here is to upgrade moto. But for that we will also have to move
+    # everything from boto to boto3. This is a near-term goal. But first lets
+    # get everything off of python2.
+    for a in ('archive_fetcher', 's3_bucket'):
+        try:
+            delattr(datalake_api.app, a)
+        except AttributeError:
+            pass
     return datalake_api.app.test_client()
+
+
+@pytest.fixture(scope='function')
+def client():
+    return get_client()
 
 
 @pytest.fixture
@@ -151,7 +184,7 @@ def table_maker(request, dynamodb):
 def record_maker(s3_file_from_metadata):
 
     def maker(**kwargs):
-        m = random_metadata()
+        m = generate_random_metadata()
         m.update(**kwargs)
         key = '/'.join([str(v) for v in kwargs.values()])
         url = 's3://datalake-test/' + key

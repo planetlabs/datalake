@@ -15,7 +15,7 @@
 from memoized_property import memoized_property
 import simplejson as json
 
-from errors import InvalidS3Notification, InvalidS3Event
+from .errors import InvalidS3Notification, InvalidS3Event
 from datalake.common import DatalakeRecord
 
 

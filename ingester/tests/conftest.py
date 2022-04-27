@@ -1,5 +1,9 @@
 import pytest
-from moto import mock_sns, mock_sqs, mock_dynamodb2
+from moto import (
+    mock_sns_deprecated as mock_sns,
+    mock_sqs_deprecated as mock_sqs,
+    mock_dynamodb2_deprecated as mock_dynamodb2
+)
 import os
 import simplejson as json
 from glob import glob

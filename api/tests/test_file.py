@@ -13,11 +13,11 @@
 # the License.
 import pytest
 import gzip
-from StringIO import StringIO
+from io import BytesIO
 import simplejson as json
 from datalake_api.fetcher import ArchiveFile
 import time
-from urllib import urlencode
+from urllib.parse import urlencode
 from datalake.common import DatalakeRecord
 
 
@@ -42,14 +42,14 @@ def _validate_file_result(result, content, content_type='text/plain',
 def test_get_text_file(file_getter, s3_file_maker, random_metadata):
     random_metadata['path'] = '/home/you/foo.txt'
     random_metadata['id'] = '12345'
-    content = 'once upon a time'
+    content = b'once upon a time'
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
     _validate_file_result(res, content)
 
 
 def create_gzip_string(content):
-    fgz = StringIO()
+    fgz = BytesIO()
     gzip_obj = gzip.GzipFile(mode='wb', fileobj=fgz)
     gzip_obj.write(content)
     gzip_obj.close()
@@ -60,7 +60,7 @@ def create_gzip_string(content):
 def test_get_gzipped_text_file(file_getter, s3_file_maker, random_metadata):
     random_metadata['path'] = '/home/you/foo.txt.gz'
     random_metadata['id'] = '12345'
-    content = create_gzip_string('no place like home')
+    content = create_gzip_string(b'no place like home')
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
@@ -70,7 +70,7 @@ def test_get_gzipped_text_file(file_getter, s3_file_maker, random_metadata):
 def test_get_json_file(file_getter, s3_file_maker, random_metadata):
     random_metadata['path'] = '/home/you/foo.json'
     random_metadata['id'] = '12345'
-    content = '{"this": "is json"}'
+    content = b'{"this": "is json"}'
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
@@ -81,7 +81,7 @@ def test_get_syslog(file_getter, s3_file_maker, random_metadata):
     random_metadata['what'] = 'syslog'
     random_metadata['path'] = '/var/log/syslog.1'
     random_metadata['id'] = '12345'
-    content = 'boot\nrun application\ncrash\n'
+    content = b'boot\nrun application\ncrash\n'
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
@@ -91,7 +91,7 @@ def test_get_syslog(file_getter, s3_file_maker, random_metadata):
 def test_get_random_log(file_getter, s3_file_maker, random_metadata):
     random_metadata['path'] = '/var/log/random.log'
     random_metadata['id'] = '12345'
-    content = '42\n'
+    content = b'42\n'
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
@@ -101,7 +101,7 @@ def test_get_random_log(file_getter, s3_file_maker, random_metadata):
 def test_get_random_rotated_log(file_getter, s3_file_maker, random_metadata):
     random_metadata['path'] = '/var/log/random.log.1'
     random_metadata['id'] = '12345'
-    content = '93\n'
+    content = b'93\n'
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
@@ -111,7 +111,7 @@ def test_get_random_rotated_log(file_getter, s3_file_maker, random_metadata):
 def test_get_random_gz_log(file_getter, s3_file_maker, random_metadata):
     random_metadata['path'] = '/var/log/random.log.gz'
     random_metadata['id'] = '12345'
-    content = create_gzip_string('431\n')
+    content = create_gzip_string(b'431\n')
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
@@ -122,7 +122,7 @@ def test_get_log_trailing_sha1(file_getter, s3_file_maker, random_metadata):
     random_metadata['what'] = 'foolog'
     random_metadata['path'] = '/var/log/foo/foo.log.gz-e6294fa5eddbc9d38bd7a20f072ffd3a182fa1e7'  # noqa
     random_metadata['id'] = '12345'
-    content = create_gzip_string('welcome to foo land')
+    content = create_gzip_string(b'welcome to foo land')
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
@@ -133,7 +133,7 @@ def test_get_log_trailing_md5(file_getter, s3_file_maker, random_metadata):
     random_metadata['what'] = 'barlog'
     random_metadata['path'] = '/var/log/bar/bar.log-e6294fa5eddbc9d38bd7a20f072ffd3a'  # noqa
     random_metadata['id'] = '12345'
-    content = 'welcome to bar land'
+    content = b'welcome to bar land'
 
     s3_file_maker('datalake-test', '12345/data', content, random_metadata)
     res = file_getter('12345')
@@ -151,6 +151,8 @@ def test_no_such_id(s3_bucket_maker, file_getter):
 
 
 def test_archive_file_read_twice(tmpfile, random_metadata):
+    # NB: tmpfile casts content to string. So we don't need the content in this
+    # test to be bytes.
     content = 'it was the best of times, it was the worst of times'
     f = open(tmpfile(content))
     af = ArchiveFile(f, random_metadata)
@@ -159,6 +161,8 @@ def test_archive_file_read_twice(tmpfile, random_metadata):
 
 
 def test_archive_file_bigger_than_header(tmpfile, random_metadata):
+    # NB: tmpfile casts content to string. So we don't need the content in this
+    # test to be bytes.
     content = 'x' * 1024 + 'y' * 1024
     f = open(tmpfile(content))
     af = ArchiveFile(f, random_metadata)
@@ -199,7 +203,7 @@ def test_get_latest_text_file(record_maker, latest_getter, random_metadata):
     random_metadata['where'] = 'there'
     random_metadata['start'] = now
     random_metadata['end'] = None
-    content = 'once upon a time'
+    content = b'once upon a time'
     record_maker(content, random_metadata)
     res = latest_getter('text', 'there')
     _validate_file_result(res, content)
@@ -214,7 +218,7 @@ def test_latest_gzipped_text_file(record_maker, latest_getter,
     random_metadata['where'] = 'here'
     random_metadata['start'] = now
     random_metadata['end'] = None
-    content = create_gzip_string('no place like home')
+    content = create_gzip_string(b'no place like home')
     record_maker(content, random_metadata)
     res = latest_getter('gz', 'here')
     _validate_file_result(res, content, content_encoding='gzip')
@@ -237,7 +241,7 @@ def test_non_default_lookback(record_maker, random_metadata, latest_getter):
     random_metadata['where'] = 'there'
     random_metadata['start'] = now
     random_metadata['end'] = None
-    content = 'once upon a time'
+    content = b'once upon a time'
     record_maker(content, random_metadata)
 
     res = latest_getter('text', 'there', lookback=19)

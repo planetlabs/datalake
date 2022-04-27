@@ -1,6 +1,6 @@
 import click
 from datalake.common.conf import load_config
-from ingester import Ingester
+from .ingester import Ingester
 
 
 DEFAULT_CONFIG = '/etc/datalake-ingester.env'

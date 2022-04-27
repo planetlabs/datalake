@@ -12,13 +12,13 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-from storage import DynamoDBStorage
-from reporter import SNSReporter
-from queue import SQSQueue
-from s3_notification import S3Notification
-from errors import *  # noqa
-from ingester import Ingester
-import log  # noqa
+from .storage import DynamoDBStorage
+from .reporter import SNSReporter
+from .queue import SQSQueue
+from .s3_notification import S3Notification
+from .errors import *  # noqa
+from .ingester import Ingester
+
 
 __all__ = ['DynamoDBStorage', 'SNSReporter', 'SQSQueue',
            'S3Notification', 'Ingester']
