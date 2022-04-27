@@ -15,7 +15,7 @@
 from memoized_property import memoized_property
 from datalake.common import DatalakeRecord
 import base64
-import simplejson as json
+import json
 import time
 
 
@@ -97,21 +97,22 @@ class Cursor(dict):
             j = base64.b64decode(b64)
             d = json.loads(j)
             return cls(**d)
-        except json.JSONDecodeError:
-            raise InvalidCursor('Failed to decode cursor ' + serialized)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            raise InvalidCursor('Failed to decode cursor ' +
+                                serialized.decode('utf8'))
 
     @staticmethod
     def _apply_padding(b64):
         padding_length = len(b64) % 4
-        return b64 + '=' * padding_length
+        return b64 + b'=' * padding_length
 
     @memoized_property
     def serialized(self):
         # the serialized representation of the cursor is a base64-encoded json
         # with the padding '=' stripped off the end. This makes it cleaner for
         # urls.
-        b64 = base64.b64encode(self._json)
-        return b64.rstrip('=')
+        b64 = base64.b64encode(self._json.encode('ascii'))
+        return b64.rstrip(b'=')
 
     @memoized_property
     def _json(self):
@@ -289,7 +290,7 @@ class ArchiveQuerier(object):
         return True
 
     def _prepare_time_bucket_kwargs(self, bucket, what, limit=None):
-        i = str(bucket) + ':' + what
+        i = str(int(bucket)) + ':' + what
 
         kwargs = {
             'ExpressionAttributeNames': {

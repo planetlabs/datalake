@@ -59,7 +59,7 @@ class ArchiveFile(object):
         self._read_done = True
         return self._header + self.fd.read()
 
-    _GZIP_MAGIC_NUMBERS = "\x1f\x8b\x08"
+    _GZIP_MAGIC_NUMBERS = b"\x1f\x8b\x08"
 
     def _is_gzip(self):
         # Thanks to:

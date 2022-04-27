@@ -1,6 +1,7 @@
 import pytest
 import time
-
+from decimal import Decimal
+import json
 
 from datalake_ingester import DynamoDBStorage, Ingester, \
     SQSQueue, SNSReporter
@@ -54,12 +55,37 @@ def test_listen_no_queue(storage):
         ingester.listen(timeout=1)
 
 
+def _replace_decimals(obj):
+    if isinstance(obj, list):
+        return [_replace_decimals(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: _replace_decimals(v) for k, v in obj.items()}
+    elif isinstance(obj, Decimal):
+        if obj % 1 == 0:
+            return int(obj)
+        else:
+            return float(obj)
+    else:
+        return obj
+
+
+def dict_list_sorter(list_of_dicts):
+    return sorted(list_of_dicts, key=lambda d: json.dumps(d, sort_keys=True))
+
+
 @pytest.fixture
 def records_comparator(dynamodb_records_table):
 
+    def _sanitize(r):
+        r = _replace_decimals(dict(r))
+        del(r['create_time'])
+        return r
+
     def comparator(expected_records):
-        records = [dict(r) for r in dynamodb_records_table.scan()]
-        assert sorted(records) == sorted(expected_records)
+        records = [_sanitize(r) for r in dynamodb_records_table.scan()]
+        for r in expected_records:
+            del(r['create_time'])
+        assert dict_list_sorter(records) == dict_list_sorter(expected_records)
 
     return comparator
 
@@ -76,7 +102,7 @@ def report_listener(bare_sqs_queue_maker, sns_connection, sns_topic_arn):
             sns_connection.subscribe_sqs_queue(sns_topic_arn, q)
 
         def handler(self, msg):
-            self.messages.append(msg)
+            self.messages.append(json.loads(msg['Message']))
 
         def drain(self):
             self._queue.drain(timeout=1)
@@ -93,8 +119,8 @@ def ingester(storage, sqs_queue, sns_topic_arn):
 @pytest.fixture
 def report_comparator():
 
-    def sort(l):
-        return sorted(l, key=lambda k: k['url'])
+    def sort(ll):
+        return sorted(ll, key=lambda k: k['url'])
 
     def comparator(actual, expected):
         if expected is None:
@@ -122,7 +148,7 @@ def report_comparator():
 
 
 def test_listener_reports(event_test_driver, ingester, report_listener,
-                          sqs_sender, report_comparator):
+                          sqs_sender, report_comparator, records_comparator):
 
     def tester(event):
         sqs_sender(event['s3_notification'])

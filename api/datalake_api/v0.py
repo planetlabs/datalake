@@ -18,9 +18,9 @@ from flask import jsonify, Response, url_for
 from flask import current_app as app
 import os
 import simplejson as json
-from querier import ArchiveQuerier, Cursor, InvalidCursor, \
+from .querier import ArchiveQuerier, Cursor, InvalidCursor, \
     DEFAULT_LOOKBACK_DAYS
-from fetcher import ArchiveFileFetcher
+from .fetcher import ArchiveFileFetcher
 from datalake.common.errors import NoSuchDatalakeFile
 from datalake.common.metadata import Metadata, InvalidDatalakeMetadata
 
@@ -129,18 +129,18 @@ def _validate_cursor(params):
     try:
         params['cursor'] = _get_cursor(params)
     except InvalidCursor as e:
-        flask.abort(400, 'InvalidCursor', e.message)
+        flask.abort(400, 'InvalidCursor', str(e))
 
 
 def _get_cursor(params):
     c = params.get('cursor')
     if c is None:
         return None
-    return Cursor.from_serialized(c)
+    return Cursor.from_serialized(c.encode('utf8'))
 
 
 def _copy_immutable_dict(d):
-    return {k: v for k, v in d.iteritems()}
+    return {k: v for k, v in d.items()}
 
 
 @v0.route('/archive/files/')
@@ -376,7 +376,7 @@ def _get_file(file_id):
         aff = get_archive_fetcher()
         return aff.get_file(file_id)
     except NoSuchDatalakeFile as e:
-        flask.abort(404, 'NoSuchFile', e.message)
+        flask.abort(404, 'NoSuchFile', str(e))
 
 
 def _get_headers_for_file(f):

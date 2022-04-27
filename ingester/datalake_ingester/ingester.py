@@ -1,13 +1,13 @@
 from datalake.common import DatalakeRecord, InvalidDatalakeMetadata
 from datalake.common.errors import InsufficientConfiguration, \
     UnsupportedTimeRange, NoSuchDatalakeFile, UnsupportedS3Event
-from s3_notification import S3Notification
+from .s3_notification import S3Notification
 import time
 import logging
-from storage import DynamoDBStorage
-from queue import SQSQueue
-from reporter import SNSReporter
-from errors import InvalidS3Notification, InvalidS3Event
+from .storage import DynamoDBStorage
+from .queue import SQSQueue
+from .reporter import SNSReporter
+from .errors import InvalidS3Notification, InvalidS3Event
 
 
 logger = logging.getLogger('ingester')
@@ -93,7 +93,7 @@ class Ingester(object):
             ir.end()
         except Exception as e:
             logger.exception(e)
-            ir.error(e.message)
+            ir.error(str(e))
             if type(e) not in SAFE_EXCEPTIONS:
                 raise
         finally:
