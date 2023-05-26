@@ -20,9 +20,8 @@ import six
 
 
 try:
-    from moto import mock_s3_deprecated
-    import boto.s3
-    from boto.s3.key import Key
+    from moto import mock_s3
+    import boto3
     from six.moves.urllib.parse import urlparse
     import json
 except ImportError:
@@ -114,6 +113,18 @@ def tmpfile(tmpdir):
 
 
 @pytest.fixture
+def tmpfile_maker(tmpdir):
+
+    def get_tmpfile(content):
+        name = random_word(10)
+        f = tmpdir.join(name)
+        f.write(content)
+        return str(f)
+
+    return get_tmpfile
+
+
+@pytest.fixture
 def aws_connector(request):
 
     def create_connection(mocker, connector):
@@ -131,14 +142,17 @@ def aws_connector(request):
 
 @pytest.fixture
 def s3_connection(aws_connector):
-    return aws_connector(mock_s3_deprecated, boto.connect_s3)
+    with mock_s3():
+        yield boto3.resource('s3')
 
 
 @pytest.fixture
 def s3_bucket_maker(s3_connection):
 
     def maker(bucket_name):
-        return s3_connection.create_bucket(bucket_name)
+        b = s3_connection.Bucket(bucket_name)
+        b.create()
+        return b
 
     return maker
 
@@ -148,11 +162,10 @@ def s3_file_maker(s3_bucket_maker):
 
     def maker(bucket, key, content, metadata):
         b = s3_bucket_maker(bucket)
-        k = Key(b)
-        k.key = key
-        if metadata:
-            k.set_metadata('datalake', json.dumps(metadata))
-        k.set_contents_from_string(content)
+        b.Object(key).put(
+            Body=content,
+            Metadata={'datalake': json.dumps(metadata)} if metadata else {}
+        )
 
     return maker
 
@@ -163,6 +176,7 @@ def s3_file_from_metadata(s3_file_maker):
     def maker(url, metadata):
         url = urlparse(url)
         assert url.scheme == 's3'
-        s3_file_maker(url.netloc, url.path, '', metadata)
+        # NB: clean up leading slash.
+        s3_file_maker(url.netloc, url.path.lstrip('/'), '', metadata)
 
     return maker

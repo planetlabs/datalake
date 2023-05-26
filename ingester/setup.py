@@ -51,7 +51,6 @@ setup(name='datalake_ingester',
       author_email='brian@planet.com',
       packages=['datalake_ingester'],
       install_requires=[
-          'boto>=2.38.0',
           'memoized_property>=1.0.2',
           'simplejson>=3.3.1',
           'sentry-sdk>=0.19.5',

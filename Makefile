@@ -12,7 +12,7 @@ devshell: docker
 	docker run --rm -it -v $$PWD:/opt --entrypoint /bin/bash $(IMAGE)
 
 test-client: docker
-	docker run --rm --entrypoint py.test $(IMAGE) client
+	docker run --rm --entrypoint tox $(IMAGE) -c /opt/client/tox.ini
 
 test-ingester: docker
 	docker run --rm --entrypoint py.test $(IMAGE) ingester

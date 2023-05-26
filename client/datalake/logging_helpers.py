@@ -5,7 +5,7 @@ command line client may choose to configure logging in some cases. Users with
 sentry accounts may wish to configure it by installing the sentry extras.
 '''
 import os
-import logging
+import logging.config
 from .common.errors import InsufficientConfiguration
 
 
