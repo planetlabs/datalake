@@ -3,10 +3,9 @@ on: [push, pull_request]
 
 jobs:
   test-client:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
-        # 4 jobs total with all permutations
         python: [3.6, 3.8, 3.9]
         extras: ["test", "test,queable,sentry"]
     steps:
@@ -30,4 +29,4 @@ jobs:
           fetch-depth: 0
       - name: Test
         run: |
-          make test
+          make test-ingester test-api

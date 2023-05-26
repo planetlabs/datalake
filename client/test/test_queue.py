@@ -16,7 +16,7 @@ import pytest
 import json
 from threading import Timer
 import os
-from datalake.tests import random_word
+from datalake.tests import random_word, generate_random_metadata
 from datalake.common.errors import InsufficientConfiguration
 from datalake import Enqueuer, Uploader, InvalidDatalakeBundle
 from datalake.queue import has_queue
@@ -53,18 +53,23 @@ def faulty_uploader(archive, queue_dir):
 
 
 @pytest.fixture
-def uploaded_content_validator(s3_key):
+def uploaded_content_validator(s3_object):
 
     def validator(expected_content, expected_metadata=None, compressed=False):
 
-        from_s3 = s3_key()
+        if expected_metadata:
+            from_s3 = s3_object(
+                f's3://datalake-test/{expected_metadata["id"]}/data'
+            )
+        else:
+            from_s3 = s3_object()
         assert from_s3 is not None
-        content = from_s3.get_contents_as_string()
+        content = from_s3.get()['Body'].read()
         if compressed:
             content = zlib.decompress(content, 16 + zlib.MAX_WBITS)
         assert content == expected_content
         if expected_metadata is not None:
-            metadata = json.loads(from_s3.get_metadata('datalake'))
+            metadata = json.loads(from_s3.get()['Metadata'].get('datalake'))
             assert metadata == expected_metadata
 
     return validator
@@ -84,7 +89,7 @@ def uploaded_file_validator(archive, uploaded_content_validator):
 def assert_s3_bucket_empty(s3_bucket):
 
     def asserter():
-        assert len([k for k in s3_bucket.list()]) == 0
+        assert len(list(s3_bucket.objects.all())) == 0
 
     return asserter
 
@@ -93,6 +98,16 @@ def assert_s3_bucket_empty(s3_bucket):
 def random_file(tmpfile, random_metadata):
     expected_content = random_word(100)
     return tmpfile(expected_content)
+
+
+@pytest.fixture
+def random_file_maker(tmpfile_maker):
+
+    def maker():
+        expected_content = random_word(100)
+        return tmpfile_maker(expected_content)
+
+    return maker
 
 
 @pytest.mark.skipif(not has_queue, reason='requires queuable features')
@@ -220,7 +235,7 @@ def test_enqueue_compress_cli(cli_tester, uploader, random_file,
 
 
 @pytest.mark.skipif(not has_queue, reason='requires queuable features')
-def test_threaded_upload(enqueuer, uploader, random_file, random_metadata,
+def test_threaded_upload(enqueuer, uploader, random_file_maker,
                          uploaded_file_validator):
 
     # This test does not actually validate that multiple threads are running.
@@ -229,7 +244,8 @@ def test_threaded_upload(enqueuer, uploader, random_file, random_metadata,
     enqueued_files = []
 
     def enqueue():
-        f = enqueuer.enqueue(random_file, **random_metadata)
+        m = generate_random_metadata()
+        f = enqueuer.enqueue(random_file_maker(), **m)
         enqueued_files.append(f)
         if len(enqueued_files) < 3:
             t = Timer(0.1, enqueue)
@@ -238,7 +254,6 @@ def test_threaded_upload(enqueuer, uploader, random_file, random_metadata,
     t = Timer(0.5, enqueue)
     t.start()
     uploader.listen(timeout=1.0, workers=3)
-
     assert len(enqueued_files) == 3
     for f in enqueued_files:
         uploaded_file_validator(f)

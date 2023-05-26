@@ -21,7 +21,7 @@ setup(name='datalake',
       author_email='brian@planet.com',
       packages=find_packages(exclude=['test']),
       install_requires=[
-          'boto>=2.38.0',
+          'boto3>=1.9.68',
           'memoized_property>=1.0.1',
           'pyblake2>=0.9.3; python_version<"3.6"',
           'click>=4.1',
@@ -34,7 +34,7 @@ setup(name='datalake',
       extras_require={
           'test': [
               'pytest<8.0.0',
-              'moto<3.0.0',
+              'moto[s3]>4,<5',
               'twine<4.0.0',
               'pip>=20.0.0,<22.0.0',
               'wheel<0.38.0',

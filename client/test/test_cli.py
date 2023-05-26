@@ -14,8 +14,8 @@
 
 import pytest
 from test_crtime import crtime_setuid
-from click.testing import CliRunner
 import random
+
 
 def test_cli_without_command_fails(cli_tester):
     cli_tester('', expected_exit=2)
@@ -62,17 +62,18 @@ def test_translate_with_good_args_succceeds(cli_tester):
     cli_tester(cmd)
 
 
-@pytest.mark.parametrize("content", [['text'], ['multiple', 'things']])  
-def test_cat(cli_tester, datalake_url_maker, random_metadata, content):
+@pytest.mark.parametrize("content", [['text'], ['multiple', 'things']])
+def test_cat(cli_tester, datalake_url_maker, random_metadata, content,
+             s3_connection):
     metadata1 = random_metadata
     metadata2 = random_metadata.copy()
     metadata2['id'] = ('%0' + str(40) + 'x') % random.randrange(16**40)
     url = ""+datalake_url_maker(metadata=metadata1, content=content[0])
     if content[0] == 'multiple':
-        for i in range (1, len(content)):
-            url = url + " " + datalake_url_maker(metadata=metadata2, content=content[i])
-    cmd = ("cat "+url)
-    print(cmd)
+        for i in range(1, len(content)):
+            url = (url + " " +
+                   datalake_url_maker(metadata=metadata2, content=content[i]))
+    cmd = "cat " + url
     output = cli_tester(cmd)
     output = output.split('\n')
     for i in range(len(content)):

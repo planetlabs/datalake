@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-from . import Metadata, InvalidDatalakeMetadata
+from . import Metadata
 from six.moves.urllib.parse import urlparse
 import json
 import os
@@ -28,8 +28,7 @@ they are unavailable, the affected functions will raise
 InsufficientConfiguration.'''
 has_s3 = True
 try:
-    import boto.s3
-    from boto.exception import S3ResponseError
+    import boto3
 except ImportError:
     has_s3 = False
 
@@ -44,6 +43,11 @@ def requires_s3(f):
     return wrapped
 
 
+# NB: Some time ago we migrated this class from datalake-common to datalake in
+# order to reduce the number of packages that comprise the datalake. As a side
+# effect of this migration this class contains some code duplicated with the
+# datalake.Archive. There is an opportunity to clean this up, but we can take
+# that on after getting off of boto 2.
 class DatalakeRecord(dict):
 
     def __init__(self, url, metadata, time_bucket, create_time, size):
@@ -64,66 +68,58 @@ class DatalakeRecord(dict):
     @requires_s3
     def list_from_url(cls, url):
         '''return a list of DatalakeRecords for the specified url'''
-        key = cls._get_key(url)
-        metadata = cls._get_metadata_from_key(key)
-        ct = cls._get_create_time(key)
+        obj, metadata = cls._get_object(url)
+        ct = cls._get_create_time(obj)
         time_buckets = cls.get_time_buckets_from_metadata(metadata)
-        return [cls(url, metadata, t, ct, key.size) for t in time_buckets]
+
+        return [
+            cls(url, metadata, t, ct, obj.content_length) for t in time_buckets
+        ]
 
     @classmethod
     @requires_s3
     def list_from_metadata(cls, url, metadata):
         '''return a list of DatalakeRecords for the url and metadata'''
-        key = cls._get_key(url)
+        obj, _ = cls._get_object(url)
         metadata = Metadata(**metadata)
-        ct = cls._get_create_time(key)
+        ct = cls._get_create_time(obj)
         time_buckets = cls.get_time_buckets_from_metadata(metadata)
-        return [cls(url, metadata, t, ct, key.size) for t in time_buckets]
+        return [
+            cls(url, metadata, t, ct, obj.content_length) for t in time_buckets
+        ]
 
     @classmethod
-    def _get_create_time(cls, key):
-        return Metadata.normalize_date(key.last_modified)
+    def _get_create_time(cls, obj):
+        return Metadata.normalize_date(obj.last_modified)
 
     @classmethod
-    def _get_key(cls, url):
+    def _get_object(cls, url):
         parsed_url = urlparse(url)
-        bucket = cls._get_bucket(parsed_url.netloc)
-        key = bucket.get_key(parsed_url.path)
-        if key is None:
+        bucket = parsed_url.netloc
+
+        # NB: under boto 2 we didn't used to have to have the lstrip. It seems
+        # that boto2 explicitly stripped these leading slashes for us:
+        # https://groups.google.com/g/boto-users/c/mv--NMPUXoU ...but boto3
+        # does not. So we must take care to strip it whenever we parse a URL to
+        # get a key.
+        key_name = parsed_url.path.lstrip('/')
+        obj = cls._connection().Object(parsed_url.netloc, key_name)
+
+        try:
+            # cache the results of the get on the obj to avoid superfluous
+            # network calls.
+            obj._datalake_details = obj.get()
+            m = obj._datalake_details['Metadata'].get('datalake')
+        except cls._connection().meta.client.exceptions.NoSuchKey:
             msg = '{} does not appear to be in the datalake'
             msg = msg.format(url)
             raise NoSuchDatalakeFile(msg)
-        return key
+        except cls._connection().meta.client.exceptions.NoSuchBucket:
+            msg = 'Cannot find datalake file (s3 bucket {} does not exist)'
+            msg = msg.format(bucket)
+            raise NoSuchDatalakeFile(msg)
 
-    @classmethod
-    def _get_metadata_from_key(cls, key):
-        metadata = key.get_metadata('datalake')
-        if not metadata:
-            msg = 'No datalake metadata for s3://{}{}'
-            msg = msg.format(key.bucket.name, key.name)
-            raise InvalidDatalakeMetadata(msg)
-        return Metadata.from_json(metadata)
-
-    _BUCKETS = {}
-
-    @classmethod
-    def _get_bucket(cls, bucket_name):
-        if bucket_name not in cls._BUCKETS:
-            bucket = cls._get_bucket_from_s3(bucket_name)
-            DatalakeRecord._BUCKETS[bucket_name] = bucket
-        return cls._BUCKETS[bucket_name]
-
-    @classmethod
-    def _get_bucket_from_s3(cls, bucket_name):
-        try:
-            return cls._connection().get_bucket(bucket_name)
-        except S3ResponseError as e:
-            if e.error_code == 'NoSuchBucket':
-                msg = 'Cannot find datalake file (s3 bucket {} does not exist)'
-                msg = msg.format(bucket_name)
-                raise NoSuchDatalakeFile(msg)
-            else:
-                raise
+        return obj, Metadata.from_json(m)
 
     _CONNECTION = None
 
@@ -134,12 +130,23 @@ class DatalakeRecord(dict):
         return cls._CONNECTION
 
     @classmethod
+    def _s3_host(cls):
+        h = os.environ.get('AWS_S3_HOST')
+        if h is not None:
+            return 'https://' + h
+        r = (os.environ.get('AWS_REGION') or
+             os.environ.get('AWS_DEFAULT_REGION'))
+        if r is not None:
+            return 'https://s3-' + r + '.amazonaws.com'
+        else:
+            return None
+
+    @classmethod
     def _prepare_connection(cls):
-        kwargs = {}
-        s3_host = os.environ.get('AWS_S3_HOST')
-        if s3_host:
-            kwargs['host'] = s3_host
-        return boto.connect_s3(**kwargs)
+
+        return boto3.resource('s3',
+                              region_name=os.environ.get('AWS_REGION'),
+                              endpoint_url=cls._s3_host())
 
     _ONE_DAY_IN_MS = 24*60*60*1000
 

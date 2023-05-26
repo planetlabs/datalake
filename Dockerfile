@@ -8,7 +8,6 @@ ENV	LC_ALL C.UTF-8
 # TODO: keep requirements in one place
 RUN pip install \
     blinker>=1.4 \
-    boto>=2.38.0 \
     boto3>=1.1.3 \
     click>=5.1 \
     Flask>=0.10.1 \
@@ -28,7 +27,9 @@ RUN pip install \
     'pytest<8' \
     'responses<0.22.0' \
     pyinotify>=0.9.4, \
-    raven>=5.0.0
+    raven>=5.0.0 \
+    'tox>4,<5' \
+    'datalake<2'
 
 RUN mkdir -p /opt/
 COPY . /opt/
@@ -37,7 +38,7 @@ COPY . /opt/
 # the container and used for development. That is, the python paths and paths
 # to console scripts Just Work (TM)
 ENV PYTHONPATH=/opt/client:/opt/ingester:/opt/api
-RUN for d in client ingester api; do \
+RUN for d in ingester api; do \
     cd /opt/$d && \
     python setup.py develop -s /usr/local/bin \
         --egg-path ../../../../../opt/$d/ \

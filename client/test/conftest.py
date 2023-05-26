@@ -13,10 +13,9 @@
 # the License.
 
 import pytest
-from moto import mock_s3_deprecated
-import boto
+import boto3
+import botocore
 from six.moves.urllib.parse import urlparse
-from datalake.tests import random_metadata, tmpfile  # noqa
 import os
 from click.testing import CliRunner
 import stat
@@ -29,25 +28,28 @@ from datalake import Archive
 
 logging.basicConfig(level=logging.INFO)
 
+pytest_plugins = [
+   "datalake.tests",
+]
 
-@pytest.fixture
-def s3_conn(request):
-    mock = mock_s3_deprecated()
-    mock.start()
-    conn = boto.connect_s3()
+# If we run with proper AWS credentials they will be used
+# This will cause moto to fail
+# But more critically, may impact production systems
+# So we test for real credentials and fail hard if they exist
+sts = boto3.client('sts')
+try:
+    sts.get_caller_identity()
+    pytest.exit("Real AWS credentials detected, aborting", 3)
+except botocore.exceptions.NoCredentialsError:
+    pass  # no credentials are good
 
-    def tear_down():
-        mock.stop()
-    request.addfinalizer(tear_down)
-
-    return conn
 
 BUCKET_NAME = 'datalake-test'
 
 
 @pytest.fixture
-def s3_bucket(s3_conn):
-    return s3_conn.create_bucket(BUCKET_NAME)
+def s3_bucket(s3_bucket_maker):
+    return s3_bucket_maker(BUCKET_NAME)
 
 
 @pytest.fixture
@@ -69,23 +71,22 @@ def archive(archive_maker):
 
 
 @pytest.fixture
-def s3_key(s3_conn, s3_bucket):
+def s3_object(s3_connection, s3_bucket):
 
-    def get_s3_key(url=None):
+    def get_s3_object(url=None):
         if url is None:
             # if no url is specified, assume there is just one key in the
             # bucket. This is the common case for tests that only push one
             # item.
-            keys = [k for k in s3_bucket.list()]
-            assert len(keys) == 1
-            return keys[0]
+            objs = list(s3_bucket.objects.all())
+            assert len(objs) == 1
+            return objs[0]
         else:
             url = urlparse(url)
             assert url.scheme == 's3'
-            bucket = s3_conn.get_bucket(url.netloc)
-            return bucket.get_key(url.path)
+            return s3_connection.Object(url.netloc, url.path[1:])
 
-    return get_s3_key
+    return get_s3_object
 
 
 @pytest.fixture
@@ -125,6 +126,10 @@ def prepare_response(response, status=200, url=None, **query_params):
     url = url or 'http://datalake.example.com/v0/archive/files/'
     if len(query_params):
         q = ['{}={}'.format(k, query_params[k]) for k in query_params.keys()]
-        url = url + '?' + '&'.join(q)
-    responses.add(responses.GET, url, json=response, status=status,
-                  match_querystring=True)
+        qs = '&'.join(q)
+        responses.add(
+            responses.GET, url, json=response, status=status,
+            match=[responses.matchers.query_string_matcher(qs)]
+        )
+    else:
+        responses.add(responses.GET, url, json=response, status=status)
