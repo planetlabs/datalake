@@ -227,3 +227,27 @@ def test_metadata_from_http_url(archive, random_metadata):
     f = archive.fetch(url + '/data')
     assert f.read() == content
     assert f.metadata == random_metadata
+
+
+def test_fetch_template_with_iso(archive, datalake_url_maker, random_metadata,
+                                 tmpdir):
+    random_metadata['start']=1702944622123
+    random_metadata['end']=1702944634456
+    url = datalake_url_maker(metadata=random_metadata)
+    t = os.path.join(str(tmpdir), '{start_iso}-{end_iso}-foobar.log')
+    fname = '2023-12-19T00:10:22.123-2023-12-19T00:10:34.456-foobar.log'
+    expected_path = os.path.join(str(tmpdir), fname)
+    archive.fetch_to_filename(url, filename_template=t)
+    assert os.path.exists(expected_path)
+
+
+def test_fetch_template_with_none(archive, datalake_url_maker, random_metadata,
+                                  tmpdir):
+    random_metadata['start']=1702944622123
+    random_metadata['end']=None
+    url = datalake_url_maker(metadata=random_metadata)
+    t = os.path.join(str(tmpdir), '{start_iso}-{end_iso}-foobar.log')
+    fname = '2023-12-19T00:10:22.123-None-foobar.log'
+    expected_path = os.path.join(str(tmpdir), fname)
+    archive.fetch_to_filename(url, filename_template=t)
+    assert os.path.exists(expected_path)
