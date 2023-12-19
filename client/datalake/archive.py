@@ -28,6 +28,8 @@ from .common import Metadata
 import requests
 from io import BytesIO
 import errno
+from copy import deepcopy
+from datetime import datetime
 
 import boto3
 import math
@@ -323,11 +325,15 @@ class Archive(object):
         example, to store a file based on `what` it is, you could pass
         something like {what}.log. Or if you gathering many `what`'s that
         originate from many `where`'s you might want to use something like
-        {where}/{what}-{start}.log. If filename_template is None (the default),
-        files are stored in the current directory and the filenames are the ids
-        from the metadata.
+        {where}/{what}-{start}.log. Note that the template variables
+        {start_iso} and {end_iso} are also supported and expand to the ISO
+        timestamps with millisecond precision (e.g., 2023-12-19T00:10:22.123).
+
+        If filename_template is None (the default), files are stored in the
+        current directory and the filenames are the ids from the metadata.
 
         Returns the filename written.
+
         '''
         k = None
         if url.startswith('s3://'):
@@ -371,16 +377,30 @@ class Archive(object):
         return obj, Metadata.from_json(m)
 
     def _get_filename_from_template(self, template, metadata):
+        template_vars = deepcopy(metadata)
+        template_vars.update(
+            start_iso=self._ms_to_iso(metadata.get('start')),
+            end_iso=self._ms_to_iso(metadata.get('end')),
+        )
         if template is None:
             template = '{id}'
         try:
-            return template.format(**metadata)
+            return template.format(**template_vars)
         except KeyError as e:
-            m = '"{}" does not appear in the datalake metadata'
+            m = '"{}" does not appear to be a supported template variable.'
             m = m.format(str(e))
             raise InvalidDatalakePath(m)
         except ValueError as e:
             raise InvalidDatalakePath(str(e))
+
+    _ISO_FORMAT_MS = '%Y-%m-%dT%H:%M:%S.%f'
+
+    def _ms_to_iso(self, ts):
+        if ts is None:
+            return None
+        d = datetime.utcfromtimestamp(ts/1000.0)
+        # drop to ms precision
+        return d.strftime(self._ISO_FORMAT_MS)[:-3]
 
     def _get_key_name_from_url(self, url):
         parts = urlparse(url)
