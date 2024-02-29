@@ -23,7 +23,7 @@ from .querier import ArchiveQuerier, Cursor, InvalidCursor, \
 from .fetcher import ArchiveFileFetcher
 from datalake.common.errors import NoSuchDatalakeFile
 from datalake.common.metadata import Metadata, InvalidDatalakeMetadata
-
+import sentry
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
 
@@ -475,6 +475,7 @@ def _validate_latest_params(params):
     return validated
 
 
+@sentry.monitor_performance()
 @v0.route('/archive/latest/<what>/<where>')
 def latest_get(what, where):
     '''Retrieve the latest file for a give what and where
