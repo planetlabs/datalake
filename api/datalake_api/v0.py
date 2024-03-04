@@ -23,7 +23,7 @@ from .querier import ArchiveQuerier, Cursor, InvalidCursor, \
 from .fetcher import ArchiveFileFetcher
 from datalake.common.errors import NoSuchDatalakeFile
 from datalake.common.metadata import Metadata, InvalidDatalakeMetadata
-
+from .sentry import monitor_performance
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
 
@@ -143,6 +143,7 @@ def _copy_immutable_dict(d):
     return {k: v for k, v in d.items()}
 
 
+@monitor_performance()
 @v0.route('/archive/files/')
 def files_get():
     '''List files
@@ -389,7 +390,7 @@ def _get_headers_for_file(f):
         headers['Content-Encoding'] = f.content_encoding
     return headers
 
-
+@monitor_performance()
 def _get_latest(what, where, lookback):
     aq = get_archive_querier()
     f = aq.query_latest(what, where, lookback_days=lookback)
