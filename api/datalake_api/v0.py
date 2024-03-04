@@ -143,8 +143,8 @@ def _copy_immutable_dict(d):
     return {k: v for k, v in d.items()}
 
 
-@v0.route('/archive/files/')
 @monitor_performance()
+@v0.route('/archive/files/')
 def files_get():
     '''List files
 
@@ -477,7 +477,6 @@ def _validate_latest_params(params):
 
 
 @v0.route('/archive/latest/<what>/<where>')
-@monitor_performance()
 def latest_get(what, where):
     '''Retrieve the latest file for a give what and where
 
@@ -529,7 +528,6 @@ def latest_get(what, where):
 
 
 @v0.route('/archive/latest/<what>/<where>/data')
-@monitor_performance
 def latest_get_contents(what, where):
     '''Retrieve the latest file data for a given what and where
 
