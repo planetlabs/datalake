@@ -40,9 +40,10 @@ if level is not None and not app.debug:
 logging.getLogger('boto3.resources.action').setLevel(logging.WARN)
 
 dsn = os.environ.get("SENTRY_DSN")
+traces_sample_rate = os.environ.get("SENTRY_TRACES_SAMPLE_RATE")
 sentry_sdk.init(dsn=dsn,
                 integrations=[FlaskIntegration()],
-                traces_sample_rate=1.0)
+                traces_sample_rate=traces_sample_rate)
 
 
 @app.route('/')
