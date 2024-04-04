@@ -38,7 +38,11 @@ if level is not None and not app.debug:
     logging.basicConfig(level=level)
 
 logging.getLogger('boto3.resources.action').setLevel(logging.WARN)
-sentry_sdk.init(integrations=[FlaskIntegration()])
+
+dsn = os.environ.get("SENTRY_DNS")
+sentry_sdk.init(dsn=dsn,
+                integrations=[FlaskIntegration()],
+                traces_sample_rate=1.0)
 
 
 @app.route('/')
