@@ -68,6 +68,12 @@ def dynamodb_records_table(dynamodb_table_maker):
 
 
 @pytest.fixture
+def dynamodb_latest_table(dynamodb_table_maker):
+    schema = [HashKey('time_index_key'), RangeKey('range_key')]
+    return dynamodb_table_maker('latest', schema)
+
+
+@pytest.fixture
 def sns_connection(aws_connector):
     return aws_connector(mock_sns, boto.connect_sns)
 
