@@ -12,11 +12,13 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+import boto3
+from boto3.dynamodb.conditions import Attr
+
 from memoized_property import memoized_property
 import boto.dynamodb2
 from boto.dynamodb2.table import Table
-from boto.dynamodb2.exceptions import (ConditionalCheckFailedException,
-                                       ItemNotFound)
+from boto.dynamodb2.exceptions import ConditionalCheckFailedException
 import os
 from datalake.common.errors import InsufficientConfiguration
 
@@ -26,6 +28,9 @@ class DynamoDBStorage(object):
 
     def __init__(self, table_name, connection=None):
         self.table_name = table_name
+        self.latest_table_name = os.environ.get("DATALAKE_DNAMODB_LATEST_TABLE",
+                                                f"{self.table_name}-latest")
+        self.use_latest = os.environ.get("DATALAKE_LATEST_FLAG", False)
         self._prepare_connection(connection)
 
     @classmethod
@@ -48,23 +53,14 @@ class DynamoDBStorage(object):
     @memoized_property
     def _table(self):
         return Table(self.table_name, connection=self._connection)
+    
+    @memoized_property
+    def _latest_table(self):
+        dynamodb = boto3.resource('dynamodb')
+        return dynamodb.Table(self.latest_table_name, connection=self._connection)
 
     def store(self, record):
         try:
-            primary_key = {
-                'time_index_key': record['time_index_key'],
-                'range_key': record['range_key']
-            }
-            existing_record = self._table.get_item(**primary_key)
-
-            if existing_record and \
-                existing_record['metadata']['start'] < record['metadata']['start']:
-                 self._table.put_item(data=record, overwrite=True)
-            else:
-                print(f'Existing record in latest table has later or same start time. No update performed')
-
-        except ItemNotFound:
-            # Item doesn't exist, lets insert
             self._table.put_item(data=record)
         except ConditionalCheckFailedException:
             # Tolerate duplicate stores
@@ -72,3 +68,14 @@ class DynamoDBStorage(object):
 
     def update(self, record):
         self._table.put_item(data=record, overwrite=True)
+
+    def store_latest(self, record):
+        item_attrs = {'time_index_key': record['time_index_key'],
+                      'range_key': record['range_key']}
+        condition = (Attr('metadata.start').lt(record['metadata']['start']))
+        try:
+            self._latest_table.put_item(item_attrs,
+                                        condition)
+        except ConditionalCheckFailedException:
+            pass
+

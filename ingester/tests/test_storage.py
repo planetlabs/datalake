@@ -1,7 +1,9 @@
 from datalake_ingester import DynamoDBStorage
 from decimal import Decimal
+import boto3
 
 def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
+    boto3.setup_default_session(fake_credentials=True)
     storage = DynamoDBStorage('latest', connection=dynamodb_connection)
     new_record = {
         'time_index_key': '15225:newlog',
@@ -13,7 +15,7 @@ def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
         'create_time': 1500000000000
     }
 
-    storage.store(new_record)
+    storage.store_latest(new_record)
 
     stored_record = dynamodb_latest_table.get_item(
         time_index_key='15225:newlog',
@@ -64,9 +66,9 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
         'size': 1048576
     }
 
-    storage.store(file3)
-    storage.store(file1)
-    storage.store(file2) # same what:where, but should replace file1 b/c newer
+    storage.store_latest(file3)
+    storage.store_latest(file1)
+    storage.store_latest(file2) # same what:where, but should replace file1 b/c newer
     
     records = [dict(i) for i in dynamodb_latest_table.scan()]
 
@@ -99,8 +101,8 @@ def test_concurrent_updates(dynamodb_latest_table, dynamodb_connection):
     updated_record2['metadata']['start'] += 5
 
 
-    storage.store(updated_record1)
-    storage.store(updated_record2)
+    storage.store_latest(updated_record1)
+    storage.store_latest(updated_record2)
 
     stored_record = dynamodb_latest_table.get_item(
         time_index_key='15219:zlcdzvawsp',
