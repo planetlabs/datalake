@@ -1,21 +1,47 @@
 from datalake_ingester import DynamoDBStorage
 from decimal import Decimal
-import boto3
+
+
+def test_dynamodb_store(dynamodb_users_table, dynamodb_connection):
+    storage = DynamoDBStorage('users', connection=dynamodb_connection)
+    expected_user = {'name': 'John', 'last_name': 'Muir'}
+    storage.store(expected_user)
+    user = dict(dynamodb_users_table.get_item(name='John', last_name='Muir'))
+    assert dict(user) == expected_user
+
+def test_store_duplicate(dynamodb_users_table, dynamodb_connection):
+    storage = DynamoDBStorage('users', connection=dynamodb_connection)
+    expected_user = {'name': 'Vanilla', 'last_name': 'Ice'}
+    storage.store(expected_user)
+    storage.store(expected_user)
+    user = dict(dynamodb_users_table.get_item(name='Vanilla', last_name='Ice'))
+    assert dict(user) == expected_user
 
 def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
-    boto3.setup_default_session(fake_credentials=True)
-    storage = DynamoDBStorage('latest', connection=dynamodb_connection)
+    storage = DynamoDBStorage(latest_table='latest', connection=dynamodb_connection)
+
     new_record = {
         'time_index_key': '15225:newlog',
         'range_key': 'new_server:12345abcde',
         'metadata': {
-            'start': 1500000000000
+            'version': 1,
+            'start': 1500000000000,
+            'end': 1500000000010,
+            'path': '/var/log/syslog.2',
+            'work_id': None,
+            'where': 'ground_server2',
+            'what': 'syslog',
+            'id': '34fb2d1ec54245c7a57e29ed5a6ea9b2',
+            'hash': 'b4f2d8de24af342643d5b78a8f2b9b88'
         },
         'url': 's3://newfile/url',
         'create_time': 1500000000000
     }
 
-    storage.store_latest(new_record)
+    try:
+        storage.store_latest(new_record)
+    except Exception as e:
+        print(f"Failed to store record: {str(e)}")
 
     stored_record = dynamodb_latest_table.get_item(
         time_index_key='15225:newlog',
@@ -25,13 +51,21 @@ def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
 
 
 def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dynamodb_connection):
-    storage = DynamoDBStorage('latest', connection=dynamodb_connection)
+    storage = DynamoDBStorage(latest_table='latest', connection=dynamodb_connection)
 
     file1 = {
         'time_index_key': '15219:zlcdzvawsp',
         'range_key': 'lawvuunyws:447a4a801cabc6089f04922abdfa8aad099824e9',
         'metadata': {
-            'start': 1314877177402
+            'version': 1,
+            'start': 1314877177402,
+            'end': 1314877177412, # ends ten seconds later
+            'path': '/var/log/syslog.2',
+            'work_id': 'abc-123',
+            'where': 'ground_server2',
+            'what': 'syslog',
+            'id': '34fb2d1ec54245c7a57e29ed5a6ea9b2',
+            'hash': 'b4f2d8de24af342643d5b78a8f2b9b88'
         },
         'url': 's3://existingfile/url',
         'create_time': 1314877177402
@@ -41,7 +75,16 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
         'time_index_key': '15219:zlcdzvawsp',
         'range_key': 'lawvuunyws:447a4a801cabc6089f04922abdfa8aad099824e9',
         'metadata': {
-            'start': 1314877177403  # One millisecond later
+            'version': 1,
+            'start': 1314877177413,  # One millisecond later
+            'end': 1314877177423, # ends ten seconds later
+            'path': '/var/log/syslog.2',
+            'work_id': 'abc-123',
+            'where': 'ground_server2',
+            'what': 'syslog',
+            'id': '45gb2d1ec54245c7a57e29ed5a6ea9b2',
+            'hash': 'c5g3d8de24af342643d5b78a8f2b9b88'
+            
         },
         'url': 's3://existingfile/url',
         'create_time': 1314877177403
@@ -55,7 +98,7 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
             'start': 1414877177402,
             'end': 1415128740728,
             'path': '/var/log/syslog.2',
-            'work_id': None,
+            'work_id': 'foo-bizz',
             'where': 'ground_server2',
             'what': 'syslog',
             'id': '34fb2d1ec54245c7a57e29ed5a6ea9b2',
@@ -74,24 +117,32 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
 
     res = dict(dynamodb_latest_table.get_item(time_index_key='15219:zlcdzvawsp',
                                               range_key='lawvuunyws:447a4a801cabc6089f04922abdfa8aad099824e9'))
-    assert res['metadata']['start'] == Decimal('1314877177403')
+    assert res['metadata']['start'] == Decimal('1314877177413')
     assert len(records) == 2
     assert file2 == res
 
 
 def test_concurrent_updates(dynamodb_latest_table, dynamodb_connection):
-    storage = DynamoDBStorage('latest', connection=dynamodb_connection)
+    storage = DynamoDBStorage(latest_table='latest', connection=dynamodb_connection)
 
     base_record = {
         'time_index_key': '15219:zlcdzvawsp',
         'range_key': 'lawvuunyws:447a4a801cabc6089f04922abdfa8aad099824e9',
         'metadata': {
-            'start': 1314877177402
+            'version': 1,
+            'start': 1314877177402,
+            'end': 1314877177412, # ends ten seconds later
+            'path': '/var/log/syslog.2',
+            'work_id': 'abc-123',
+            'where': 'ground_server2',
+            'what': 'syslog',
+            'id': '34fb2d1ec54245c7a57e29ed5a6ea9b2',
+            'hash': 'b4f2d8de24af342643d5b78a8f2b9b88'
         },
         'url': 's3://existingfile/url',
         'create_time': 1314877177402
     }
-    storage.store(base_record)
+    storage.store_latest(base_record)
 
     
     updated_record1 = base_record.copy()

@@ -14,29 +14,15 @@ from boto.dynamodb2.fields import HashKey, RangeKey
 import boto.sns
 import boto.sqs
 
-
-import boto3
-from boto3 import client
-from botocore.exceptions import ClientError
-
 from datalake.tests import *  # noqa
 
 from datalake_ingester import SQSQueue
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
 
 @pytest.fixture
 def dynamodb_connection(aws_connector):
     return aws_connector(mock_dynamodb2,
                          lambda: boto.dynamodb2.connect_to_region('us-west-1'))
-
-
-@pytest.fixture
-def dynamodb_latest_connection(aws_connector):
-    return aws_connector(mock_dynamodb2,
-                         lambda: boto3.resource('dynamodb',                          
-                          region_name='us-west-1'))
 
 
 def _delete_table_if_exists(conn, name):
@@ -45,16 +31,6 @@ def _delete_table_if_exists(conn, name):
         table.delete()
     except JSONResponseError as e:
         if e.status == 400 and e.error_code == 'ResourceNotFoundException':
-            return
-        raise e
-    
-def _delete_latest_if_exists(dynamodb, name):
-    try:
-        table = dynamodb.Table(name)
-        table.delete()
-        table.wait_until_not_exists()
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'ResourceNotFoundException':
             return
         raise e
 
@@ -79,31 +55,6 @@ def dynamodb_table_maker(request, dynamodb_connection):
     return table_maker
 
 
-@pytest.fixture
-def dynamodb_latest_table_maker(request, dynamodb_latest_connection):
-
-    def table_maker(name, key_schema, attributes):
-        _delete_latest_if_exists(dynamodb_latest_connection, name)
-        table = dynamodb_latest_connection.create_table(
-            TableName=name,
-            KeySchema=key_schema,
-            AttributeDefinitions=attributes,
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 5,
-                'WriteCapacityUnits': 5
-            }
-        )
-        table.wait_until_exists()
-
-        def tear_down():
-            table.delete()
-            table.wait_until_not_exists()
-
-        request.addfinalizer(tear_down)
-        return table
-
-    return table_maker
-
 
 @pytest.fixture
 def dynamodb_users_table(dynamodb_table_maker):
@@ -118,16 +69,9 @@ def dynamodb_records_table(dynamodb_table_maker):
 
 
 @pytest.fixture
-def dynamodb_latest_table(dynamodb_latest_table_maker):
-    schema = [
-        {'AttributeName': 'time_index_key', 'KeyType': 'HASH'},
-        {'AttributeName': 'range_key', 'KeyType': 'RANGE'}
-    ]
-    attributes = [
-        {'AttributeName': 'time_index_key', 'AttributeType': 'S'},
-        {'AttributeName': 'range_key', 'AttributeType': 'S'}
-    ]
-    return dynamodb_latest_table_maker('latest', schema, attributes)
+def dynamodb_latest_table(dynamodb_table_maker):
+    schema = [HashKey('time_index_key'), RangeKey('range_key')]
+    return dynamodb_table_maker('latest', schema)
 
 
 @pytest.fixture
