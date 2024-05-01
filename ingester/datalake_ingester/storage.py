@@ -29,7 +29,7 @@ class DynamoDBStorage(object):
         self.table_name = table_name
         self.latest_table_name = os.environ.get("DATALAKE_DNAMODB_LATEST_TABLE",
                                                 f"{latest_table}")
-        self.use_latest = os.environ.get("DATALAKE_LATEST_FLAG", False)
+        self.use_latest = os.environ.get("DATALAKE_USE_LATEST_TABLE", False)
         self._prepare_connection(connection)
         self.logger = logging.getLogger('storage')
 
@@ -73,7 +73,14 @@ class DynamoDBStorage(object):
         note: Record must utilize AttributeValue syntax
               for the conditional put.
         """
+
+        condition_expression = " attribute_not_exists(what_where_key) OR metadata.start < :new_start"
+        expression_attribute_values = {
+            ':what_where_key': {'S': record['what_where_key']},
+            ':new_start': {'N': str(record['metadata']['start'])}
+        }
         record = {
+            'what_where_key': {"S": record['metadata']['what']+':'+record['metadata']['where']},
             'time_index_key': {"S": record['time_index_key']},
             'range_key': {"S": record['range_key']},
             'metadata': {
@@ -110,12 +117,13 @@ class DynamoDBStorage(object):
             'url': {"S": record['url']},
             'create_time': {'N': str(record['create_time'])}
         }
+
         try:
             self._connection.put_item(
                 table_name=self.latest_table_name,
                 item=record,
-                condition_expression=\
-                    f"attribute_not_exists(metadata.M.start.N) OR metadata.M.start.N < {record['metadata']['M']['start']['N']}",
+                condition_expression=condition_expression,
+                expression_attribute_values=expression_attribute_values
             )
             self.logger.info("Record stored successfully.")
         except ConditionalCheckFailedException:
