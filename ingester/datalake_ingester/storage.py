@@ -76,7 +76,6 @@ class DynamoDBStorage(object):
 
         condition_expression = " attribute_not_exists(what_where_key) OR metadata.start < :new_start"
         expression_attribute_values = {
-            ':what_where_key': {'S': record['what_where_key']},
             ':new_start': {'N': str(record['metadata']['start'])}
         }
         record = {
