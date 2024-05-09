@@ -107,6 +107,20 @@ key_schema = [
     }
 ]
 
+latest_attribute_definitions = [
+    {
+        'AttributeName': 'what_where_key',
+        'AttributeType': 'S'
+    }
+]
+
+latest_key_schema = [
+    {
+        'AttributeName': 'what_where_key',
+        'KeyType': 'HASH'
+    }
+]
+
 global_secondary = [{
     'IndexName': 'work-id-index',
     'KeySchema': [
@@ -140,42 +154,59 @@ def _delete_table(table):
         raise e
 
 
-def _create_table(dynamodb, table_name):
+def _create_table(dynamodb,
+                  table_name,
+                  attribute_definitions,
+                  key_schema, 
+                  global_secondary=None):
     table = dynamodb.Table(table_name)
     _delete_table(table)
     kwargs = dict(
         TableName=table_name,
         AttributeDefinitions=attribute_definitions,
         KeySchema=key_schema,
-        GlobalSecondaryIndexes=global_secondary,
         ProvisionedThroughput={
             'ReadCapacityUnits': 5,
             'WriteCapacityUnits': 5
         }
     )
+    if global_secondary:
+        kwargs['GlobalSecondaryIndexes'] = global_secondary
     dynamodb.create_table(**kwargs)
     return dynamodb.Table(table_name)
 
 
 def _populate_table(table, records):
+    print(f'attempting to populate {table}')
     with table.batch_writer() as batch:
         for r in records:
             batch.put_item(Item=r)
 
-
+# Adding latest table logic so latest table will be created and records will populate it
+# Once that's possible, we will simply query the latest_table for what:where, no bucket logic
 @pytest.fixture
 def table_maker(request, dynamodb):
 
-    def maker(records):
-        table_name = 'test'
-        table = _create_table(dynamodb, table_name)
-        _populate_table(table, records)
+    def maker(records, include_latest_key=False):
+        old_table_name = 'test'
+        latest_table_name = 'test_latest'
+        latest_table = None
+
+        old_table = _create_table(dynamodb, old_table_name, attribute_definitions, key_schema, global_secondary)
+        _populate_table(old_table, records)
+
+        if include_latest_key:
+            latest_table = _create_table(dynamodb, latest_table_name, latest_attribute_definitions, latest_key_schema)
+            _populate_table(latest_table, records)
 
         def tear_down():
-            _delete_table(table)
+            _delete_table(old_table)
+            if include_latest_key:
+                _delete_table(latest_table)
+
         request.addfinalizer(tear_down)
 
-        return table
+        return old_table, latest_table
 
     return maker
 
@@ -183,12 +214,20 @@ def table_maker(request, dynamodb):
 @pytest.fixture
 def record_maker(s3_file_from_metadata):
 
-    def maker(**kwargs):
+    def maker(include_latest_key=False, **kwargs):
         m = generate_random_metadata()
         m.update(**kwargs)
         key = '/'.join([str(v) for v in kwargs.values()])
         url = 's3://datalake-test/' + key
         s3_file_from_metadata(url, m)
-        return DatalakeRecord.list_from_metadata(url, m)
+        records = DatalakeRecord.list_from_metadata(url, m)
+
+        if include_latest_key:
+            what = kwargs.get('what')
+            where = kwargs.get('where')
+            for record in records:
+                record['what_where_key'] = f"{what}:{where}"
+
+        return records
 
     return maker

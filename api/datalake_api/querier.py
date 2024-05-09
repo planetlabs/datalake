@@ -14,6 +14,7 @@
 
 from memoized_property import memoized_property
 from datalake.common import DatalakeRecord
+from boto3.dynamodb.conditions import Key
 import base64
 import json
 import time
@@ -365,3 +366,13 @@ class ArchiveQuerier(object):
                 break
             kwargs['ExclusiveStartKey'] = response['LastEvaluatedKey']
         return records
+    
+    def query_latest_table(self, what, where):
+        response = self._table.query(
+            KeyConditionExpression=Key('what_where_key').eq(f'{what}:{where}')
+        )
+        items = response.get('Items', [])
+        if not items:
+            return None
+        latest_item = items[0]
+        return dict(url=latest_item['url'], metadata=latest_item['metadata'])

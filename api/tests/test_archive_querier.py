@@ -125,8 +125,10 @@ class HttpQuerier(object):
 
 @pytest.fixture(params=[ArchiveQuerier, HttpQuerier],
                 ids=['archive_querier', 'http'])
-def querier(request, dynamodb):
-    return request.param('test', dynamodb=dynamodb)
+def querier(request):
+    def create_querier(dynamodb, table_name):
+        return request.param(table_name, dynamodb=dynamodb)
+    return create_querier
 
 
 def in_url(result, part):
@@ -528,3 +530,18 @@ def test_2x_max_results_in_one_bucket(table_maker, querier, record_maker):
     pages = get_all_pages(querier.query_by_time, [start, end, 'boo'])
     results = consolidate_pages(pages)
     assert len(results) == MAX_RESULTS * 2
+
+"""
+Will have to go through all of the tests associated with
+latest and correctly query from
+the latest table that was created.
+"""
+
+def test_latest_table_query(table_maker, querier, record_maker):
+    now = int(time.time() * 1000)
+    records = record_maker(include_latest_key=True, what='foo', where='boo')
+    _, latest_table = table_maker(records)
+
+    querier_instance = querier(dynamodb=latest_table.dynamodb, table_name=latest_table.table_name)
+    result = querier_instance.query_latest_table('foo', 'boo')
+    _validate_latest_result(result, what='foo', where='boo')
