@@ -59,11 +59,14 @@ class DynamoDBStorage(object):
         return Table(self.latest_table_name, connection=self._connection)
 
     def store(self, record):
-        try:
-            self._table.put_item(data=record)
-        except ConditionalCheckFailedException:
-            # Tolerate duplicate stores
-            pass
+        if self.use_latest:
+            self._latest_table.store_latest(record)
+        else:
+            try:
+                self._table.put_item(data=record)
+            except ConditionalCheckFailedException:
+                # Tolerate duplicate stores
+                pass
 
     def update(self, record):
         self._table.put_item(data=record, overwrite=True)
