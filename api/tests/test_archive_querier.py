@@ -126,7 +126,7 @@ class HttpQuerier(object):
 @pytest.fixture(params=[ArchiveQuerier, HttpQuerier],
                 ids=['archive_querier', 'http'])
 def querier(request, dynamodb):
-        return request.param('test', dynamodb=dynamodb, use_latest=True)
+        return request.param('test', dynamodb=dynamodb)
 
 def in_url(result, part):
     url = result['url']

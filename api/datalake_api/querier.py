@@ -173,10 +173,10 @@ class QueryResults(list):
 
 class ArchiveQuerier(object):
 
-    def __init__(self, table_name, dynamodb=None, use_latest=None):
+    def __init__(self, table_name, dynamodb=None):
         self.table_name = table_name
         self.dynamodb = dynamodb
-        self.use_latest = use_latest
+        self.use_latest = False
 
     def query_by_work_id(self, work_id, what, where=None, cursor=None):
         kwargs = self._prepare_work_id_kwargs(work_id, what)
@@ -337,7 +337,7 @@ class ArchiveQuerier(object):
     def _latest_table(self):
         return self.dynamodb.Table('test_latest')
 
-    def query_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS, use_latest=False):
+    def query_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS):
         if self.use_latest:
             response = self._latest_table.query(
                 KeyConditionExpression=Key('what_where_key').eq(f'{what}:{where}')

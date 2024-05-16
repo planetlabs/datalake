@@ -186,7 +186,7 @@ def _populate_table(table, records):
 @pytest.fixture
 def table_maker(request, dynamodb):
 
-    def maker(records, use_latest=False):
+    def maker(records):
         table_name = 'test'
         latest_table_name = 'test_latest'
         latest_table = None
