@@ -125,11 +125,8 @@ class HttpQuerier(object):
 
 @pytest.fixture(params=[ArchiveQuerier, HttpQuerier],
                 ids=['archive_querier', 'http'])
-def querier(request):
-    def create_querier(dynamodb, table_name):
-        return request.param(table_name, dynamodb=dynamodb)
-    return create_querier
-
+def querier(request, dynamodb):
+        return request.param('test', dynamodb=dynamodb, use_latest=True)
 
 def in_url(result, part):
     url = result['url']
@@ -409,6 +406,10 @@ def test_no_end(table_maker, querier, s3_file_from_metadata):
     url = 's3://datalake-test/' + m['id']
     s3_file_from_metadata(url, m)
     records = DatalakeRecord.list_from_metadata(url, m)
+    for record in records:
+        what = record.get('what')
+        where = record.get('where')
+        record['what_where_key'] = f'{what}:{where}'
     table_maker(records)
     results = querier.query_by_time(m['start'], m['start'] + 1, m['what'])
     assert len(results) == 1
@@ -421,7 +422,12 @@ def test_no_end_exclusion(table_maker, querier, s3_file_from_metadata):
     url = 's3://datalake-test/' + m['id']
     s3_file_from_metadata(url, m)
     records = DatalakeRecord.list_from_metadata(url, m)
+    for record in records:
+        what = record.get('what')
+        where = record.get('where')
+        record['what_where_key'] = f'{what}:{where}'
     table_maker(records)
+    
     results = querier.query_by_time(m['start'] + 1, m['start'] + 2, m['what'])
     assert len(results) == 0
 
@@ -480,8 +486,7 @@ def test_latest_creation_time_breaks_tie(table_maker, querier,
     start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150
     end = start + interval
-    table = table_maker([])
-
+    table = table_maker([])[0]
     for i in range(3):
         record = record_maker(start=start,
                               end=end,
@@ -531,17 +536,10 @@ def test_2x_max_results_in_one_bucket(table_maker, querier, record_maker):
     results = consolidate_pages(pages)
     assert len(results) == MAX_RESULTS * 2
 
-"""
-Will have to go through all of the tests associated with
-latest and correctly query from
-the latest table that was created.
-"""
 
 def test_latest_table_query(table_maker, querier, record_maker):
-    now = int(time.time() * 1000)
-    records = record_maker(include_latest_key=True, what='foo', where='boo')
-    _, latest_table = table_maker(records)
-
-    querier_instance = querier(dynamodb=latest_table.dynamodb, table_name=latest_table.table_name)
-    result = querier_instance.query_latest_table('foo', 'boo')
+    records = record_maker(what='foo', where='boo')
+    table_maker(records)
+    querier.use_latest = True
+    result = querier.query_latest('foo', 'boo')
     _validate_latest_result(result, what='foo', where='boo')

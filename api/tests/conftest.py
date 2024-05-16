@@ -177,7 +177,6 @@ def _create_table(dynamodb,
 
 
 def _populate_table(table, records):
-    print(f'attempting to populate {table}')
     with table.batch_writer() as batch:
         for r in records:
             batch.put_item(Item=r)
@@ -187,26 +186,25 @@ def _populate_table(table, records):
 @pytest.fixture
 def table_maker(request, dynamodb):
 
-    def maker(records, include_latest_key=False):
-        old_table_name = 'test'
+    def maker(records, use_latest=False):
+        table_name = 'test'
         latest_table_name = 'test_latest'
         latest_table = None
 
-        old_table = _create_table(dynamodb, old_table_name, attribute_definitions, key_schema, global_secondary)
-        _populate_table(old_table, records)
+        table = _create_table(dynamodb, table_name, attribute_definitions, key_schema, global_secondary)
 
-        if include_latest_key:
-            latest_table = _create_table(dynamodb, latest_table_name, latest_attribute_definitions, latest_key_schema)
-            _populate_table(latest_table, records)
+        latest_table = _create_table(dynamodb, latest_table_name, latest_attribute_definitions, latest_key_schema)
+        _populate_table(latest_table, records)
+
+        _populate_table(table, records)
 
         def tear_down():
-            _delete_table(old_table)
-            if include_latest_key:
-                _delete_table(latest_table)
+            _delete_table(table)
+            _delete_table(latest_table)
 
         request.addfinalizer(tear_down)
 
-        return old_table, latest_table
+        return (table, latest_table)
 
     return maker
 
@@ -214,7 +212,7 @@ def table_maker(request, dynamodb):
 @pytest.fixture
 def record_maker(s3_file_from_metadata):
 
-    def maker(include_latest_key=False, **kwargs):
+    def maker(**kwargs):
         m = generate_random_metadata()
         m.update(**kwargs)
         key = '/'.join([str(v) for v in kwargs.values()])
@@ -222,11 +220,10 @@ def record_maker(s3_file_from_metadata):
         s3_file_from_metadata(url, m)
         records = DatalakeRecord.list_from_metadata(url, m)
 
-        if include_latest_key:
-            what = kwargs.get('what')
-            where = kwargs.get('where')
-            for record in records:
-                record['what_where_key'] = f"{what}:{where}"
+        what = kwargs.get('what')
+        where = kwargs.get('where')
+        for record in records:
+            record['what_where_key'] = f"{what}:{where}"
 
         return records
 

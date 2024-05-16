@@ -173,9 +173,10 @@ class QueryResults(list):
 
 class ArchiveQuerier(object):
 
-    def __init__(self, table_name, dynamodb=None):
+    def __init__(self, table_name, dynamodb=None, use_latest=None):
         self.table_name = table_name
         self.dynamodb = dynamodb
+        self.use_latest = use_latest
 
     def query_by_work_id(self, work_id, what, where=None, cursor=None):
         kwargs = self._prepare_work_id_kwargs(work_id, what)
@@ -331,18 +332,25 @@ class ArchiveQuerier(object):
     @memoized_property
     def _table(self):
         return self.dynamodb.Table(self.table_name)
+    
+    @memoized_property
+    def _latest_table(self):
+        return self.dynamodb.Table('test_latest')
 
-    def query_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS):
-        current = int(time.time() * 1000)
-        end = current - lookback_days * _ONE_DAY_MS
-        while current >= end:
-            bucket = current/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
-            r = self._get_latest_record_in_bucket(bucket, what, where)
-            if r is not None:
-                return r
-            current -= _ONE_DAY_MS
+    def query_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS, use_latest=False):
+        if self.use_latest:
+            response = self._latest_table.query(
+                KeyConditionExpression=Key('what_where_key').eq(f'{what}:{where}')
+            )
+            items = response.get('Items', [])
+            if not items:
+                return self._default_latest(what, where, lookback_days)
 
-        return None
+            latest_item = items[0]
+            return dict(url=latest_item['url'], metadata=latest_item['metadata'])
+
+        else:
+            return self._default_latest(what, where, lookback_days)
 
     def _get_latest_record_in_bucket(self, bucket, what, where):
         kwargs = self._prepare_time_bucket_kwargs(bucket, what)
@@ -367,12 +375,14 @@ class ArchiveQuerier(object):
             kwargs['ExclusiveStartKey'] = response['LastEvaluatedKey']
         return records
     
-    def query_latest_table(self, what, where):
-        response = self._table.query(
-            KeyConditionExpression=Key('what_where_key').eq(f'{what}:{where}')
-        )
-        items = response.get('Items', [])
-        if not items:
-            return None
-        latest_item = items[0]
-        return dict(url=latest_item['url'], metadata=latest_item['metadata'])
+    def _default_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS):
+        current = int(time.time() * 1000)
+        end = current - lookback_days * _ONE_DAY_MS
+        while current >= end:
+            bucket = current/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+            r = self._get_latest_record_in_bucket(bucket, what, where)
+            if r is not None:
+                return r
+            current -= _ONE_DAY_MS
+
+        return None
