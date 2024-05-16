@@ -189,13 +189,11 @@ def table_maker(request, dynamodb):
     def maker(records):
         table_name = 'test'
         latest_table_name = 'test_latest'
-        latest_table = None
 
         table = _create_table(dynamodb, table_name, attribute_definitions, key_schema, global_secondary)
-
         latest_table = _create_table(dynamodb, latest_table_name, latest_attribute_definitions, latest_key_schema)
-        _populate_table(latest_table, records)
 
+        _populate_table(latest_table, records)
         _populate_table(table, records)
 
         def tear_down():
@@ -203,7 +201,6 @@ def table_maker(request, dynamodb):
             _delete_table(latest_table)
 
         request.addfinalizer(tear_down)
-
         return (table, latest_table)
 
     return maker
