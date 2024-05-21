@@ -190,6 +190,10 @@ def record_maker(table_maker, s3_file_maker):
         s3_file_maker('datalake-test', path, content, metadata)
         url = 's3://datalake-test/' + path
         records = DatalakeRecord.list_from_metadata(url, metadata)
+        for record in records:
+            what = record.get('what')
+            where = record.get('where')
+            record['what_where_key'] = f"{what}:{where}"
         table_maker(records)
 
     return maker

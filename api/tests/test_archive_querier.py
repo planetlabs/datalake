@@ -126,7 +126,7 @@ class HttpQuerier(object):
 @pytest.fixture(params=[ArchiveQuerier, HttpQuerier],
                 ids=['archive_querier', 'http'])
 def querier(request, dynamodb):
-        return request.param('test', dynamodb=dynamodb)
+        return request.param('test', 'test_latest', dynamodb=dynamodb)
 
 def in_url(result, part):
     url = result['url']
@@ -513,6 +513,7 @@ def test_max_results_in_one_bucket(table_maker, querier, record_maker):
                                 end=end,
                                 what='boo',
                                 where='hoo{}'.format(i))
+    print(f'records are {records}')
     table_maker(records)
     pages = get_all_pages(querier.query_by_time, [start, end, 'boo'])
     results = consolidate_pages(pages)
@@ -538,8 +539,17 @@ def test_2x_max_results_in_one_bucket(table_maker, querier, record_maker):
 
 
 def test_latest_table_query(table_maker, querier, record_maker):
-    records = record_maker(what='foo', where='boo')
+    now = int(time.time() * 1000)
+    records = []
+    bucket = int(now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
+    start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    end = start
+    for i in range(MAX_RESULTS):
+        records += record_maker(start=start,
+                                end=end,
+                                what='boo',
+                                where='hoo{}'.format(i))
     table_maker(records)
     querier.use_latest = True
-    result = querier.query_latest('foo', 'boo')
-    _validate_latest_result(result, what='foo', where='boo')
+    result = querier.query_latest('boo', 'hoo0')
+    _validate_latest_result(result, what='boo', where='hoo0')

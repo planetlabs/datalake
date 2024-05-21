@@ -18,6 +18,7 @@ from boto3.dynamodb.conditions import Key
 import base64
 import json
 import time
+import os
 
 
 '''the maximum number of results to return to the user
@@ -173,10 +174,11 @@ class QueryResults(list):
 
 class ArchiveQuerier(object):
 
-    def __init__(self, table_name, dynamodb=None):
+    def __init__(self, table_name, latest_table_name=None, dynamodb=None):
         self.table_name = table_name
+        self.latest_table_name = latest_table_name
         self.dynamodb = dynamodb
-        self.use_latest = False
+        self.use_latest = os.environ.get("DATALAKE_USE_LATEST_TABLE", False)
 
     def query_by_work_id(self, work_id, what, where=None, cursor=None):
         kwargs = self._prepare_work_id_kwargs(work_id, what)
@@ -335,7 +337,7 @@ class ArchiveQuerier(object):
     
     @memoized_property
     def _latest_table(self):
-        return self.dynamodb.Table('test_latest')
+        return self.dynamodb.Table(self.latest_table_name)
 
     def query_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS):
         if self.use_latest:
