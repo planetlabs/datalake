@@ -549,6 +549,6 @@ def test_latest_table_query(table_maker, querier, record_maker):
                                 what='boo',
                                 where='hoo{}'.format(i))
     table_maker(records)
-    querier.use_latest = True
+    querier.use_latest_table = True
     result = querier.query_latest('boo', 'hoo0')
     _validate_latest_result(result, what='boo', where='hoo0')
