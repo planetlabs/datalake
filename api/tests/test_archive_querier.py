@@ -513,7 +513,6 @@ def test_max_results_in_one_bucket(table_maker, querier, record_maker):
                                 end=end,
                                 what='boo',
                                 where='hoo{}'.format(i))
-    print(f'records are {records}')
     table_maker(records)
     pages = get_all_pages(querier.query_by_time, [start, end, 'boo'])
     results = consolidate_pages(pages)
