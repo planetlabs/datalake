@@ -20,6 +20,11 @@ import json
 import time
 import os
 
+import logging
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
+
 
 '''the maximum number of results to return to the user
 
@@ -179,7 +184,7 @@ class ArchiveQuerier(object):
         self.latest_table_name = latest_table_name
         self.dynamodb = dynamodb
         self.use_latest_table = os.environ.get("DATALAKE_USE_LATEST_TABLE",
-                                               False)
+                                               "false").lower() == "true"
 
     def query_by_work_id(self, work_id, what, where=None, cursor=None):
         kwargs = self._prepare_work_id_kwargs(work_id, what)
@@ -341,7 +346,9 @@ class ArchiveQuerier(object):
         return self.dynamodb.Table(self.latest_table_name)
 
     def query_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS):
+        log.info('Inside query_latest method')
         if self.use_latest_table:
+            log.info('inside use_latest_table=TRUE')
             response = self._latest_table.query(
                 KeyConditionExpression=Key('what_where_key').eq(f'{what}:{where}')
             )

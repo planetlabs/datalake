@@ -14,6 +14,7 @@
 
 # default settings
 DYNAMODB_TABLE = 'test'
+DYNAMODB_LATEST_TABLE = 'test_latest'
 AWS_REGION = 'us-west-2'
 AWS_ACCESS_KEY_ID = None
 AWS_SECRET_ACCESS_KEY = None

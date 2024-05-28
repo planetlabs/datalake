@@ -123,10 +123,24 @@ class HttpQuerier(object):
         return HttpRecord(**record)
 
 
-@pytest.fixture(params=[ArchiveQuerier, HttpQuerier],
-                ids=['archive_querier', 'http'])
-def querier(request, dynamodb):
-        return request.param('test', 'test_latest', dynamodb=dynamodb)
+@pytest.fixture(params=[
+    ('archive', 'use_latest'),
+    ('archive', 'use_default'),
+    ('http', 'use_latest'),
+    ('http', 'use_default')
+], ids=['archive_latest', 'archive-default', 'http-latest', 'http-default'])
+def querier(monkeypatch, request, dynamodb):
+        querier_type, table_usage = request.param
+
+        if table_usage == 'use_latest':
+            monkeypatch.setenv('DATALAKE_USE_LATEST_TABLE', 'true')
+        else:
+            monkeypatch.setenv('DATALAKE_USE_LATEST_TABLE', 'false')
+
+        if querier_type == 'http':
+            return HttpQuerier('test', 'test_latest', dynamodb=dynamodb)
+        else:
+            return ArchiveQuerier('test', 'test_latest', dynamodb=dynamodb)
 
 def in_url(result, part):
     url = result['url']
