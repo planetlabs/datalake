@@ -11,10 +11,16 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
+import os
 
 # default settings
+
 DYNAMODB_TABLE = 'test'
 DYNAMODB_LATEST_TABLE = 'test_latest'
+DATALAKE_USE_LATEST_TABLE = \
+    os.environ.get("DATALAKE_USE_LATEST_TABLE", "false").lower() == "true"
+LATEST_MAX_LOOKBACK = int(os.environ.get("LATEST_MAX_LOOKBACK", "30"))
+
 AWS_REGION = 'us-west-2'
 AWS_ACCESS_KEY_ID = None
 AWS_SECRET_ACCESS_KEY = None

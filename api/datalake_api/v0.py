@@ -51,8 +51,12 @@ def get_archive_querier():
     if not hasattr(app, 'archive_querier'):
         table_name = app.config.get('DYNAMODB_TABLE')
         latest_table_name = app.config.get('DYNAMODB_LATEST_TABLE')
+        use_latest_table = app.config.get('DATALAKE_USE_LATEST_TABLE')
+        latest_max_lookback = app.config.get("LATEST_MAX_LOOKBACK")
         app.archive_querier = ArchiveQuerier(table_name,
                                              latest_table_name,
+                                             use_latest_table,
+                                             latest_max_lookback,
                                              dynamodb=get_dynamodb())
     return app.archive_querier
 

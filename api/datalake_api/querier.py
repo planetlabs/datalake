@@ -21,9 +21,7 @@ import time
 import os
 
 import logging
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 '''the maximum number of results to return to the user
@@ -179,12 +177,17 @@ class QueryResults(list):
 
 class ArchiveQuerier(object):
 
-    def __init__(self, table_name, latest_table_name=None, dynamodb=None):
+    def __init__(self, table_name,
+                 latest_table_name=None,
+                 use_latest_table=None,
+                 latest_max_lookback=30,
+                 dynamodb=None):
         self.table_name = table_name
         self.latest_table_name = latest_table_name
+        self.use_latest_table = use_latest_table
+        self.latest_max_lookback = latest_max_lookback
         self.dynamodb = dynamodb
-        self.use_latest_table = os.environ.get("DATALAKE_USE_LATEST_TABLE",
-                                               "false").lower() == "true"
+        
 
     def query_by_work_id(self, work_id, what, where=None, cursor=None):
         kwargs = self._prepare_work_id_kwargs(work_id, what)
@@ -353,7 +356,7 @@ class ArchiveQuerier(object):
                 KeyConditionExpression=Key('what_where_key').eq(f'{what}:{where}')
             )
             items = response.get('Items', [])
-            if not items:
+            if not items and self.latest_max_lookback > 0:
                 return self._default_latest(what, where, lookback_days)
 
             latest_item = items[0]

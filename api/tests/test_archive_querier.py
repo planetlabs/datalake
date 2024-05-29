@@ -123,6 +123,10 @@ class HttpQuerier(object):
         return HttpRecord(**record)
 
 
+
+"""
+Incorporate LATEST_MAX_LOOKBACK HERE
+"""
 @pytest.fixture(params=[
     ('archive', 'use_latest'),
     ('archive', 'use_default'),
@@ -566,3 +570,14 @@ def test_latest_table_query(table_maker, querier, record_maker):
     querier.use_latest_table = True
     result = querier.query_latest('boo', 'hoo0')
     _validate_latest_result(result, what='boo', where='hoo0')
+
+"""
+Write tests:
+With setup of latest table records, 
+with DYNAMODB_LATEST_TABLE set, with DATALAKE_USE_LATEST_TABLE=true, with LATEST_MAX_LOOKBACK=0, record is found
+
+With setup of latest table records, 
+with DYNAMODB_LATEST_TABLE set, with DATALAKE_USE_LATEST_TABLE=false, with LATEST_MAX_LOOKBACK=0, record is not found
+
+2-4
+"""
