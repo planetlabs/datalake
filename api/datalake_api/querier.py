@@ -180,12 +180,10 @@ class ArchiveQuerier(object):
     def __init__(self, table_name,
                  latest_table_name=None,
                  use_latest_table=None,
-                 latest_max_lookback=30,
                  dynamodb=None):
         self.table_name = table_name
         self.latest_table_name = latest_table_name
         self.use_latest_table = use_latest_table
-        self.latest_max_lookback = latest_max_lookback
         self.dynamodb = dynamodb
         
 
@@ -349,14 +347,15 @@ class ArchiveQuerier(object):
         return self.dynamodb.Table(self.latest_table_name)
 
     def query_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS):
-        log.info('Inside query_latest method')
         if self.use_latest_table:
             log.info('inside use_latest_table=TRUE')
             response = self._latest_table.query(
                 KeyConditionExpression=Key('what_where_key').eq(f'{what}:{where}')
             )
             items = response.get('Items', [])
-            if not items and self.latest_max_lookback > 0:
+
+            if not items:
+                log.info('Falling back to default latest query')
                 return self._default_latest(what, where, lookback_days)
 
             latest_item = items[0]
@@ -389,6 +388,7 @@ class ArchiveQuerier(object):
         return records
     
     def _default_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS):
+        log.info("Using default latest behavior")
         current = int(time.time() * 1000)
         end = current - lookback_days * _ONE_DAY_MS
         while current >= end:

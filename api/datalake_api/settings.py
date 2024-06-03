@@ -17,9 +17,7 @@ import os
 
 DYNAMODB_TABLE = 'test'
 DYNAMODB_LATEST_TABLE = 'test_latest'
-DATALAKE_USE_LATEST_TABLE = \
-    os.environ.get("DATALAKE_USE_LATEST_TABLE", "false").lower() == "true"
-LATEST_MAX_LOOKBACK = int(os.environ.get("LATEST_MAX_LOOKBACK", "30"))
+DATALAKE_USE_LATEST_TABLE = False
 
 AWS_REGION = 'us-west-2'
 AWS_ACCESS_KEY_ID = None

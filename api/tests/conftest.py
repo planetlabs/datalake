@@ -42,6 +42,9 @@ except NoCredentialsError:
 
 
 def get_client():
+    from datalake_api import settings
+    datalake_api.app.config.from_object(settings)
+
     datalake_api.app.config['TESTING'] = True
     datalake_api.app.config['AWS_ACCESS_KEY_ID'] = 'abc'
     datalake_api.app.config['AWS_SECRET_ACCESS_KEY'] = '123'
@@ -181,8 +184,7 @@ def _populate_table(table, records):
         for r in records:
             batch.put_item(Item=r)
 
-# Adding latest table logic so latest table will be created and records will populate it
-# Once that's possible, we will simply query the latest_table for what:where, no bucket logic
+
 @pytest.fixture
 def table_maker(request, dynamodb):
 

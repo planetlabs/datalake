@@ -11,8 +11,11 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-
+import os
 import pytest
+from datalake_api.v0 import reset_archive_querier
+from datalake_api import settings
+# from flask import current_app as app
 from datalake.common import DatalakeRecord
 from datalake.tests import generate_random_metadata
 import simplejson as json
@@ -124,27 +127,35 @@ class HttpQuerier(object):
 
 
 
-"""
-Incorporate LATEST_MAX_LOOKBACK HERE
-"""
 @pytest.fixture(params=[
     ('archive', 'use_latest'),
     ('archive', 'use_default'),
     ('http', 'use_latest'),
     ('http', 'use_default')
-], ids=['archive_latest', 'archive-default', 'http-latest', 'http-default'])
+], ids=['archive-latest',
+        'archive-default',
+        'http-latest',
+        'http-default'
+        ])
 def querier(monkeypatch, request, dynamodb):
+
+        reset_archive_querier()
         querier_type, table_usage = request.param
 
         if table_usage == 'use_latest':
-            monkeypatch.setenv('DATALAKE_USE_LATEST_TABLE', 'true')
+            settings.DATALAKE_USE_LATEST_TABLE = True
         else:
-            monkeypatch.setenv('DATALAKE_USE_LATEST_TABLE', 'false')
+            settings.DATALAKE_USE_LATEST_TABLE= False
 
         if querier_type == 'http':
-            return HttpQuerier('test', 'test_latest', dynamodb=dynamodb)
+            return HttpQuerier('test',
+                               'test_latest',
+                               dynamodb=dynamodb)
         else:
-            return ArchiveQuerier('test', 'test_latest', dynamodb=dynamodb)
+            return ArchiveQuerier('test',
+                                  'test_latest',
+                                  use_latest_table=True if table_usage == 'use_latest' else False,
+                                  dynamodb=dynamodb)
 
 def in_url(result, part):
     url = result['url']
@@ -567,17 +578,24 @@ def test_latest_table_query(table_maker, querier, record_maker):
                                 what='boo',
                                 where='hoo{}'.format(i))
     table_maker(records)
-    querier.use_latest_table = True
     result = querier.query_latest('boo', 'hoo0')
     _validate_latest_result(result, what='boo', where='hoo0')
 
-"""
-Write tests:
-With setup of latest table records, 
-with DYNAMODB_LATEST_TABLE set, with DATALAKE_USE_LATEST_TABLE=true, with LATEST_MAX_LOOKBACK=0, record is found
 
-With setup of latest table records, 
-with DYNAMODB_LATEST_TABLE set, with DATALAKE_USE_LATEST_TABLE=false, with LATEST_MAX_LOOKBACK=0, record is not found
+def test_query_latest_just_latest_table(table_maker, querier, record_maker):
+    use_latest_from_env = settings.DATALAKE_USE_LATEST_TABLE
+    table = table_maker([])[1] 
+    for i in range(3):
+        record = record_maker(what='meow',
+                              where=f'tree',
+                              path='/{}'.format(i))
 
-2-4
-"""
+        # only inserting into latest table
+        table.put_item(Item=record[0])
+        time.sleep(1.01)
+
+    result = querier.query_latest('meow', 'tree')
+    if use_latest_from_env:
+        _validate_latest_result(result, what='meow', where='tree')
+    else:
+        assert result is None

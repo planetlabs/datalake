@@ -27,6 +27,7 @@ from .sentry import monitor_performance
 
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
 
+_archive_querier = None
 
 def _get_aws_kwargs():
     kwargs = dict(
@@ -48,17 +49,23 @@ def get_dynamodb():
 
 
 def get_archive_querier():
-    if not hasattr(app, 'archive_querier'):
+    global _archive_querier
+
+    if not _archive_querier:
         table_name = app.config.get('DYNAMODB_TABLE')
         latest_table_name = app.config.get('DYNAMODB_LATEST_TABLE')
         use_latest_table = app.config.get('DATALAKE_USE_LATEST_TABLE')
-        latest_max_lookback = app.config.get("LATEST_MAX_LOOKBACK")
-        app.archive_querier = ArchiveQuerier(table_name,
+        _archive_querier = ArchiveQuerier(table_name,
                                              latest_table_name,
                                              use_latest_table,
-                                             latest_max_lookback,
                                              dynamodb=get_dynamodb())
-    return app.archive_querier
+    return _archive_querier
+
+
+def reset_archive_querier():
+    """FOR TESTING PURPOSES ONLY"""
+    global _archive_querier
+    _archive_querier = None
 
 
 @v0.route('/archive/')
