@@ -55,6 +55,7 @@ def dynamodb_table_maker(request, dynamodb_connection):
     return table_maker
 
 
+
 @pytest.fixture
 def dynamodb_users_table(dynamodb_table_maker):
     schema = [HashKey('name'), RangeKey('last_name')]
@@ -65,6 +66,12 @@ def dynamodb_users_table(dynamodb_table_maker):
 def dynamodb_records_table(dynamodb_table_maker):
     schema = [HashKey('time_index_key'), RangeKey('range_key')]
     return dynamodb_table_maker('records', schema)
+
+
+@pytest.fixture
+def dynamodb_latest_table(dynamodb_table_maker):
+    schema = [HashKey('what_where_key')]
+    return dynamodb_table_maker('latest', schema)
 
 
 @pytest.fixture
