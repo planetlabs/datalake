@@ -27,7 +27,7 @@ class DynamoDBStorage(object):
 
     def __init__(self, table_name=None, latest_table=None, connection=None):
         self.table_name = table_name
-        self.latest_table_name = os.environ.get("DATALAKE_DNAMODB_LATEST_TABLE",
+        self.latest_table_name = os.environ.get("DATALAKE_LATEST_TABLE",
                                                 f"{latest_table}")
         self.use_latest = os.environ.get("DATALAKE_USE_LATEST_TABLE", False)
         self._prepare_connection(connection)
