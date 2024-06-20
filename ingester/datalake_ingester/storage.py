@@ -60,7 +60,6 @@ class DynamoDBStorage(object):
 
     def store(self, record):
         if self.use_latest:
-            print(f'use_latest is {self.use_latest}')
             self.store_latest(record)
         else:
             try:
