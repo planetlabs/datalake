@@ -20,6 +20,7 @@ from boto.dynamodb2.exceptions import ConditionalCheckFailedException
 import os
 from datalake.common.errors import InsufficientConfiguration
 import logging
+import decimal
 
 
 class DynamoDBStorage(object):
@@ -61,12 +62,11 @@ class DynamoDBStorage(object):
     def store(self, record):
         if self.use_latest:
             self.store_latest(record)
-        else:
-            try:
-                self._table.put_item(data=record)
-            except ConditionalCheckFailedException:
-                # Tolerate duplicate stores
-                pass
+        try:
+            self._table.put_item(data=record)
+        except ConditionalCheckFailedException:
+            # Tolerate duplicate stores
+            pass
 
     def update(self, record):
         self._table.put_item(data=record, overwrite=True)
@@ -76,7 +76,6 @@ class DynamoDBStorage(object):
         note: Record must utilize AttributeValue syntax
               for the conditional put.
         """
-
         condition_expression = " attribute_not_exists(what_where_key) OR metadata.start < :new_start"
         expression_attribute_values = {
             ':new_start': {'N': str(record['metadata']['start'])}

@@ -13,6 +13,10 @@ def storage(dynamodb_records_table, dynamodb_connection):
     return DynamoDBStorage(table_name='records',
                            connection=dynamodb_connection)
 
+@pytest.fixture
+def latest_storage(dynamodb_latest_table, dynamodb_connection):
+    return DynamoDBStorage(connection=dynamodb_connection)
+
 
 @pytest.fixture
 def random_s3_file_maker(s3_file_from_metadata, random_metadata):
@@ -31,6 +35,23 @@ def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker):
     assert len(records) >= 1
     for r in records:
         assert r['metadata'] == metadata
+
+def test_ingest_random_latest(storage, latest_storage, dynamodb_latest_table, random_s3_file_maker):
+    latest_storage.latest_table_name = 'latest'
+    latest_storage.use_latest = True
+    url, metadata = random_s3_file_maker()
+    ingester = Ingester(storage, latest_storage=latest_storage)
+    ingester.ingest(url)
+    records = [dict(r) for r in dynamodb_latest_table.scan()]
+    def convert_metadata(metadata):
+        import decimal
+        return {k: (decimal.Decimal(str(v)) if isinstance(v, (int, float)) else v) for k, v in metadata.items()}
+    
+    converted_metadata = convert_metadata(metadata)
+
+    assert len(records) >= 1
+    for r in records:
+        assert r['metadata'] == converted_metadata
 
 
 def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,

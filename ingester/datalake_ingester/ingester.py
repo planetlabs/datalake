@@ -3,6 +3,7 @@ from datalake.common.errors import InsufficientConfiguration, \
     UnsupportedTimeRange, NoSuchDatalakeFile, UnsupportedS3Event
 from .s3_notification import S3Notification
 import time
+import os
 import logging
 from .storage import DynamoDBStorage
 from .queue import SQSQueue
@@ -68,23 +69,28 @@ class IngesterReport(dict):
 
 class Ingester(object):
 
-    def __init__(self, storage, queue=None, reporter=None):
+    def __init__(self, storage, latest_storage=None, queue=None, reporter=None):
         self.storage = storage
+        self.latest_storage = latest_storage
         self.queue = queue
         self.reporter = reporter
 
     @classmethod
     def from_config(cls):
         storage = DynamoDBStorage.from_config()
+        if os.environ.get("DATALAKE_USE_LATEST_TABLE", False):
+            latest_storage = DynamoDBStorage.from_config(use_latest=True)
         queue = SQSQueue.from_config()
         reporter = SNSReporter.from_config()
-        return cls(storage, queue=queue, reporter=reporter)
+        return cls(storage, latest_storage=latest_storage, queue=queue, reporter=reporter)
 
     def ingest(self, url):
         '''ingest the metadata associated with the given url'''
         records = DatalakeRecord.list_from_url(url)
         for r in records:
             self.storage.store(r)
+            if self.latest_storage:
+                self.latest_storage.store_latest(r)
 
     def handler(self, msg):
         ir = IngesterReport().start()
