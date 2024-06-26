@@ -18,7 +18,8 @@ def test_store_duplicate(dynamodb_users_table, dynamodb_connection):
     assert dict(user) == expected_user
 
 def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
-    storage = DynamoDBStorage(latest_table='latest', connection=dynamodb_connection)
+    storage = DynamoDBStorage(connection=dynamodb_connection)
+    storage.latest_table_name = 'latest'
 
     new_record = {
         'what_where_key': 'syslog:ground_server2',
@@ -51,7 +52,8 @@ def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
 
 
 def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dynamodb_connection):
-    storage = DynamoDBStorage(latest_table='latest', connection=dynamodb_connection)
+    storage = DynamoDBStorage(connection=dynamodb_connection)
+    storage.latest_table_name = 'latest'
 
     file1 = {
         'what_where_key': 'syslog:ground_server2',

@@ -26,11 +26,10 @@ import decimal
 class DynamoDBStorage(object):
     '''store datalake records in a dynamoDB table'''
 
-    def __init__(self, table_name=None, latest_table=None, connection=None):
+    def __init__(self, table_name=None, latest_table_name=None, connection=None):
         self.table_name = table_name
         self.latest_table_name = os.environ.get("DATALAKE_LATEST_TABLE",
-                                                f"{latest_table}")
-        self.use_latest = os.environ.get("DATALAKE_USE_LATEST_TABLE", False)
+                                                False)
         self._prepare_connection(connection)
         self.logger = logging.getLogger('storage')
 
@@ -60,7 +59,7 @@ class DynamoDBStorage(object):
         return Table(self.latest_table_name, connection=self._connection)
 
     def store(self, record):
-        if self.use_latest:
+        if self.latest_table_name:
             self.store_latest(record)
         try:
             self._table.put_item(data=record)
