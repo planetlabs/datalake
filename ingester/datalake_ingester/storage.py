@@ -80,7 +80,7 @@ class DynamoDBStorage(object):
         }
 
         if record['metadata']['work_id'] is None:
-            work_id_value = {'BOOL': False}
+            work_id_value = {'NULL': True}
         else:
             work_id_value = {'S': str(record['metadata']['work_id'])}
 

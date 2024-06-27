@@ -39,7 +39,6 @@ def test_ingest_random_latest(storage, dynamodb_latest_table, random_s3_file_mak
     ingester = Ingester(storage)
     ingester.ingest(url)
     records = [dict(r) for r in dynamodb_latest_table.scan()]
-
     def convert_records(records):
         return {k: (decimal.Decimal(str(v)) if isinstance(v, (int, float)) else v) for k, v in records[0].items()}
     
