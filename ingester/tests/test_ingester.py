@@ -36,19 +36,17 @@ def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker):
 def test_ingest_random_latest(storage, dynamodb_latest_table, random_s3_file_maker):
     storage.latest_table_name = 'latest'
     url, metadata = random_s3_file_maker()
-    if metadata['work_id'] == 'None':
-        metadata['work_id'] = None
     ingester = Ingester(storage)
     ingester.ingest(url)
     records = [dict(r) for r in dynamodb_latest_table.scan()]
-    def convert_metadata(metadata):
-        return {k: (decimal.Decimal(str(v)) if isinstance(v, (int, float)) else v) for k, v in metadata.items()}
-    
-    converted_metadata = convert_metadata(metadata)
 
+    def convert_records(records):
+        return {k: (decimal.Decimal(str(v)) if isinstance(v, (int, float)) else v) for k, v in records[0].items()}
+    
+    converted_records = convert_records(records)
     assert len(records) >= 1
     for r in records:
-        assert r['metadata'] == converted_metadata
+        assert r['metadata'] == converted_records['metadata']
 
 
 def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,

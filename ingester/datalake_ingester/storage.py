@@ -78,6 +78,12 @@ class DynamoDBStorage(object):
         expression_attribute_values = {
             ':new_start': {'N': str(record['metadata']['start'])}
         }
+
+        if record['metadata']['work_id'] is None:
+            work_id_value = {'BOOL': False}
+        else:
+            work_id_value = {'S': str(record['metadata']['work_id'])}
+
         record = {
             'what_where_key': {"S": record['metadata']['what']+':'+record['metadata']['where']},
             'time_index_key': {"S": record['time_index_key']},
@@ -108,9 +114,7 @@ class DynamoDBStorage(object):
                     'where': {
                         'S': str(record['metadata']['where'])
                     },
-                    'work_id': {
-                        'S': str(record['metadata']['work_id'])
-                    }
+                    'work_id': work_id_value
                 }
             },
             'url': {"S": record['url']},
