@@ -67,6 +67,8 @@ def random_interval():
 
 
 def random_work_id():
+    if random.randint(0, 1):
+        return None
     return '{}-{}'.format(random_word(5), random.randint(0, 2**15))
 
 

@@ -12,6 +12,8 @@ DEFAULT_CONFIG = '/etc/datalake-ingester.env'
               help='config file. The format is just a dotenv file')
 @click.option('-t', '--dynamodb-table',
               help='dynamodb table in which to store datalake records.')
+@click.option('-lt', '--latest-table',
+              help='dynamodb table specifically for storing latest records.')
 @click.option('-r', '--aws-region',
               help='region to use for aws services (e.g., s3, dynamodb)')
 @click.option('-k', '--report-key',

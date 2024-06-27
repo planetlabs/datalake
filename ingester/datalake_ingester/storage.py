@@ -20,7 +20,6 @@ from boto.dynamodb2.exceptions import ConditionalCheckFailedException
 import os
 from datalake.common.errors import InsufficientConfiguration
 import logging
-import decimal
 
 
 class DynamoDBStorage(object):
@@ -28,17 +27,17 @@ class DynamoDBStorage(object):
 
     def __init__(self, table_name=None, latest_table_name=None, connection=None):
         self.table_name = table_name
-        self.latest_table_name = os.environ.get("DATALAKE_LATEST_TABLE",
-                                                False)
+        self.latest_table_name = latest_table_name
         self._prepare_connection(connection)
         self.logger = logging.getLogger('storage')
 
     @classmethod
     def from_config(cls):
         table_name = os.environ.get('DATALAKE_DYNAMODB_TABLE')
+        latest_table_name = os.environ.get("DATALAKE_LATEST_TABLE")
         if table_name is None:
             raise InsufficientConfiguration('Please specify a dynamodb table')
-        return cls(table_name)
+        return cls(table_name, latest_table_name)
 
     def _prepare_connection(self, connection):
         region = os.environ.get('AWS_REGION')
@@ -59,13 +58,13 @@ class DynamoDBStorage(object):
         return Table(self.latest_table_name, connection=self._connection)
 
     def store(self, record):
-        if self.latest_table_name:
-            self.store_latest(record)
         try:
             self._table.put_item(data=record)
         except ConditionalCheckFailedException:
             # Tolerate duplicate stores
             pass
+        if self.latest_table_name:
+            self.store_latest(record)
 
     def update(self, record):
         self._table.put_item(data=record, overwrite=True)

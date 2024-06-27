@@ -3,7 +3,6 @@ from datalake.common.errors import InsufficientConfiguration, \
     UnsupportedTimeRange, NoSuchDatalakeFile, UnsupportedS3Event
 from .s3_notification import S3Notification
 import time
-import os
 import logging
 from .storage import DynamoDBStorage
 from .queue import SQSQueue
