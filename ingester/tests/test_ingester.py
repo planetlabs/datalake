@@ -1,5 +1,6 @@
 import pytest
 import time
+import decimal
 from decimal import Decimal
 import json
 
@@ -31,6 +32,20 @@ def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker):
     assert len(records) >= 1
     for r in records:
         assert r['metadata'] == metadata
+
+def test_ingest_random_latest(storage, dynamodb_latest_table, random_s3_file_maker):
+    storage.latest_table_name = 'latest'
+    url, metadata = random_s3_file_maker()
+    ingester = Ingester(storage)
+    ingester.ingest(url)
+    records = [dict(r) for r in dynamodb_latest_table.scan()]
+    def convert_records(records):
+        return {k: (decimal.Decimal(str(v)) if isinstance(v, (int, float)) else v) for k, v in records[0].items()}
+    
+    converted_records = convert_records(records)
+    assert len(records) >= 1
+    for r in records:
+        assert r['metadata'] == converted_records['metadata']
 
 
 def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,
