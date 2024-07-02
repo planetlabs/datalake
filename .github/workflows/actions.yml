@@ -6,8 +6,8 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python: [3.6, 3.8, 3.9]
-        extras: ["test", "test,queable,sentry"]
+        python: [3.6, 3.8, 3.9, "3.10", 3.12]
+        extras: ["test", "test,queuable,sentry"]
     steps:
       - name: Setup Python
         uses: actions/setup-python@v2.2.2

@@ -44,16 +44,9 @@ they are unavailable, the affected functions will raise
 InsufficientConfiguration.'''
 has_queue = True
 try:
-    import pyinotify
+    import inotify_simple
 except ImportError:
     has_queue = False
-
-    class FakePyinotify(object):
-
-        class ProcessEvent(object):
-            pass
-
-    pyinotify = FakePyinotify
 
 
 def requires_queue(f):
@@ -124,32 +117,19 @@ class Uploader(DatalakeQueueBase):
         self._archive = archive
         self._callback = callback
 
-    class EventHandler(pyinotify.ProcessEvent):
-
-        def __init__(self, callback):
-            super(Uploader.EventHandler, self).__init__()
-            self.callback = callback
-
-        def process_IN_CLOSE_WRITE(self, event):
-            self.callback(event.pathname)
-
-        def process_IN_MOVED_TO(self, event):
-            self.callback(event.pathname)
+        self.inotify = inotify_simple.INotify()
 
     def _setup_watch_manager(self, timeout):
-        if timeout is not None:
-            timeout = int(timeout * 1000)
-        self._wm = pyinotify.WatchManager()
-        self._handler = Uploader.EventHandler(self._push)
-        self._notifier = pyinotify.Notifier(self._wm, self._handler,
-                                            timeout=timeout)
-        self._wm.add_watch(self.queue_dir,
-                           pyinotify.IN_CLOSE_WRITE | pyinotify.IN_MOVED_TO)
+        flags = inotify_simple.flags
+        watch_flags = flags.CLOSE_WRITE | flags.MOVED_TO
+        self.inotify.add_watch(self.queue_dir, watch_flags)
 
     def _push(self, filename):
+        if not os.path.isabs(filename):
+            filename = os.path.join(self.queue_dir, filename)
         if os.path.basename(filename).startswith('.'):
             return
-        if self._workers == []:
+        if not self._workers:
             self._synchronous_push(filename)
         else:
             self._threaded_push(filename)
@@ -205,7 +185,7 @@ class Uploader(DatalakeQueueBase):
             msg = 'number of upload workers cannot be zero or negative'
             raise InsufficientConfiguration(msg)
         if workers > 1:
-            # when multipe workers are requested, the main thread monitors the
+            # when multiple workers are requested, the main thread monitors the
             # queue directory and puts the files in a Queue that is serviced by
             # the worker threads. So the word queue is a bit overloaded in this
             # module.
@@ -229,12 +209,16 @@ class Uploader(DatalakeQueueBase):
     def _run(self, timeout):
 
         self._prepare_to_track_run_time(timeout)
-        self._notifier.process_events()
-        while self._notifier.check_events():
-            self._notifier.read_events()
-            self._notifier.process_events()
-            if self._update_time_remaining() == 0:
-                break
+        if timeout is not None:
+            timeout = int(timeout * 1000)
+
+        while self._update_time_remaining() > 0:
+            for event in self.inotify.read(timeout=timeout):
+                if event.name is None:
+                    continue
+                self._push(event.name)
+                if self._update_time_remaining() == 0:
+                    break
 
     def _update_time_remaining(self):
         if self._run_time_remaining is self.INFINITY:

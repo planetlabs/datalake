@@ -44,7 +44,7 @@ setup(name='datalake',
           # the queuable feature allows users to offload their datalake pushes
           # to a separate uploader process.
           'queuable': [
-              'pyinotify>=0.9.4',
+              'inotify_simple>=1.3.5',
           ],
           'sentry': [
               'raven>=5.0.0',
