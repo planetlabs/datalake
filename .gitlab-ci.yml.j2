@@ -27,7 +27,7 @@ publish-pypi:
   script:
     - cd client
     - rm -rf dist
-    - python3 setup.py sdist bdist_wheel
+    - python -m build
     - twine upload -r pypi --skip-existing dist/*
   tags:
     - {{PLANET_RUNNER_TAG}}

@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python: [3.6, 3.8, 3.9, "3.10", 3.12]
+        python: [3.8, 3.9, "3.10", 3.12]
         extras: ["test", "test,queuable,sentry"]
     steps:
       - name: Setup Python
@@ -15,6 +15,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Check out repository code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Test
         working-directory: ./client
         run: |

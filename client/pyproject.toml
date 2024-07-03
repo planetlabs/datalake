@@ -1,0 +1,77 @@
+[build-system]
+requires = [
+    "setuptools",
+    "versioningit",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datalake"
+authors = [
+    {name = "Brian Cavagnolo", email = "brian@planet.com"},
+]
+description = "datalake: a metadata-aware archive"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    'boto3>=1.9.68',
+    'memoized_property>=1.0.1',
+    'pyblake2>=0.9.3; python_version<"3.6"',
+    'click>=4.1',
+    'python-dotenv>=0.1.3',
+    'requests>=2.5',
+    'six>=1.10.0',
+    'python-dateutil>=2.4.2',
+    'pytz>=2015.4',
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    'pytest<8.0.0',
+    'pytest-cov>=2.5.1,<4',
+    'moto[s3]>4,<5',
+    'twine<4.0.0',
+    'pip>=20.0.0,<22.0.0',
+    'wheel<0.38.0',
+    'flake8>=2.5.0,<4.1',
+    'responses<0.22.0',
+]
+# the queuable feature allows users to offload their datalake pushes
+# to a separate uploader process.
+queuable = [
+    'inotify_simple>=1.3.5',
+]
+sentry = [
+    'raven>=5.0.0',
+]
+
+[project.scripts]
+datalake = "datalake.scripts.cli:cli"
+
+[tool.setuptools.packages.find]
+exclude = ["test"]
+
+
+[tool.versioningit.format]
+distance = "{base_version}+{distance}.{vcs}{rev}"
+# Example formatted version: 1.2.3+42.ge174a1f
+
+dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
+# Example formatted version: 1.2.3+42.ge174a1f.dirty
+
+distance-dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
+# Example formatted version: 1.2.3+42.ge174a1f.dirty
+
+[tool.pytest.ini_options]
+addopts = "--cov=planet.mc_client --cov-config .coveragerc"
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+]
