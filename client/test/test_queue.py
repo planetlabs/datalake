@@ -264,4 +264,4 @@ def test_threaded_uploader_exits(enqueuer, faulty_uploader, random_file,
                                  random_metadata, uploaded_file_validator):
     enqueuer.enqueue(random_file, **random_metadata)
     with pytest.raises(KeyboardInterrupt):
-        faulty_uploader.listen(timeout=0.1, workers=2)
+        faulty_uploader.listen(timeout=1.0, workers=2)

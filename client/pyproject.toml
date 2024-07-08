@@ -59,6 +59,8 @@ datalake = "datalake.scripts.cli:cli"
 [tool.setuptools.packages.find]
 exclude = ["test"]
 
+[tool.versioningit]
+default-version = "0.0.0-dev"
 
 [tool.versioningit.format]
 distance = "{base_version}+{distance}.{vcs}{rev}"
