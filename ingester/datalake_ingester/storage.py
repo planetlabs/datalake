@@ -58,6 +58,7 @@ class DynamoDBStorage(object):
         return Table(self.latest_table_name, connection=self._connection)
 
     def store(self, record):
+        self.logger.error(f"Attempting to store {record}")
         try:
             self._table.put_item(data=record)
         except ConditionalCheckFailedException:
@@ -71,12 +72,17 @@ class DynamoDBStorage(object):
 
     def store_latest(self, record):
         """
-        note: Record must utilize AttributeValue syntax
+        Record must utilize AttributeValue syntax
               for the conditional put.
         """
-        condition_expression = " attribute_not_exists(what_where_key) OR metadata.start < :new_start"
+        condition_expression = " attribute_not_exists(what_where_key) OR metadata.#metadata_start < :new_start"
         expression_attribute_values = {
             ':new_start': {'N': str(record['metadata']['start'])}
+        }
+
+        # aliases for DynamoDB reserved names.
+        expression_attribute_names = {
+            '#metadata_start': "start"
         }
 
         if record['metadata']['work_id'] is None:
@@ -120,17 +126,19 @@ class DynamoDBStorage(object):
             'url': {"S": record['url']},
             'create_time': {'N': str(record['create_time'])}
         }
-
+        self.logger.info(f"Attempting to store record: {record}")
         try:
             self._connection.put_item(
                 table_name=self.latest_table_name,
                 item=record,
                 condition_expression=condition_expression,
-                expression_attribute_values=expression_attribute_values
+                expression_attribute_names=expression_attribute_names,
+                expression_attribute_values=expression_attribute_values,
             )
             self.logger.info("Record stored successfully.")
         except ConditionalCheckFailedException:
-            self.logger.error("Condition not met, no operation was performed.")
+            self.logger.error(f"Condition not met for record {record},"
+                              "no operation was performed.")
         except Exception as e:
-            self.logger.error(f"Error occurred: {str(e)}")
+            self.logger.error(f"Error occurred while attempting {record}: {str(e)}")
 
