@@ -89,6 +89,11 @@ class DynamoDBStorage(object):
         else:
             work_id_value = {'S': str(record['metadata']['work_id'])}
 
+        if record['metadata']['end'] is None:
+            end_time_value = {'NULL': True}
+        else:
+            end_time_value = {'N': str(record['metadata']['end'])}
+
         record = {
             'what_where_key': {"S": record['metadata']['what']+':'+record['metadata']['where']},
             'time_index_key': {"S": record['time_index_key']},
@@ -98,9 +103,7 @@ class DynamoDBStorage(object):
                     'start': {
                         'N': str(record['metadata']['start'])
                     },
-                    'end': {
-                        'N': str(record['metadata']['end'])
-                    },
+                    'end': end_time_value,
                     'id': {
                         'S': str(record['metadata']['id'])
                     },
