@@ -222,7 +222,7 @@ class Uploader(DatalakeQueueBase):
 
     def _update_time_remaining(self):
         if self._run_time_remaining is self.INFINITY:
-            return float(inf)
+            return float('inf')
         now = time.time()
         duration = now - self._run_start
         self._run_time_remaining -= duration
