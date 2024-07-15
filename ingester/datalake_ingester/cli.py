@@ -24,7 +24,6 @@ DEFAULT_CONFIG = '/etc/datalake-ingester.env'
 @click.pass_context
 def cli(ctx, **kwargs):
     conf = kwargs.pop('config')
-    # setup logging func
     log_debugger(None, "datalake_ingester:cli.py before load_config", loc='datalake_ingester:cli.py:cli')
     load_config(conf, DEFAULT_CONFIG, **kwargs)
     log_debugger(None, "datalake_ingester:cli.py AFTER load_config", loc='datalake_ingester:cli.py:cli')
