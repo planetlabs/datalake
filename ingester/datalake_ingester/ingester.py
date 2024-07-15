@@ -23,7 +23,7 @@ SAFE_EXCEPTIONS = [
     InvalidDatalakeMetadata,
     UnsupportedS3Event
 ]
-
+from .log import log_debugger
 
 class IngesterReport(dict):
 
@@ -83,6 +83,7 @@ class Ingester(object):
     def ingest(self, url):
         '''ingest the metadata associated with the given url'''
         records = DatalakeRecord.list_from_url(url)
+        log_debugger(logger, "Ingester:ingest", loc=self.__class__.__name__)
         for r in records:
             self.storage.store(r)
 
@@ -117,6 +118,7 @@ class Ingester(object):
     def _add_records(self, datalake_records, ir):
         for r in datalake_records:
             ir.add_record(r)
+            log_debugger(logger, "Ingester:_add_records", loc=self.__class__.__name__, )
             self.storage.store(r)
 
     def _update_records(self, datalake_records, ir):
@@ -135,4 +137,5 @@ class Ingester(object):
             raise InsufficientConfiguration('No queue configured.')
 
         self.queue.set_handler(self.handler)
+        log_debugger(logger, "Ingester:listen", loc=self.__class__.__name__)
         self.queue.drain(timeout=timeout)
