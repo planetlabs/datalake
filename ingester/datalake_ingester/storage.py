@@ -21,7 +21,6 @@ import os
 from datalake.common.errors import InsufficientConfiguration
 import logging
 
-from .log import log_debugger
 
 class DynamoDBStorage(object):
     '''store datalake records in a dynamoDB table'''
@@ -42,7 +41,7 @@ class DynamoDBStorage(object):
         return cls(table_name, latest_table_name)
 
     def _prepare_connection(self, connection):
-        log_debugger(self.logger, "Storage:_prepare_connection before setup connection", loc=self.__class__.__name__)
+        self.logger.info("Preparing connection...")
         region = os.environ.get('AWS_REGION')
         if connection:
             self._connection = connection
@@ -61,7 +60,7 @@ class DynamoDBStorage(object):
         return Table(self.latest_table_name, connection=self._connection)
 
     def store(self, record):
-        log_debugger(self.logger, "Storage:store before PUT", loc=self.__class__.__name__)
+        self.logger.info(f"Storage:store before PUT {self.__class__.__name__}")
         try:
             self._table.put_item(data=record)
         except ConditionalCheckFailedException:
@@ -78,7 +77,6 @@ class DynamoDBStorage(object):
         Record must utilize AttributeValue syntax
               for the conditional put.
         """
-        log_debugger(self.logger, "Storage:store_latest before conditional_put", loc=self.__class__.__name__)
         condition_expression = " attribute_not_exists(what_where_key) OR metadata.#metadata_start < :new_start"
         expression_attribute_values = {
             ':new_start': {'N': str(record['metadata']['start'])}
