@@ -60,7 +60,6 @@ class DynamoDBStorage(object):
         return Table(self.latest_table_name, connection=self._connection)
 
     def store(self, record):
-        self.logger.info(f"Storage:store before PUT {self.__class__.__name__}")
         try:
             self._table.put_item(data=record)
         except ConditionalCheckFailedException:
