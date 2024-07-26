@@ -1,6 +1,7 @@
 import logging
 import sentry_sdk
 
+_log_configured = False
 
 conf = {
     'version': 1,
@@ -24,8 +25,15 @@ conf = {
     }
 }
 
+def configure_logging():
+    global _log_configured
+    if not _log_configured:
+        sentry_sdk.init()
+        logging.config.dictConfig(conf)
+        log = logging.getLogger()
+        level = logging.INFO
+        log.setLevel(level)
+        log.info(f"Logging initialized with provided conf {conf}.")
+        _log_configured = True
 
-sentry_sdk.init()
 
-
-logging.config.dictConfig(conf)

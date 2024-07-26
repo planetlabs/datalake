@@ -28,8 +28,9 @@ class DynamoDBStorage(object):
     def __init__(self, table_name=None, latest_table_name=None, connection=None):
         self.table_name = table_name
         self.latest_table_name = latest_table_name
-        self._prepare_connection(connection)
         self.logger = logging.getLogger('storage')
+        self._prepare_connection(connection)
+
 
     @classmethod
     def from_config(cls):
@@ -40,6 +41,7 @@ class DynamoDBStorage(object):
         return cls(table_name, latest_table_name)
 
     def _prepare_connection(self, connection):
+        self.logger.info("Preparing connection...")
         region = os.environ.get('AWS_REGION')
         if connection:
             self._connection = connection
@@ -89,6 +91,11 @@ class DynamoDBStorage(object):
         else:
             work_id_value = {'S': str(record['metadata']['work_id'])}
 
+        if record['metadata']['end'] is None:
+            end_time_value = {'NULL': True}
+        else:
+            end_time_value = {'N': str(record['metadata']['end'])}
+
         record = {
             'what_where_key': {"S": record['metadata']['what']+':'+record['metadata']['where']},
             'time_index_key': {"S": record['time_index_key']},
@@ -98,9 +105,7 @@ class DynamoDBStorage(object):
                     'start': {
                         'N': str(record['metadata']['start'])
                     },
-                    'end': {
-                        'N': str(record['metadata']['end'])
-                    },
+                    'end': end_time_value,
                     'id': {
                         'S': str(record['metadata']['id'])
                     },

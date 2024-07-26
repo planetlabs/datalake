@@ -1,6 +1,7 @@
 import click
 from datalake.common.conf import load_config
 from .ingester import Ingester
+from .log import configure_logging
 
 
 DEFAULT_CONFIG = '/etc/datalake-ingester.env'
@@ -23,6 +24,7 @@ DEFAULT_CONFIG = '/etc/datalake-ingester.env'
 @click.pass_context
 def cli(ctx, **kwargs):
     conf = kwargs.pop('config')
+    configure_logging()
     load_config(conf, DEFAULT_CONFIG, **kwargs)
 
 
@@ -35,3 +37,4 @@ def _subcommand_or_fail(ctx):
 def listen():
     i = Ingester.from_config()
     i.listen()
+

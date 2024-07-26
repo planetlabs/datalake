@@ -24,7 +24,6 @@ SAFE_EXCEPTIONS = [
     UnsupportedS3Event
 ]
 
-
 class IngesterReport(dict):
 
     def start(self):
