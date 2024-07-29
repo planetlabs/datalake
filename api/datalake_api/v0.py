@@ -49,6 +49,11 @@ def get_dynamodb():
 
 
 def get_archive_querier():
+    """
+    we use global var here along with reset_archive_querier()
+    to allow test fixture to differentiate between 
+    ArchiveQuerier vs HttpQuerier fixtures.
+    """
     global _archive_querier
 
     if not _archive_querier:

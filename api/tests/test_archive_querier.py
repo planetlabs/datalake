@@ -15,7 +15,6 @@ import os
 import pytest
 from datalake_api.v0 import reset_archive_querier
 from datalake_api import settings
-# from flask import current_app as app
 from datalake.common import DatalakeRecord
 from datalake.tests import generate_random_metadata
 import simplejson as json
