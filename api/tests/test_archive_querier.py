@@ -136,7 +136,7 @@ class HttpQuerier(object):
         'http-latest',
         'http-default'
         ])
-def querier(monkeypatch, request, dynamodb):
+def querier(request, dynamodb):
 
         reset_archive_querier()
         querier_type, table_usage = request.param
