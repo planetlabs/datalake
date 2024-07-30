@@ -42,6 +42,9 @@ except NoCredentialsError:
 
 
 def get_client():
+    from datalake_api import settings
+    datalake_api.app.config.from_object(settings)
+
     datalake_api.app.config['TESTING'] = True
     datalake_api.app.config['AWS_ACCESS_KEY_ID'] = 'abc'
     datalake_api.app.config['AWS_SECRET_ACCESS_KEY'] = '123'
@@ -107,6 +110,20 @@ key_schema = [
     }
 ]
 
+latest_attribute_definitions = [
+    {
+        'AttributeName': 'what_where_key',
+        'AttributeType': 'S'
+    }
+]
+
+latest_key_schema = [
+    {
+        'AttributeName': 'what_where_key',
+        'KeyType': 'HASH'
+    }
+]
+
 global_secondary = [{
     'IndexName': 'work-id-index',
     'KeySchema': [
@@ -140,19 +157,24 @@ def _delete_table(table):
         raise e
 
 
-def _create_table(dynamodb, table_name):
+def _create_table(dynamodb,
+                  table_name,
+                  attribute_definitions,
+                  key_schema, 
+                  global_secondary=None):
     table = dynamodb.Table(table_name)
     _delete_table(table)
     kwargs = dict(
         TableName=table_name,
         AttributeDefinitions=attribute_definitions,
         KeySchema=key_schema,
-        GlobalSecondaryIndexes=global_secondary,
         ProvisionedThroughput={
             'ReadCapacityUnits': 5,
             'WriteCapacityUnits': 5
         }
     )
+    if global_secondary:
+        kwargs['GlobalSecondaryIndexes'] = global_secondary
     dynamodb.create_table(**kwargs)
     return dynamodb.Table(table_name)
 
@@ -168,14 +190,20 @@ def table_maker(request, dynamodb):
 
     def maker(records):
         table_name = 'test'
-        table = _create_table(dynamodb, table_name)
+        latest_table_name = 'test_latest'
+
+        table = _create_table(dynamodb, table_name, attribute_definitions, key_schema, global_secondary)
+        latest_table = _create_table(dynamodb, latest_table_name, latest_attribute_definitions, latest_key_schema)
+
+        _populate_table(latest_table, records)
         _populate_table(table, records)
 
         def tear_down():
             _delete_table(table)
-        request.addfinalizer(tear_down)
+            _delete_table(latest_table)
 
-        return table
+        request.addfinalizer(tear_down)
+        return (table, latest_table)
 
     return maker
 
@@ -189,6 +217,13 @@ def record_maker(s3_file_from_metadata):
         key = '/'.join([str(v) for v in kwargs.values()])
         url = 's3://datalake-test/' + key
         s3_file_from_metadata(url, m)
-        return DatalakeRecord.list_from_metadata(url, m)
+        records = DatalakeRecord.list_from_metadata(url, m)
+
+        what = kwargs.get('what')
+        where = kwargs.get('where')
+        for record in records:
+            record['what_where_key'] = f"{what}:{where}"
+
+        return records
 
     return maker

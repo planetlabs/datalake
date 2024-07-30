@@ -23,6 +23,7 @@ from datalake_api.v0 import v0
 from datalake_api import settings
 
 
+logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
 

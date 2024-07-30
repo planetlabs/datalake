@@ -11,8 +11,10 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-
+import os
 import pytest
+from datalake_api.v0 import reset_archive_querier
+from datalake_api import settings
 from datalake.common import DatalakeRecord
 from datalake.tests import generate_random_metadata
 import simplejson as json
@@ -123,11 +125,36 @@ class HttpQuerier(object):
         return HttpRecord(**record)
 
 
-@pytest.fixture(params=[ArchiveQuerier, HttpQuerier],
-                ids=['archive_querier', 'http'])
-def querier(request, dynamodb):
-    return request.param('test', dynamodb=dynamodb)
 
+@pytest.fixture(params=[
+    ('archive', 'use_latest'),
+    ('archive', 'use_default'),
+    ('http', 'use_latest'),
+    ('http', 'use_default')
+], ids=['archive-latest',
+        'archive-default',
+        'http-latest',
+        'http-default'
+        ])
+def querier(request, dynamodb):
+
+        reset_archive_querier()
+        querier_type, table_usage = request.param
+
+        if table_usage == 'use_latest':
+            settings.DATALAKE_USE_LATEST_TABLE = True
+        else:
+            settings.DATALAKE_USE_LATEST_TABLE= False
+
+        if querier_type == 'http':
+            return HttpQuerier('test',
+                               'test_latest',
+                               dynamodb=dynamodb)
+        else:
+            return ArchiveQuerier('test',
+                                  'test_latest',
+                                  use_latest_table=True if table_usage == 'use_latest' else False,
+                                  dynamodb=dynamodb)
 
 def in_url(result, part):
     url = result['url']
@@ -407,6 +434,10 @@ def test_no_end(table_maker, querier, s3_file_from_metadata):
     url = 's3://datalake-test/' + m['id']
     s3_file_from_metadata(url, m)
     records = DatalakeRecord.list_from_metadata(url, m)
+    for record in records:
+        what = record.get('what')
+        where = record.get('where')
+        record['what_where_key'] = f'{what}:{where}'
     table_maker(records)
     results = querier.query_by_time(m['start'], m['start'] + 1, m['what'])
     assert len(results) == 1
@@ -419,7 +450,12 @@ def test_no_end_exclusion(table_maker, querier, s3_file_from_metadata):
     url = 's3://datalake-test/' + m['id']
     s3_file_from_metadata(url, m)
     records = DatalakeRecord.list_from_metadata(url, m)
+    for record in records:
+        what = record.get('what')
+        where = record.get('where')
+        record['what_where_key'] = f'{what}:{where}'
     table_maker(records)
+    
     results = querier.query_by_time(m['start'] + 1, m['start'] + 2, m['what'])
     assert len(results) == 0
 
@@ -478,8 +514,7 @@ def test_latest_creation_time_breaks_tie(table_maker, querier,
     start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
     interval = DatalakeRecord.TIME_BUCKET_SIZE_IN_MS/150
     end = start + interval
-    table = table_maker([])
-
+    table = table_maker([])[0]
     for i in range(3):
         record = record_maker(start=start,
                               end=end,
@@ -528,3 +563,38 @@ def test_2x_max_results_in_one_bucket(table_maker, querier, record_maker):
     pages = get_all_pages(querier.query_by_time, [start, end, 'boo'])
     results = consolidate_pages(pages)
     assert len(results) == MAX_RESULTS * 2
+
+
+def test_latest_table_query(table_maker, querier, record_maker):
+    now = int(time.time() * 1000)
+    records = []
+    bucket = int(now/DatalakeRecord.TIME_BUCKET_SIZE_IN_MS)
+    start = bucket * DatalakeRecord.TIME_BUCKET_SIZE_IN_MS
+    end = start
+    for i in range(MAX_RESULTS):
+        records += record_maker(start=start,
+                                end=end,
+                                what='boo',
+                                where='hoo{}'.format(i))
+    table_maker(records)
+    result = querier.query_latest('boo', 'hoo0')
+    _validate_latest_result(result, what='boo', where='hoo0')
+
+
+def test_query_latest_just_latest_table(table_maker, querier, record_maker):
+    use_latest_from_env = settings.DATALAKE_USE_LATEST_TABLE
+    table = table_maker([])[1] 
+    for i in range(3):
+        record = record_maker(what='meow',
+                              where=f'tree',
+                              path='/{}'.format(i))
+
+        # only inserting into latest table
+        table.put_item(Item=record[0])
+        time.sleep(1.01)
+
+    result = querier.query_latest('meow', 'tree')
+    if use_latest_from_env:
+        _validate_latest_result(result, what='meow', where='tree')
+    else:
+        assert result is None
