@@ -141,7 +141,7 @@ class DynamoDBStorage(object):
             )
             self.logger.info("Record stored successfully.")
         except ConditionalCheckFailedException:
-            self.logger.error(f"Condition not met for record {record},"
+            self.logger.debug(f"Condition not met for record {record},"
                               "no operation was performed.")
         except Exception as e:
             self.logger.error(f"Error occurred while attempting {record}: {str(e)}")
