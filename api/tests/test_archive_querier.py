@@ -601,8 +601,8 @@ def test_query_latest_just_latest_table(table_maker, querier, record_maker):
 
 
 def test_query_latest_future_record_exceeds_lookforward(table_maker, querier, record_maker):
-    future_start = (int(time.time() * 1000) + 25 * 60 * 60 * 1000)  # 25 hours ahead
-    future_end = (int(time.time() * 1000) + 26 * 60 * 60 * 1000)    # ends one hour later
+    future_start = (int(time.time() * 1000) + 25 * 60 * 60 * 1000)
+    future_end = (int(time.time() * 1000) + 26 * 60 * 60 * 1000)
     record = record_maker(what='meow', where='tree', start=future_start, end=future_end)
     
     default_table, latest_table = table_maker([])
