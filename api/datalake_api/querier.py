@@ -20,6 +20,8 @@ import json
 import time
 import os
 
+from datetime import datetime, timedelta
+import decimal
 import logging
 log = logging.getLogger(__name__)
 
@@ -40,6 +42,7 @@ arbitrarily far back, though, because this makes the failing case terribly
 slow and expensive.
 '''
 DEFAULT_LOOKBACK_DAYS = 14
+LATEST_MAX_LOOKFORWARD_HOURS = 24
 
 
 _ONE_DAY_MS = 24 * 60 * 60 * 1000
@@ -347,6 +350,9 @@ class ArchiveQuerier(object):
         return self.dynamodb.Table(self.latest_table_name)
 
     def query_latest(self, what, where, lookback_days=DEFAULT_LOOKBACK_DAYS):
+        now = datetime.utcnow()
+        max_lookforward = now + timedelta(hours=LATEST_MAX_LOOKFORWARD_HOURS)
+
         if self.use_latest_table:
             log.info('inside use_latest_table=TRUE')
             response = self._latest_table.query(
@@ -359,6 +365,18 @@ class ArchiveQuerier(object):
                 return self._default_latest(what, where, lookback_days)
 
             latest_item = items[0]
+            metadata_start = latest_item['metadata']['start']
+
+            if isinstance(metadata_start, (int, decimal.Decimal)):
+                metadata_start = datetime.utcfromtimestamp(float(metadata_start) / 1000)
+
+            elif isinstance(metadata_start, str):
+                metadata_start = datetime.strptime(metadata_start, '%Y-%m-%dT%H:%M:%S.%fZ')
+
+            if metadata_start > max_lookforward:
+                log.info(f"Record with metadata.start {metadata_start} is beyond MAX_LOOKFORWARD_HOURS. Falling back to default latest.")
+                return self._default_latest(what, where, lookback_days)
+
             return dict(url=latest_item['url'], metadata=latest_item['metadata'])
 
         else:
