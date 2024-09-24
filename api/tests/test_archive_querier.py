@@ -598,3 +598,19 @@ def test_query_latest_just_latest_table(table_maker, querier, record_maker):
         _validate_latest_result(result, what='meow', where='tree')
     else:
         assert result is None
+
+
+def test_query_latest_future_record_exceeds_lookforward(table_maker, querier, record_maker):
+    future_start = (int(time.time() * 1000) + 25 * 60 * 60 * 1000)
+    future_end = (int(time.time() * 1000) + 26 * 60 * 60 * 1000)
+    record = record_maker(what='meow', where='tree', start=future_start, end=future_end)
+    
+    default_table, latest_table = table_maker([])
+    print(default_table.__dict__, type(default_table))
+
+    default_table.put_item(Item=record[0])
+    latest_table.put_item(Item=record[0])
+
+    result = querier.query_latest('meow', 'tree')
+    assert result is None, "No result should be returned if falling back to the default query"
+
