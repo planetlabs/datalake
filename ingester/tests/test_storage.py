@@ -51,7 +51,7 @@ def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
     assert stored_record['metadata']['start'] == new_record['metadata']['start']
 
 
-def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dynamodb_connection):
+def test_insert_duplicate_writes_once(dynamodb_latest_table, dynamodb_connection):
     storage = DynamoDBStorage(connection=dynamodb_connection)
     storage.latest_table_name = 'latest'
 
@@ -145,7 +145,7 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
 
 
 
-def test_insert_ingestion_issue(dynamodb_latest_table, dynamodb_connection):
+def test_verify_replace_same_start_time(dynamodb_latest_table, dynamodb_connection):
     storage = DynamoDBStorage(connection=dynamodb_connection)
     storage.latest_table_name = 'latest'
 
@@ -187,11 +187,8 @@ def test_insert_ingestion_issue(dynamodb_latest_table, dynamodb_connection):
         'create_time': 1500000000000
     }
 
-    try:
-        storage.store_latest(record1)
-        storage.store_latest(record2)
-    except Exception as e:
-        print(f"Failed to store record: {str(e)}")
+    storage.store_latest(record1)
+    storage.store_latest(record2)
 
     stored_record = dynamodb_latest_table.get_item(
         what_where_key="syslog:ground_server2"
