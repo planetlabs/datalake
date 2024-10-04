@@ -606,7 +606,6 @@ def test_query_latest_future_record_exceeds_lookforward(table_maker, querier, re
     record = record_maker(what='meow', where='tree', start=future_start, end=future_end)
     
     default_table, latest_table = table_maker([])
-    print(default_table.__dict__, type(default_table))
 
     default_table.put_item(Item=record[0])
     latest_table.put_item(Item=record[0])
