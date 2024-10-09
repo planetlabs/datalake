@@ -18,7 +18,6 @@ from boto3.dynamodb.conditions import Key
 import base64
 import json
 import time
-import os
 
 from datetime import datetime, timedelta
 import decimal

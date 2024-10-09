@@ -48,10 +48,7 @@ def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
     assert stored_record['metadata']['start'] == new_record['metadata']['start']
 
 
-def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dynamodb_connection):
-    storage = DynamoDBStorage(connection=dynamodb_connection)
-    storage.latest_table_name = 'latest'
-
+def provide_test_records():
     file1 = {
         'what_where_key': 'syslog:ground_server2',
         'time_index_key': '15219:zlcdzvawsp',
@@ -64,7 +61,7 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
             'work_id': 'abc-123',
             'where': 'ground_server2',
             'what': 'syslog',
-            'id': '34fb2d1ec54245c7a57e29ed5a6ea9b2',
+            'id': 'file1',
             'hash': 'b4f2d8de24af342643d5b78a8f2b9b88'
         },
         'url': 's3://existingfile/url',
@@ -83,7 +80,7 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
             'work_id': 'abc-123',
             'where': 'ground_server2',
             'what': 'syslog',
-            'id': '45gb2d1ec54245c7a57e29ed5a6ea9b2',
+            'id': 'file2',
             'hash': 'c5g3d8de24af342643d5b78a8f2b9b88'
             
         },
@@ -103,13 +100,21 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
             'work_id': 'foo-bizz',
             'where': 's114',
             'what': 'syslog',
-            'id': '34fb2d1ec54245c7a57e29ed5a6ea9b2',
+            'id': 'file3',
             'hash': 'b4f2d8de24af342643d5b78a8f2b9b88'
         },
         'url': 's3://datalake/path_to_file1',
         'create_time': 1414877177402,
         'size': 1048576
     }
+
+    return (file1, file2, file3)
+
+
+def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dynamodb_connection):
+    storage = DynamoDBStorage(connection=dynamodb_connection)
+    storage.latest_table_name = 'latest'
+    file1, file2, file3 = provide_test_records()
 
     storage.store_latest(file3)
     storage.store_latest(file1)
@@ -124,21 +129,39 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
     assert len(records) == 2
     assert file2 == res
 
+
+def test_store_conditional_put_newest_first(dynamodb_latest_table, dynamodb_connection):
+    storage = DynamoDBStorage(connection=dynamodb_connection)
+    storage.latest_table_name = 'latest'
+    file1, file2, file3 = provide_test_records()
+
     storage.store_latest(file3)
     storage.store_latest(file2)
     storage.store_latest(file1)
 
-    records = [dict(i) for i in dynamodb_latest_table.scan()]
+    query_what_where = 'syslog:ground_server2'
+
     res = dict(dynamodb_latest_table.get_item(what_where_key=query_what_where))
     assert res['metadata']['id'] != file1['metadata']['id']
     assert res['metadata']['id'] == file2['metadata']['id']
-    
+
+
+def test_store_conditional_put_same_duplicate_overwrite(dynamodb_latest_table, dynamodb_connection):
+    storage = DynamoDBStorage(connection=dynamodb_connection)
+    storage.latest_table_name = 'latest'
+    file1, file2, file3 = provide_test_records()
+
     storage.store_latest(file1)
     storage.store_latest(file1)
     storage.store_latest(file2)
     storage.store_latest(file3)
-    res = dict(dynamodb_latest_table.get_item(what_where_key=query_what_where))
+
+    query_what_where = 'syslog:ground_server2'
+    res = dict(dynamodb_latest_table.get_item(
+        what_where_key=query_what_where
+    ))
     assert res['metadata']['start'] == file2['metadata']['start']
+    assert res['metadata']['id'] == file2['metadata']['id']
 
 
 def test_verify_replace_record_same_start(dynamodb_latest_table, dynamodb_connection):
