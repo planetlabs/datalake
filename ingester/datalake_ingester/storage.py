@@ -76,7 +76,7 @@ class DynamoDBStorage(object):
         Record must utilize AttributeValue syntax
               for the conditional put.
         """
-        condition_expression = " attribute_not_exists(what_where_key) OR metadata.#metadata_start < :new_start"
+        condition_expression = " attribute_not_exists(what_where_key) OR metadata.#metadata_start <= :new_start"
         expression_attribute_values = {
             ':new_start': {'N': str(record['metadata']['start'])}
         }
