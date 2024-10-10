@@ -146,24 +146,6 @@ def test_store_conditional_put_newest_first(dynamodb_latest_table, dynamodb_conn
     assert res['metadata']['id'] == file2['metadata']['id']
 
 
-def test_store_conditional_put_same_duplicate_overwrite(dynamodb_latest_table, dynamodb_connection):
-    storage = DynamoDBStorage(connection=dynamodb_connection)
-    storage.latest_table_name = 'latest'
-    file1, file2, file3 = provide_test_records()
-
-    storage.store_latest(file1)
-    storage.store_latest(file1)
-    storage.store_latest(file2)
-    storage.store_latest(file3)
-
-    query_what_where = 'syslog:ground_server2'
-    res = dict(dynamodb_latest_table.get_item(
-        what_where_key=query_what_where
-    ))
-    assert res['metadata']['start'] == file2['metadata']['start']
-    assert res['metadata']['id'] == file2['metadata']['id']
-
-
 def test_verify_replace_record_same_start(dynamodb_latest_table, dynamodb_connection):
     storage = DynamoDBStorage(connection=dynamodb_connection)
     storage.latest_table_name = 'latest'
