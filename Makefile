@@ -15,10 +15,10 @@ test-client: docker
 	docker run --rm --entrypoint tox $(IMAGE) -c /opt/client/tox.ini
 
 test-ingester: docker
-	docker run --rm --entrypoint py.test $(IMAGE) ingester
+	docker run --rm --entrypoint py.test $(IMAGE) -vv ingester
 
 test-api: docker
-	docker run --rm --entrypoint py.test $(IMAGE) api
+	docker run --rm --entrypoint py.test $(IMAGE) -vv api
 
 .PHONY: test  # Run the tests
 test:

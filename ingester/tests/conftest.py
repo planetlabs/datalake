@@ -18,6 +18,8 @@ from datalake.tests import *  # noqa
 
 from datalake_ingester import SQSQueue
 
+os.environ["AWS_REQUEST_CHECKSUM_CALCULATION"] = "when_required"
+os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
 
 @pytest.fixture
 def dynamodb_connection(aws_connector):
