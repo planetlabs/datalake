@@ -32,6 +32,9 @@ pytest_plugins = [
    "datalake.tests",
 ]
 
+os.environ["AWS_REQUEST_CHECKSUM_CALCULATION"] = "when_required"
+os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
+
 # If we run with proper AWS credentials they will be used
 # This will cause moto to fail
 # But more critically, may impact production systems

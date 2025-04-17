@@ -14,6 +14,7 @@
 
 import pytest
 import boto3
+import os
 from botocore.exceptions import (
     ClientError as BotoClientError,
     NoCredentialsError
@@ -24,7 +25,8 @@ from datalake_api import app as datalake_api
 from datalake.tests import *  # noqa
 from datalake.common import DatalakeRecord
 from datalake.tests import generate_random_metadata
-
+os.environ["AWS_REQUEST_CHECKSUM_CALCULATION"] = "when_required"
+os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
 
 YEAR_2010 = 1262304000000
 
