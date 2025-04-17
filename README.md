@@ -1,4 +1,4 @@
-Introduction
+ixIntroduction
 ============
 
 [![Build Status](https://travis-ci.org/planetlabs/datalake.svg)](https://travis-ci.org/planetlabs/datalake)
