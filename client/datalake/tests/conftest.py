@@ -20,7 +20,7 @@ import six
 
 
 try:
-    from moto import mock_s3
+    from moto import mock_aws
     import boto3
     from six.moves.urllib.parse import urlparse
     import json
@@ -142,7 +142,7 @@ def aws_connector(request):
 
 @pytest.fixture
 def s3_connection(aws_connector):
-    with mock_s3():
+    with mock_aws():
         yield boto3.resource('s3')
 
 

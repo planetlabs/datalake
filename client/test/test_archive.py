@@ -36,6 +36,19 @@ def test_push_file(archive, random_metadata, tmpfile, s3_object):
 def test_push_large_file(
         monkeypatch, archive, random_metadata, tmpfile, s3_object):
     monkeypatch.setenv('DATALAKE_CHUNK_SIZE_MB', '5')
+    from botocore.httpchecksum import StreamingChecksumBody
+
+    # When testing with Moto, newer versions of boto3/botocore cause a
+    # FlexibleChecksumError because Moto doesn't supply the checksum headers
+    # that boto3 now expects. The standard config objects can fail to apply
+    # to the underlying S3 transfer manager.
+    # The most reliable way to disable this for tests is to directly patch
+    # the validation function in botocore to do nothing.
+    monkeypatch.setattr(
+        StreamingChecksumBody,
+        "_validate_checksum",
+        lambda _: None)
+
     expected_content = ('big data' * 1024 * 1024).encode('utf-8')
     f = tmpfile(expected_content)
     url = archive.prepare_metadata_and_push(f, **random_metadata)
