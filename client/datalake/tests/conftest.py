@@ -21,12 +21,14 @@ import six
 try:
     from moto import mock_aws
 except ImportError:
-    from moto import mock_s3 as mock_aws  # ugh
+    # Ugh. This is necessary because the client tests rely on a later version
+    # of moto than the ingester and api tests. And that newer version changed
+    # the object mock_s3 -> mock_aws.
+    from moto import mock_s3 as mock_aws
 except ImportError:
     pass
 
 try:
-    # from moto import mock_aws
     import boto3
     from six.moves.urllib.parse import urlparse
     import json
