@@ -37,7 +37,7 @@ dynamic = ["version"]
 test = [
     'pytest<8.0.0',
     'pytest-cov>=2.5.1,<4',
-    'moto[s3]>4,<5',
+    'moto[s3]>4',
     'twine<4.0.0',
     'pip>=20.0.0,<22.0.0',
     'wheel<0.38.0',

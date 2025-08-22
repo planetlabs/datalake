@@ -18,9 +18,17 @@ import string
 import os
 import six
 
+try:
+    from moto import mock_aws
+except ImportError:
+    # Ugh. This is necessary because the client tests rely on a later version
+    # of moto than the ingester and api tests. And that newer version changed
+    # the object mock_s3 -> mock_aws.
+    from moto import mock_s3 as mock_aws
+except ImportError:
+    pass
 
 try:
-    from moto import mock_s3
     import boto3
     from six.moves.urllib.parse import urlparse
     import json
@@ -142,7 +150,7 @@ def aws_connector(request):
 
 @pytest.fixture
 def s3_connection(aws_connector):
-    with mock_s3():
+    with mock_aws():
         yield boto3.resource('s3')
 
 

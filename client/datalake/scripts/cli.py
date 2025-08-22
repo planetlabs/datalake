@@ -68,7 +68,7 @@ to eventually upload.
                     'environment variables, which can be overridden by '
                     'command-line arguments.'),
               envvar='DATALAKE_CONFIG')
-@click.option('-u', '--storage-url',
+@click.option('-U', '--storage-url',
               help=('The URL to the top-level storage resource where '
                     'datalake will archive all the files (e.g., '
                     's3://my-datalake). DATALAKE_STORAGE_URL is the '

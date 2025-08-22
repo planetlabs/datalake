@@ -101,3 +101,12 @@ def test_push_with_translation_expression(cli_tester, tmpdir):
     cmd += '--what=job --start=now --end=now --where=hostname '
     cmd += str(f)
     cli_tester(cmd)
+
+
+@pytest.mark.xfail(reason="We don't want the CLI to raise warnings.",
+                   strict=True)
+def test_no_duplicate_parameters(cli_tester):
+    # Unfortunately there is no clean way to test if a warning is NOT emitted.
+    # So we have to test that a warning IS emitted and XFAIL.
+    with pytest.warns(UserWarning, match='Remove its duplicate as parameters'):
+        cli_tester('--help')
