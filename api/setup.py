@@ -30,7 +30,7 @@ def get_version_from_pyver():
         if 'sdist' in sys.argv or 'bdist_wheel' in sys.argv:
             raise ImportError('You must install pyver to create a package')
         else:
-            return '0.dev'
+            return 'noversion'
     version, version_info = pyver.get_version(pkg="datalake_api",
                                               public=True)
     return version

@@ -18,9 +18,15 @@ import string
 import os
 import six
 
-
 try:
     from moto import mock_aws
+except ImportError:
+    from moto import mock_s3 as mock_aws  # ugh
+except ImportError:
+    pass
+
+try:
+    # from moto import mock_aws
     import boto3
     from six.moves.urllib.parse import urlparse
     import json

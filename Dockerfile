@@ -1,9 +1,9 @@
-FROM python:3.12-slim
+FROM python:3.9-slim
 
-LABEL org.opencontainers.image.authors="brian <brian@planet.com>"
+MAINTAINER brian <brian@planet.com>
 
-ENV LANG=C.UTF-8
-ENV	LC_ALL=C.UTF-8
+ENV LANG C.UTF-8
+ENV	LC_ALL C.UTF-8
 
 # TODO: keep requirements in one place
 RUN pip install \
@@ -29,16 +29,10 @@ RUN pip install \
     pyinotify>=0.9.4, \
     raven>=5.0.0 \
     'tox>4,<5' \
-    # v80 removes many setup.py develop otions
-    'setuptools<80.0.0' \
     'datalake<2'
-
-# RUN pip install -U pip
 
 RUN mkdir -p /opt/
 COPY . /opt/
-
-# RUN pip install -e /opt/client[test]
 
 # Take care to install clients such that the source code can be mounted into
 # the container and used for development. That is, the python paths and paths
@@ -46,9 +40,9 @@ COPY . /opt/
 ENV PYTHONPATH=/opt/client:/opt/ingester:/opt/api
 RUN for d in ingester api; do \
     cd /opt/$d && \
-    python setup.py develop --script-dir /usr/local/bin \
+    python setup.py develop -s /usr/local/bin \
         --egg-path ../../../../../opt/$d/ \
-        -d /usr/local/lib/python3.12/site-packages/ \
+        -d /usr/local/lib/python3.9/site-packages/ \
         --no-deps; \
     done
 
