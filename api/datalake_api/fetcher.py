@@ -11,6 +11,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
+from datetime import datetime, timezone
 from mimetypes import guess_type
 from datalake.common import Metadata
 from datalake.common.errors import NoSuchDatalakeFile
@@ -76,6 +77,20 @@ class ArchiveFileFetcher(object):
         key = self._get_s3_key(file_id)
         fd = key['Body']
         j = json.loads(key['Metadata']['datalake'])
+        start_utc = j['start']
+        end_utc = j['end']
+
+        if start_utc:
+            start_utc = datetime.fromtimestamp(
+                start_utc / 1000.0, tz=timezone.utc
+            ).isoformat()
+        if end_utc:
+            end_utc = datetime.fromtimestamp(
+                end_utc / 1000.0, tz=timezone.utc
+            ).isoformat()
+        j['start_UTC'] = start_utc
+        j['end_UTC'] = end_utc
+
         metadata = Metadata(j)
         return ArchiveFile(fd, metadata)
 

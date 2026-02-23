@@ -11,6 +11,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
+from datetime import datetime, timezone
 import pytest
 import simplejson as json
 
@@ -32,7 +33,16 @@ def test_get_metadata(metadata_getter, s3_file_maker, random_metadata):
     res = metadata_getter('12345')
     assert res.status_code == 200
     assert res.content_type == 'application/json'
-    assert json.loads(res.data) == random_metadata
+    res_data = json.loads(res.data)
+    for k, v in random_metadata.items():
+        if k == 'start_UTC' or k == 'end_UTC':
+            if v: # Null case
+                expected_v_utc = datetime.fromtimestamp(
+                    v / 1000.0, tz=timezone.utc
+                ).isoformat()
+                assert expected_v_utc == res_data[k]
+        else:
+            assert v == res_data[k]
 
 
 def test_no_such_metadata(s3_bucket_maker, metadata_getter):
