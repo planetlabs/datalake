@@ -7,8 +7,8 @@ IMAGE="$(REPO)/$(REPO_PATH):$(VERSION)"
 docker: version
 	docker build --build-arg VERSION=$(VERSION) -t $(IMAGE) .
 
-.PHONY: devshell  # Open a developer shell in the docker env
-devshell: docker
+.PHONY: dev  # Open a developer  in the docker env
+dev: docker
 	docker run --rm -it -v $$PWD:/opt --entrypoint /bin/bash $(IMAGE)
 
 test-client: docker
