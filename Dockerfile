@@ -7,29 +7,32 @@ ENV	LC_ALL C.UTF-8
 
 # TODO: keep requirements in one place
 RUN pip install \
-    blinker>=1.4 \
-    boto3>=1.1.3 \
-    click>=5.1 \
-    Flask>=0.10.1 \
-    flask-swagger>=0.2.14 \
-    memoized_property>=1.0.1 \
-    python-dateutil>=2.4.2 \
-    python-dotenv>=0.1.3 \
-    pytz>=2015.4 \
-    sentry-sdk[flask]>=0.19.5 \
-    requests>=2.5 \
-    simplejson>=3.3.1 \
-    six>=1.10.0 \
-    # test requirements
+    'boto==2.49.0' \
+    'boto3==1.35.41' \
+    'botocore==1.35.64' \
+    'datalake<2' \
     'flake8>=2.5.0,<4.1' \
     'freezegun<1' \
     'moto<3' \
     'pytest<8' \
     'responses<0.22.0' \
-    pyinotify>=0.9.4, \
-    raven>=5.0.0 \
     'tox>4,<5' \
-    'datalake<2'
+    # test requirements
+    blinker>=1.4 \
+    click>=5.1 \
+    flask-swagger>=0.2.14 \
+    Flask>=0.10.1 \
+    memoized_property>=1.0.1 \
+    pyinotify>=0.9.4, \
+    python-dateutil>=2.4.2 \
+    python-dotenv>=0.1.3 \
+    pytz>=2015.4 \
+    raven>=5.0.0 \
+    requests>=2.5 \
+    sentry-sdk[flask]>=0.19.5 \
+    simplejson>=3.3.1 \
+    six>=1.10.0
+
 
 RUN mkdir -p /opt/
 COPY . /opt/
