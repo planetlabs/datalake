@@ -35,7 +35,7 @@ _archive_querier = None
 def add_utc_metadata(metadata):
     """Add UTC timestamp fields to metadata
 
-    This function takes a metadata dict and adds start_UTC and end_UTC fields
+    This function takes a metadata dict and adds start_iso and end_iso fields
     containing ISO-formatted UTC timestamps corresponding to the millisecond
     timestamps in the start and end fields.
     Can be expanded to add any needed metadata to apis
@@ -43,23 +43,23 @@ def add_utc_metadata(metadata):
     if not metadata:
         return metadata
 
-    start_utc = metadata['start']
-    end_utc = metadata['end']
-    if start_utc:
-        if isinstance(start_utc, decimal.Decimal):
-            start_utc = float(start_utc)
-        start_utc = datetime.fromtimestamp(
-            start_utc / 1000.0, tz=timezone.utc
-        ).isoformat()
-    if end_utc:
-        if isinstance(end_utc, decimal.Decimal):
-            end_utc = float(end_utc)
-        end_utc = datetime.fromtimestamp(
-            end_utc / 1000.0, tz=timezone.utc
-        ).isoformat()
+    start_iso = metadata['start']
+    end_iso = metadata['end']
+    if start_iso:
+        if isinstance(start_iso, decimal.Decimal):
+            start_iso = float(start_iso)
+        start_iso = datetime.fromtimestamp(
+            start_iso / 1000.0, tz=timezone.utc
+        ).isoformat(timespec='milliseconds') + 'Z'
+    if end_iso:
+        if isinstance(end_iso, decimal.Decimal):
+            end_iso = float(end_iso)
+        end_iso = datetime.fromtimestamp(
+            end_iso / 1000.0, tz=timezone.utc
+        ).isoformat(timespec='milliseconds') + 'Z'
 
-    metadata['start_UTC'] = start_utc
-    metadata['end_UTC'] = end_utc
+    metadata['start_iso'] = start_iso
+    metadata['end_iso'] = end_iso
     return metadata
 
 
@@ -339,14 +339,14 @@ def files_get():
                                   type: string
                                   description: 16-byte blake2 hash of the file
                                                content
-                                start_UTC:
+                                start_iso:
                                   type: string
                                   description: the start time of the file in ISO
-                                               format UTC timezone
-                                end_UTC:
+                                               format UTC iso timezone
+                                end_iso:
                                   type: string
                                   description: the end time of the file in ISO
-                                               format UTC timezone
+                                               format UTC iso timezone
 
               next:
                   type: string
