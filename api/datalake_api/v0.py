@@ -58,7 +58,6 @@ def add_utc_metadata(metadata):
             end_iso / 1000.0, tz=timezone.utc
         ).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
-    breakpoint()
     metadata['start_iso'] = start_iso
     metadata['end_iso'] = end_iso
     return metadata
