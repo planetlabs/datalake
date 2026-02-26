@@ -15,6 +15,7 @@ RUN pip install \
     'freezegun<1' \
     'moto<3' \
     'pytest<8' \
+    'pytest-xdist>=3.0.0' \
     'responses<0.22.0' \
     'tox>4,<5' \
     # test requirements
