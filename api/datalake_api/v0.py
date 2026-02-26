@@ -50,14 +50,15 @@ def add_utc_metadata(metadata):
             start_iso = float(start_iso)
         start_iso = datetime.fromtimestamp(
             start_iso / 1000.0, tz=timezone.utc
-        ).isoformat(timespec='milliseconds') + 'Z'
+        ).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
     if end_iso:
         if isinstance(end_iso, decimal.Decimal):
             end_iso = float(end_iso)
         end_iso = datetime.fromtimestamp(
             end_iso / 1000.0, tz=timezone.utc
-        ).isoformat(timespec='milliseconds') + 'Z'
+        ).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
+    breakpoint()
     metadata['start_iso'] = start_iso
     metadata['end_iso'] = end_iso
     return metadata
