@@ -20,7 +20,7 @@ import six
 
 
 try:
-    from moto import mock_s3
+    from moto import mock_aws
     import boto3
     from six.moves.urllib.parse import urlparse
     import json
@@ -125,24 +125,8 @@ def tmpfile_maker(tmpdir):
 
 
 @pytest.fixture
-def aws_connector(request):
-
-    def create_connection(mocker, connector):
-        mock = mocker()
-        mock.start()
-
-        def tear_down():
-            mock.stop()
-        request.addfinalizer(tear_down)
-
-        return connector()
-
-    return create_connection
-
-
-@pytest.fixture
-def s3_connection(aws_connector):
-    with mock_s3():
+def s3_connection():
+    with mock_aws():
         yield boto3.resource('s3')
 
 

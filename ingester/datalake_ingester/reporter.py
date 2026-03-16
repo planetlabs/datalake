@@ -1,4 +1,4 @@
-import boto.sns
+import boto3
 import simplejson as json
 import logging
 from memoized_property import memoized_property
@@ -25,13 +25,10 @@ class SNSReporter(object):
 
     @memoized_property
     def _connection(self):
-        region = os.environ.get('AWS_REGION')
-        if region:
-            return boto.sns.connect_to_region(region)
-        else:
-            return boto.connect_sns()
+        region = os.environ.get('AWS_REGION', 'us-east-1')
+        return boto3.client('sns', region_name=region)
 
     def report(self, ingestion_report):
         message = json.dumps(ingestion_report)
         self.logger.info('REPORTING: %s', message)
-        self._connection.publish(topic=self.report_key, message=message)
+        self._connection.publish(TopicArn=self.report_key, Message=message)

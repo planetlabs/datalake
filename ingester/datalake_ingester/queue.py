@@ -13,7 +13,7 @@
 # the License.
 
 from memoized_property import memoized_property
-import boto.sqs
+import boto3
 import simplejson as json
 import logging
 import os
@@ -39,16 +39,13 @@ class SQSQueue(object):
         self.handler = h
 
     @memoized_property
-    def _queue(self):
-        return self._connection.get_queue(self.queue_name)
+    def _connection(self):
+        region = os.environ.get('AWS_REGION', 'us-east-1')
+        return boto3.resource('sqs', region_name=region)
 
     @memoized_property
-    def _connection(self):
-        region = os.environ.get('AWS_REGION')
-        if region:
-            return boto.sqs.connect_to_region(region)
-        else:
-            return boto.connect_sqs()
+    def _queue(self):
+        return self._connection.get_queue_by_name(QueueName=self.queue_name)
 
     _LONG_POLL_TIMEOUT = 20
 
@@ -57,17 +54,19 @@ class SQSQueue(object):
         '''
         long_poll_timeout = timeout or self._LONG_POLL_TIMEOUT
         while True:
-            raw_msg = self._queue.read(wait_time_seconds=long_poll_timeout)
-            if raw_msg is None:
+            messages = self._queue.receive_messages(
+                MaxNumberOfMessages=1,
+                WaitTimeSeconds=long_poll_timeout
+            )
+            if not messages:
                 if timeout:
                     return
                 else:
                     continue
-            self._handle_raw_message(raw_msg)
+            self._handle_raw_message(messages[0])
 
     def _handle_raw_message(self, raw_msg):
-        # eliminate newlines in raw message so it all logs to one line
-        raw = raw_msg.get_body().replace('\n', ' ')
+        raw = raw_msg.body.replace('\n', ' ')
         if not self.handler:
             self.logger.error('NO HANDLER CONFIGURED: %s', raw)
             return
@@ -76,4 +75,4 @@ class SQSQueue(object):
         msg = json.loads(raw)
 
         self.handler(msg)
-        self._queue.delete_message(raw_msg)
+        raw_msg.delete()

@@ -1,53 +1,53 @@
 import pytest
-from moto import (
-    mock_sns_deprecated as mock_sns,
-    mock_sqs_deprecated as mock_sqs,
-    mock_dynamodb2_deprecated as mock_dynamodb2
-)
+from moto import mock_aws
 import os
 import simplejson as json
 from glob import glob
-
-from boto.dynamodb2.table import Table
-from boto.exception import JSONResponseError
-from boto.dynamodb2.fields import HashKey, RangeKey
-import boto.sns
-import boto.sqs
+import boto3
+from botocore.exceptions import ClientError
 
 from datalake.tests import *  # noqa
 
 from datalake_ingester import SQSQueue
 
-
-@pytest.fixture
-def dynamodb_connection(aws_connector):
-    return aws_connector(mock_dynamodb2,
-                         lambda: boto.dynamodb2.connect_to_region('us-west-1'))
-
-
 def _delete_table_if_exists(conn, name):
     try:
-        table = Table(name, connection=conn)
+        table = conn.Table(name)
         table.delete()
-    except JSONResponseError as e:
-        if e.status == 400 and e.error_code == 'ResourceNotFoundException':
-            return
-        raise e
+    except ClientError as e:
+        if e.response['Error']['Code'] != 'ResourceNotFoundException':
+            raise
+    
+@pytest.fixture
+def dynamodb_connection():
+    with mock_aws():
+        yield boto3.resource('dynamodb', region_name='us-east-1')
 
 
 @pytest.fixture
 def dynamodb_table_maker(request, dynamodb_connection):
 
-    def table_maker(name, schema):
+    def table_maker(name, key_schema, attribute_definitions):
         _delete_table_if_exists(dynamodb_connection, name)
-        throughput = {'read': 5, 'write': 5}
-        table = Table.create(name,
-                             schema=schema,
-                             throughput=throughput,
-                             connection=dynamodb_connection)
+
+        table = dynamodb_connection.create_table(
+            TableName=name,
+            KeySchema=key_schema,
+            AttributeDefinitions=attribute_definitions,
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 5,
+                'WriteCapacityUnits': 5
+            }
+        )
+
+        table.meta.client.get_waiter('table_exists').wait(
+            TableName=name,
+            WaiterConfig={'Delay': 1, 'MaxAttempts': 30}
+        )
 
         def tear_down():
             _delete_table_if_exists(dynamodb_connection, name)
+
         request.addfinalizer(tear_down)
 
         return table
@@ -58,44 +58,71 @@ def dynamodb_table_maker(request, dynamodb_connection):
 
 @pytest.fixture
 def dynamodb_users_table(dynamodb_table_maker):
-    schema = [HashKey('name'), RangeKey('last_name')]
-    return dynamodb_table_maker('users', schema)
+    key_schema = [
+        {'AttributeName': 'name', 'KeyType': 'HASH'},
+        {'AttributeName': 'last_name', 'KeyType': 'RANGE'}
+    ]
+    attribute_definitions = [
+        {'AttributeName': 'name', 'AttributeType': 'S'},
+        {'AttributeName': 'last_name', 'AttributeType': 'S'}
+    ]
+    return dynamodb_table_maker('users', key_schema, attribute_definitions)
 
 
 @pytest.fixture
 def dynamodb_records_table(dynamodb_table_maker):
-    schema = [HashKey('time_index_key'), RangeKey('range_key')]
-    return dynamodb_table_maker('records', schema)
+    key_schema = [
+        {'AttributeName': 'time_index_key', 'KeyType': 'HASH'},
+        {'AttributeName': 'range_key', 'KeyType': 'RANGE'}
+    ]
+    attribute_definitions = [
+        {'AttributeName': 'time_index_key', 'AttributeType': 'S'},
+        {'AttributeName': 'range_key', 'AttributeType': 'S'}
+    ]
+    return dynamodb_table_maker('records', key_schema, attribute_definitions)
 
 
 @pytest.fixture
 def dynamodb_latest_table(dynamodb_table_maker):
-    schema = [HashKey('what_where_key')]
-    return dynamodb_table_maker('latest', schema)
+    key_schema = [
+        {'AttributeName': 'what_where_key', 'KeyType': 'HASH'}
+    ]
+    attribute_definitions = [
+        {'AttributeName': 'what_where_key', 'AttributeType': 'S'}
+    ]
+    return dynamodb_table_maker('latest', key_schema, attribute_definitions)
 
 
 @pytest.fixture
-def sns_connection(aws_connector):
-    return aws_connector(mock_sns, boto.connect_sns)
+def sns_connection():
+    with mock_aws():
+        yield boto3.resource('sns', region_name='us-east-1')
 
 
 @pytest.fixture
 def sns_topic_arn(sns_connection):
-    topic = sns_connection.create_topic('foo')
-    return topic['CreateTopicResponse']['CreateTopicResult']['TopicArn']
+    topic = sns_connection.create_topic(Name='foo')
+    return topic.arn
 
 
 @pytest.fixture
-def sqs_connection(aws_connector):
-    return aws_connector(mock_sqs, boto.connect_sqs)
+def sqs_connection():
+    with mock_aws():
+        yield boto3.resource('sqs', region_name='us-east-1')
 
 
 @pytest.fixture
 def bare_sqs_queue_maker(sqs_connection):
 
     def maker(queue_name):
-        return sqs_connection.get_queue(queue_name) or \
-            sqs_connection.create_queue(queue_name)
+        try:
+            queue = sqs_connection.get_queue_by_name(QueueName=queue_name)
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'AWS.SimpleQueueService.NonExistentQueue':
+                queue = sqs_connection.create_queue(QueueName=queue_name)
+            else:
+                raise
+        return queue
 
     return maker
 
@@ -105,7 +132,7 @@ def sqs_queue_maker(bare_sqs_queue_maker):
 
     def maker(queue_name):
         q = bare_sqs_queue_maker(queue_name)
-        return SQSQueue(q.name)
+        return SQSQueue(queue_name)
 
     return maker
 
@@ -125,8 +152,9 @@ def sqs_sender(bare_sqs_queue_maker):
 
     def sender(msg, queue_name='test-queue'):
         q = bare_sqs_queue_maker(queue_name)
-        msg = q.new_message(json.dumps(msg))
-        q.write(msg)
+        q.send_message(
+            MessageBody=json.dumps(msg)
+        )
 
     return sender
 
