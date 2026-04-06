@@ -14,9 +14,8 @@
 
 
 from memoized_property import memoized_property
-import boto.dynamodb2
-from boto.dynamodb2.table import Table
-from boto.dynamodb2.exceptions import ConditionalCheckFailedException
+import boto3
+from botocore.exceptions import ClientError
 import os
 from datalake.common.errors import InsufficientConfiguration
 import logging
@@ -45,104 +44,94 @@ class DynamoDBStorage(object):
         region = os.environ.get('AWS_REGION')
         if connection:
             self._connection = connection
+            self._client = connection.meta.client
         elif region:
-            self._connection = boto.dynamodb2.connect_to_region(region)
+            self._connection = boto3.resource('dynamodb', region_name=region)
+            self._client = self._connection.meta.client
+
         else:
             msg = 'Please provide a connection or configure a region'
             raise InsufficientConfiguration(msg)
 
     @memoized_property
     def _table(self):
-        return Table(self.table_name, connection=self._connection)
-    
+        return self._connection.Table(self.table_name)
+
     @memoized_property
     def _latest_table(self):
-        return Table(self.latest_table_name, connection=self._connection)
+        return self._connection.Table(self.latest_table_name)
 
     def store(self, record):
         try:
-            self._table.put_item(data=record)
-        except ConditionalCheckFailedException:
-            # Tolerate duplicate stores
-            pass
+            self._table.put_item(Item=record)
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                pass
+            else:
+                raise
         if self.latest_table_name:
             self.store_latest(record)
 
     def update(self, record):
-        self._table.put_item(data=record, overwrite=True)
+        self._table.put_item(Item=record)
 
     def store_latest(self, record):
         """
-        Record must utilize AttributeValue syntax
-              for the conditional put.
+        Store the latest record for a given what:where key with conditional put.
         """
-        condition_expression = " attribute_not_exists(what_where_key) OR metadata.#metadata_start <= :new_start"
+        condition_expression = "attribute_not_exists(what_where_key) OR metadata.#metadata_start <= :new_start"
+
         expression_attribute_values = {
-            ':new_start': {'N': str(record['metadata']['start'])}
+            ':new_start': record['metadata']['start']
         }
 
-        # aliases for DynamoDB reserved names.
         expression_attribute_names = {
             '#metadata_start': "start"
         }
 
+
         if record['metadata']['work_id'] is None:
-            work_id_value = {'NULL': True}
+            work_id_value = None
         else:
-            work_id_value = {'S': str(record['metadata']['work_id'])}
+            work_id_value = str(record['metadata']['work_id'])
 
         if record['metadata']['end'] is None:
-            end_time_value = {'NULL': True}
+            end_time_value = None
         else:
-            end_time_value = {'N': str(record['metadata']['end'])}
+            end_time_value = record['metadata']['end']
 
         record = {
-            'what_where_key': {"S": record['metadata']['what']+':'+record['metadata']['where']},
-            'time_index_key': {"S": record['time_index_key']},
-            'range_key': {"S": record['range_key']},
+            'what_where_key': record['metadata']['what']+':'+record['metadata']['where'],
+            'time_index_key': record['time_index_key'],
+            'range_key': record['range_key'],
             'metadata': {
-                'M': {
-                    'start': {
-                        'N': str(record['metadata']['start'])
-                    },
-                    'end': end_time_value,
-                    'id': {
-                        'S': str(record['metadata']['id'])
-                    },
-                    'path': {
-                        'S': str(record['metadata']['path'])
-                    },
-                    'hash': {
-                        'S': str(record['metadata']['hash'])
-                    },
-                    'version': {
-                        'N': str(record['metadata']['version'])
-                    },
-                    'what': {
-                        'S': str(record['metadata']['what'])
-                    },
-                    'where': {
-                        'S': str(record['metadata']['where'])
-                    },
-                    'work_id': work_id_value
-                }
+                'start': record['metadata']['start'],
+                'end': end_time_value,
+                'id': str(record['metadata']['id']),
+                'path': str(record['metadata']['path']),
+                'hash': str(record['metadata']['hash']),
+                'version': record['metadata']['version'],
+                'what': str(record['metadata']['what']),
+                'where': str(record['metadata']['where']),
+                'work_id': work_id_value
             },
-            'url': {"S": record['url']},
-            'create_time': {'N': str(record['create_time'])}
+            'url': record['url'],
+            'create_time': record['create_time']
         }
         self.logger.info(f"Attempting to store record: {record}")
         try:
-            self._connection.put_item(
-                table_name=self.latest_table_name,
-                item=record,
-                condition_expression=condition_expression,
-                expression_attribute_names=expression_attribute_names,
-                expression_attribute_values=expression_attribute_values,
+            self._latest_table.put_item(
+                Item=record,
+                ConditionExpression=condition_expression,
+                ExpressionAttributeNames=expression_attribute_names,
+                ExpressionAttributeValues=expression_attribute_values,
             )
             self.logger.info("Record stored successfully.")
-        except ConditionalCheckFailedException:
-            self.logger.debug(f"Condition not met for record {record},"
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                self.logger.debug(f"Condition not met for record {record},"
                               "no operation was performed.")
+            else:
+                raise
         except Exception as e:
             self.logger.error(f"Error occurred while attempting {record}: {str(e)}")
-

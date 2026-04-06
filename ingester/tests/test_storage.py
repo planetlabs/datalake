@@ -6,7 +6,8 @@ def test_dynamodb_store(dynamodb_users_table, dynamodb_connection):
     storage = DynamoDBStorage('users', connection=dynamodb_connection)
     expected_user = {'name': 'John', 'last_name': 'Muir'}
     storage.store(expected_user)
-    user = dict(dynamodb_users_table.get_item(name='John', last_name='Muir'))
+    response = dynamodb_users_table.get_item(Key={'name': 'John', 'last_name': 'Muir'})
+    user = dict(response['Item'])
     assert dict(user) == expected_user
 
 def test_store_duplicate(dynamodb_users_table, dynamodb_connection):
@@ -14,7 +15,8 @@ def test_store_duplicate(dynamodb_users_table, dynamodb_connection):
     expected_user = {'name': 'Vanilla', 'last_name': 'Ice'}
     storage.store(expected_user)
     storage.store(expected_user)
-    user = dict(dynamodb_users_table.get_item(name='Vanilla', last_name='Ice'))
+    response = dynamodb_users_table.get_item(Key={'name': 'Vanilla', 'last_name': 'Ice'})
+    user = dict(response['Item'])
     assert dict(user) == expected_user
 
 def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
@@ -42,9 +44,10 @@ def test_insert_new_record(dynamodb_latest_table, dynamodb_connection):
 
     storage.store_latest(new_record)
 
-    stored_record = dynamodb_latest_table.get_item(
-        what_where_key=new_record['what_where_key']
+    response = dynamodb_latest_table.get_item(
+        Key={'what_where_key': new_record['what_where_key']}
     )
+    stored_record = response['Item']
     assert stored_record['metadata']['start'] == new_record['metadata']['start']
 
 
@@ -82,7 +85,7 @@ def provide_test_records():
             'what': 'syslog',
             'id': 'file2',
             'hash': 'c5g3d8de24af342643d5b78a8f2b9b88'
-            
+
         },
         'url': 's3://existingfile/url',
         'create_time': 1314877177403
@@ -122,9 +125,10 @@ def test_store_conditional_put_latest_multiple_files(dynamodb_latest_table, dyna
     
     query_what_where = 'syslog:ground_server2'
 
-    records = [dict(i) for i in dynamodb_latest_table.scan()]
+    records = [dict(i) for i in dynamodb_latest_table.scan()['Items']]
 
-    res = dict(dynamodb_latest_table.get_item(what_where_key=query_what_where))
+    response = dynamodb_latest_table.get_item(Key={'what_where_key': query_what_where})
+    res = dict(response['Item'])
     assert res['metadata']['start'] == Decimal('1314877177413')
     assert len(records) == 2
     assert file2 == res
@@ -141,7 +145,8 @@ def test_store_conditional_put_newest_first(dynamodb_latest_table, dynamodb_conn
 
     query_what_where = 'syslog:ground_server2'
 
-    res = dict(dynamodb_latest_table.get_item(what_where_key=query_what_where))
+    response = dynamodb_latest_table.get_item(Key={'what_where_key': query_what_where})
+    res = dict(response['Item'])
     assert res['metadata']['id'] != file1['metadata']['id']
     assert res['metadata']['id'] == file2['metadata']['id']
 
@@ -191,8 +196,9 @@ def test_verify_replace_record_same_start(dynamodb_latest_table, dynamodb_connec
     storage.store_latest(record1)
     storage.store_latest(record2)
 
-    stored_record = dynamodb_latest_table.get_item(
-        what_where_key="syslog:ground_server2"
+    response = dynamodb_latest_table.get_item(
+        Key={'what_where_key': "syslog:ground_server2"}
     )
+    stored_record = response['Item']
     assert stored_record['metadata']['start'] == record1['metadata']['start']
     assert stored_record['metadata']['id'] == "abc123"

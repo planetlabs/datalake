@@ -12,13 +12,22 @@ dev: docker
 	docker run --rm -it -v $$PWD:/opt --entrypoint /bin/bash $(IMAGE)
 
 test-client: docker
-	docker run --rm --entrypoint tox $(IMAGE) -c /opt/client/tox.ini
+	docker run --rm -t --entrypoint tox $(IMAGE) -c /opt/client/tox.ini
 
 test-ingester: docker
-	docker run --rm --entrypoint py.test $(IMAGE) ingester
+	docker run --rm -t --entrypoint pytest $(IMAGE) /opt/ingester -svvx
 
 test-api: docker
-	docker run --rm --entrypoint py.test $(IMAGE) api
+	docker run --rm -t --entrypoint pytest $(IMAGE) /opt/api -svvx
+
+testp-client: docker
+	docker run --rm -t --entrypoint /bin/bash $(IMAGE) -c "cd /opt/client && pytest -svvx -n auto"
+
+testp-ingester: docker
+	docker run --rm -t --entrypoint pytest $(IMAGE) /opt/ingester -svvx -n auto
+
+testp-api: docker
+	docker run --rm -t --entrypoint pytest $(IMAGE) /opt/api -svvx -n auto
 
 .PHONY: test  # Run the tests
 test:
@@ -26,6 +35,18 @@ test:
 	$(MAKE) test-client
 	$(MAKE) test-ingester
 	$(MAKE) test-api
+
+.PHONY: testp  # Run all tests in parallel with pytest-xdist
+testp: docker
+	docker run --rm -t --entrypoint /bin/bash $(IMAGE) -c "\
+		set -e && \
+		echo '==> Running client tests...' && \
+		cd /opt/client && pytest -svvx -n auto && \
+		echo '==> Running ingester tests...' && \
+		cd /opt/ingester && pytest -svvx -n auto && \
+		echo '==> Running API tests...' && \
+		cd /opt/api && pytest -svvx -n auto && \
+		echo '==> All tests passed!'"
 
 .PHONY: push
 push:
