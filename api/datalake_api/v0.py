@@ -18,6 +18,8 @@ from flask import jsonify, Response, url_for
 from flask import current_app as app
 import os
 import simplejson as json
+from datetime import datetime, timezone
+import decimal
 from .querier import ArchiveQuerier, Cursor, InvalidCursor, \
     DEFAULT_LOOKBACK_DAYS
 from .fetcher import ArchiveFileFetcher
@@ -28,6 +30,38 @@ from .sentry import monitor_performance
 v0 = flask.Blueprint('v0', __name__, url_prefix='/v0')
 
 _archive_querier = None
+
+
+def unix_ms_to_utc_iso(unix_ms):
+    if unix_ms is None:
+        return unix_ms
+    unix_ms_to_iso = unix_ms
+    if isinstance(unix_ms_to_iso, decimal.Decimal):
+        unix_ms_to_iso = float(unix_ms_to_iso)
+    iso = datetime.fromtimestamp(
+        unix_ms_to_iso / 1000.0, tz=timezone.utc
+    ).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+    return iso
+
+
+def add_utc_metadata(metadata):
+    """Add ISO-8601 UTC timestamp fields to metadata dict
+
+    This function takes a metadata dict and adds start_iso and end_iso fields
+    based on existing start and end epoch timestamps
+    iso precision is set to milliseconds
+    Can be expanded to add any api-level metadata
+    """
+    if not metadata:
+        return metadata
+
+    start_iso = unix_ms_to_utc_iso(metadata['start'])
+    end_iso = unix_ms_to_utc_iso(metadata['end'])
+
+    metadata['start_iso'] = start_iso
+    metadata['end_iso'] = end_iso
+    return metadata
+
 
 def _get_aws_kwargs():
     kwargs = dict(
@@ -305,6 +339,14 @@ def files_get():
                                   type: string
                                   description: 16-byte blake2 hash of the file
                                                content
+                                start_iso:
+                                  type: string
+                                  description: the start time of the file in ISO
+                                               format UTC iso timezone
+                                end_iso:
+                                  type: string
+                                  description: the end time of the file in ISO
+                                               format UTC iso timezone
 
               next:
                   type: string
@@ -349,7 +391,10 @@ def files_get():
                                    where=params.get('where'),
                                    cursor=params.get('cursor'))
 
-    [r.update(http_url=_get_canonical_http_url(r)) for r in results]
+    for r in results:
+        r.update(http_url=_get_canonical_http_url(r))
+        r['metadata'] = add_utc_metadata(r['metadata'])
+
     response = {
         'records': results,
         'next': _get_next_url(flask.request, results),
@@ -476,6 +521,7 @@ def file_get_metadata(file_id):
           id: DatalakeAPIError
     '''
     f = _get_file(file_id)
+    f.metadata = add_utc_metadata(f.metadata)
     return Response(json.dumps(f.metadata), content_type='application/json')
 
 
@@ -542,6 +588,7 @@ def latest_get(what, where):
     params = _validate_latest_params(params)
     f = _get_latest(what, where, params.get('lookback', DEFAULT_LOOKBACK_DAYS))
     f.update(http_url=_get_canonical_http_url(f))
+    f['metadata'] = add_utc_metadata(f['metadata'])
     return Response(json.dumps(f), content_type='application/json')
 
 
