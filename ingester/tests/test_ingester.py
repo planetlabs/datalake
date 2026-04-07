@@ -28,7 +28,7 @@ def test_ingest_random(storage, dynamodb_records_table, random_s3_file_maker):
     url, metadata = random_s3_file_maker()
     ingester = Ingester(storage)
     ingester.ingest(url)
-    records = [dict(r) for r in dynamodb_records_table.scan()['Items']]
+    records = [dict(r) for r in dynamodb_records_table.scan()]
     assert len(records) >= 1
     for r in records:
         assert r['metadata'] == metadata
@@ -38,10 +38,10 @@ def test_ingest_random_latest(storage, dynamodb_latest_table, random_s3_file_mak
     url, metadata = random_s3_file_maker()
     ingester = Ingester(storage)
     ingester.ingest(url)
-    records = [dict(r) for r in dynamodb_latest_table.scan()['Items']]
+    records = [dict(r) for r in dynamodb_latest_table.scan()]
     def convert_records(records):
         return {k: (decimal.Decimal(str(v)) if isinstance(v, (int, float)) else v) for k, v in records[0].items()}
-
+    
     converted_records = convert_records(records)
     assert len(records) >= 1
     for r in records:
@@ -55,7 +55,7 @@ def test_ingest_no_end(storage, dynamodb_records_table, s3_file_from_metadata,
     s3_file_from_metadata(url, random_metadata)
     ingester = Ingester(storage)
     ingester.ingest(url)
-    records = [dict(r) for r in dynamodb_records_table.scan()['Items']]
+    records = [dict(r) for r in dynamodb_records_table.scan()]
     assert len(records) >= 1
 
     # we expect a null end key to come back when the user leaves it out.
@@ -97,7 +97,7 @@ def records_comparator(dynamodb_records_table):
         return r
 
     def comparator(expected_records):
-        records = [_sanitize(r) for r in dynamodb_records_table.scan()['Items']]
+        records = [_sanitize(r) for r in dynamodb_records_table.scan()]
         for r in expected_records:
             del(r['create_time'])
         assert dict_list_sorter(records) == dict_list_sorter(expected_records)
@@ -113,12 +113,8 @@ def report_listener(bare_sqs_queue_maker, sns_connection, sns_topic_arn):
         def __init__(self):
             self.messages = []
             q = bare_sqs_queue_maker('reporter-queue')
-            self._queue = SQSQueue('reporter-queue', self.handler)
-            topic = sns_connection.Topic(sns_topic_arn)
-            topic.subscribe(
-                Protocol='sqs',
-                Endpoint=q.attributes['QueueArn']
-            )
+            self._queue = SQSQueue(q.name, self.handler)
+            sns_connection.subscribe_sqs_queue(sns_topic_arn, q)
 
         def handler(self, msg):
             self.messages.append(json.loads(msg['Message']))

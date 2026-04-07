@@ -58,6 +58,4 @@ target/
 
 # build artifacts
 version.txt
-
-# Claude Code
-.claude/
+.claude/settings.local.json

@@ -18,14 +18,9 @@ from datalake_ingester import SNSReporter
 
 
 def test_snsreporter_sends(sns_connection, sns_topic_arn, bare_sqs_queue):
-    topic = sns_connection.Topic(sns_topic_arn)
-    topic.subscribe(
-        Protocol='sqs',
-        Endpoint=bare_sqs_queue.attributes['QueueArn']
-    )
+    sns_connection.subscribe_sqs_queue(sns_topic_arn, bare_sqs_queue)
     r = SNSReporter(sns_topic_arn)
     expected_msg = {'message': 'foo'}
     r.report(expected_msg)
-    messages = bare_sqs_queue.receive_messages(MaxNumberOfMessages=1)
-    msg = json.loads(messages[0].body)
+    msg = json.loads(bare_sqs_queue.read(1).get_body())
     assert expected_msg == json.loads(msg['Message'])

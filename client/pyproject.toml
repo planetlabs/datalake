@@ -21,8 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    'boto3==1.35.41',
-    'botocore==1.35.64',
+    'boto3>=1.9.68',
     'memoized_property>=1.0.1',
     'pyblake2>=0.9.3; python_version<"3.6"',
     'click>=4.1',
@@ -38,7 +37,7 @@ dynamic = ["version"]
 test = [
     'pytest<8.0.0',
     'pytest-cov>=2.5.1,<4',
-    'moto[s3]>5,<6',
+    'moto[s3]>4,<5',
     'twine<4.0.0',
     'pip>=20.0.0,<22.0.0',
     'wheel<0.38.0',
@@ -74,7 +73,7 @@ distance-dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
 # Example formatted version: 1.2.3+42.ge174a1f.dirty
 
 [tool.pytest.ini_options]
-addopts = "--cov=datalake --cov-config .coveragerc"
+addopts = "--cov=planet.mc_client --cov-config .coveragerc"
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')"
 ]

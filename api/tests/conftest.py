@@ -18,7 +18,7 @@ from botocore.exceptions import (
     ClientError as BotoClientError,
     NoCredentialsError
 )
-from moto import mock_aws
+from moto import mock_dynamodb2
 
 from datalake_api import app as datalake_api
 from datalake.tests import *  # noqa
@@ -33,15 +33,12 @@ YEAR_2010 = 1262304000000
 # This will cause moto to fail
 # But more critically, may impact production systems
 # So we test for real credentials and fail hard if they exist
-# Session fixture runs in pytest setup rather than at import time
-@pytest.fixture(scope='session', autouse=True)
-def verify_no_aws_credentials():
-    sts = boto3.client('sts')
-    try:
-        sts.get_caller_identity()
-        pytest.exit("Real AWS credentials detected, aborting", 3)
-    except NoCredentialsError:
-        pass
+sts = boto3.client('sts')
+try:
+    sts.get_caller_identity()
+    pytest.exit("Real AWS credentials detected, aborting", 3)
+except NoCredentialsError:
+    pass  # no credentials are good
 
 
 def get_client():
@@ -49,11 +46,17 @@ def get_client():
     datalake_api.app.config.from_object(settings)
 
     datalake_api.app.config['TESTING'] = True
-    datalake_api.app.config['AWS_REGION'] = 'us-east-1'
     datalake_api.app.config['AWS_ACCESS_KEY_ID'] = 'abc'
     datalake_api.app.config['AWS_SECRET_ACCESS_KEY'] = '123'
 
-    for a in ('archive_fetcher', 's3_bucket', 'dynamodb'):
+    # TODO: Sigh. The api caches the archive_fetcher and s3_bucket, which is
+    # the right thing. However, because moto<3 still uses httpretty, and
+    # because httpretty wreaks havoc on the python socket code, these cached
+    # parts end up in a bad state after their first use. The right thing to do
+    # here is to upgrade moto. But for that we will also have to move
+    # everything from boto to boto3. This is a near-term goal. But first lets
+    # get everything off of python2.
+    for a in ('archive_fetcher', 's3_bucket'):
         try:
             delattr(datalake_api.app, a)
         except AttributeError:
@@ -68,7 +71,7 @@ def client():
 
 @pytest.fixture
 def dynamodb(request):
-    mock = mock_aws()
+    mock = mock_dynamodb2()
     mock.start()
 
     def tear_down():
@@ -76,7 +79,7 @@ def dynamodb(request):
     request.addfinalizer(tear_down)
 
     return boto3.resource('dynamodb',
-                          region_name='us-east-1',
+                          region_name='us-west-2',
                           aws_secret_access_key='123',
                           aws_access_key_id='abc')
 

@@ -32,21 +32,20 @@ def handler():
 
 
 def test_sqs_queue_timeout(bare_sqs_queue, handler):
-    queue_name = bare_sqs_queue.url.split('/')[-1]
-    q = SQSQueue(queue_name, handler)
+    q = SQSQueue(bare_sqs_queue.name, handler)
     start = time.time()
     q.drain(timeout=1)
     duration = time.time() - start
     error = abs(duration - 1.0)
-    assert error < 0.12
+    assert error < 0.1
     assert handler.messages == []
 
 
 def test_sqs_queue_drain(bare_sqs_queue, handler):
-    queue_name = bare_sqs_queue.url.split('/')[-1]
-    q = SQSQueue(queue_name, handler)
+    q = SQSQueue(bare_sqs_queue.name, handler)
     expected_msg = {'foo': 'bar'}
-    bare_sqs_queue.send_message(MessageBody=json.dumps(expected_msg))
+    msg = bare_sqs_queue.new_message(json.dumps(expected_msg))
+    bare_sqs_queue.write(msg)
     q.drain(timeout=1)
     assert handler.messages == [expected_msg]
     handler.messages = []
