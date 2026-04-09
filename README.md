@@ -1,3 +1,7 @@
+Note for Internal Developers
+============
+Please read readme from datalake-ops repo for internal processes of development and deployment.
+
 Introduction
 ============
 
@@ -89,6 +93,8 @@ Developer Setup
 ===============
 
         make docker test
+        # or for faster/parallelized testing
+        make docker testp
 
 Datalake Metadata
 =================
