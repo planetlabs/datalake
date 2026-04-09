@@ -1,4 +1,5 @@
 import logging
+import logging.config
 import sentry_sdk
 
 _log_configured = False
