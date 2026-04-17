@@ -15,7 +15,7 @@ RUN pip install \
     'Flask>=0.10.1' \
     'flask-swagger>=0.2.14' \
     'memoized_property>=1.0.1' \
-    'pyinotify>=0.9.4' \
+    'inotify_simple>=1.3.5' \
     'python-dateutil>=2.4.2' \
     'python-dotenv>=0.1.3' \
     'pytz>=2015.4' \
