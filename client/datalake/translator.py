@@ -13,7 +13,6 @@
 # the License.
 
 import re
-import sre_constants
 import os
 
 
@@ -58,7 +57,7 @@ class Translator(object):
     def _prepare_re(self):
         try:
             self._re = re.compile(self._extract)
-        except sre_constants.error as e:
+        except re.error as e:
             raise TranslatorError(str(e))
 
     def _validate_tilde(self):
